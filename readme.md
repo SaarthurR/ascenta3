@@ -1,2 +1,1 @@
-# No automated tools were used in the ripping of this game
-This Polytrack rip was dose 100% manually by visiting each file URL and downloading them because I was board at 2AM uhhh i dont have much else cya BYEEEEEE :Þ 
+
