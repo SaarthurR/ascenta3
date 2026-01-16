@@ -1,77 +1,105 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCENT 2</title>
 
-  <link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
-  <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/>
-  <link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/>
+<style>
+  body { margin:0; background:#050505; color:white; font-family:system-ui; overflow:hidden; }
 
-  <link rel="manifest" href="manifest.json"/>
+  .screen {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:#050505; z-index:9999;
+  }
 
-  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+  .box {
+    width:90%; max-width:380px; background:#0f0f0f; padding:22px;
+    border-radius:16px; text-align:center; box-shadow:0 0 40px rgba(0,0,0,.7);
+  }
+
+  h1 { margin:0 0 10px; letter-spacing:2px; }
+
+  .red { color:#ff4d4d; }
+
+  button {
+    width:100%; padding:14px; border-radius:10px; border:none;
+    background:#4f46e5; color:white; font-size:16px; margin-top:12px;
+  }
+
+  input {
+    width:100%; padding:14px; border-radius:10px; border:none; font-size:16px;
+  }
+
+  #msg { margin-top:10px; min-height:22px; }
+
+  /* Car animation */
+  .road {
+    position:absolute; bottom:20%; width:100%; height:4px; background:#222;
+  }
+  .car {
+    position:absolute; bottom:20%; left:-80px; width:80px; height:40px;
+    background:#ff3b3b; border-radius:8px;
+    animation: drive 3s linear infinite;
+  }
+  .car::before,.car::after{
+    content:""; position:absolute; bottom:-10px; width:16px; height:16px;
+    background:#000; border-radius:50%;
+  }
+  .car::before{ left:10px;}
+  .car::after{ right:10px;}
+
+  @keyframes drive {
+    from { left:-100px; }
+    to { left:110%; }
+  }
+</style>
 </head>
 
-<body style="margin:0;background:black;color:white;font-family:system-ui">
+<body>
 
-<div id="lock" style="
-  position:fixed;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at top,#111,#000);
-  z-index:9999">
+<!-- DISCLAIMER SCREEN -->
+<div id="disclaimer" class="screen">
+  <div class="box">
+    <h1>ASCENT 2</h1>
 
-  <div style="
-    background:#0b0b0b;
-    padding:30px 28px;
-    border-radius:14px;
-    box-shadow:0 0 30px rgba(0,0,0,.8);
-    min-width:260px;
-    text-align:center">
+    <div class="road"></div>
+    <div class="car"></div>
 
-    <h2 style="margin:0 0 12px;font-weight:600">Access Key</h2>
+    <p class="red" style="font-size:14px; line-height:1.4;">
+      We (KAS) remain anonymous and retain full ownership and rights to this website and all related systems.
+      Any attempt to bypass, tamper, abuse, reverse engineer, or exploit this service will be detected and may
+      result in permanent bans or further repercussions.
+      <br><br>
+      By continuing, you are granted a limited license to access and use this website under our rules and terms.
+      Misuse will result in termination of access.
+    </p>
 
-    <input id="keyInput"
-      placeholder="#####"
-      maxlength="5"
-      style="
-        width:100%;
-        padding:10px;
-        font-size:18px;
-        border-radius:8px;
-        border:none;
-        outline:none;
-        text-align:center;
-        letter-spacing:3px;
-      ">
-
-    <button onclick="checkKey()" style="
-      margin-top:12px;
-      width:100%;
-      padding:10px;
-      border:none;
-      border-radius:8px;
-      background:#1e90ff;
-      color:white;
-      font-size:15px;
-      cursor:pointer">
-      Unlock
+    <button id="playBtn" style="background:none;color:#ff4d4d;font-weight:700;">
+      ▶ PLAY NOW
     </button>
-
-    <div id="msg" style="color:#ff4d4d;margin-top:10px;font-size:14px"></div>
-
   </div>
 </div>
 
-<!-- GAME HUB -->
+<!-- KEY LOCK SCREEN -->
+<div id="lockScreen" class="screen" style="display:none;">
+  <div class="box">
+    <h2>Enter Access Key</h2>
+    <input id="keyInput" placeholder="Enter key">
+    <button id="unlockBtn">Unlock</button>
+    <p id="msg"></p>
+  </div>
+</div>
+
+<!-- GAME LOAD -->
 <canvas id="screen"></canvas>
 <div id="ui"></div>
 <div id="transition-layer"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔴 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyA-xmCzHc0_sXOxOyAHppw1brgX0CX8dfU",
   authDomain: "hwid-lock.firebaseapp.com",
@@ -84,72 +112,72 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* HWID (browser fingerprint) */
-function getHWID() {
-  return btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    navigator.language +
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
-}
+// soft fingerprint (web only, not real hwid)
+const hwid = btoa(navigator.userAgent + screen.width + screen.height + navigator.language);
 
-/* LOAD GAME FILES */
-function load(s){
-  const e=document.createElement("script");
-  e.src=s;
-  e.defer=true;
-  document.head.appendChild(e);
-}
+const playBtn = document.getElementById("playBtn");
+const lockScreen = document.getElementById("lockScreen");
+const disclaimer = document.getElementById("disclaimer");
+const msg = document.getElementById("msg");
 
-function unlock(){
-  document.getElementById("lock").style.display = "none";
-  load("error_screen.bundle.js");
-  load("main.bundle.js");
-}
+playBtn.onclick = () => {
+  disclaimer.style.display = "none";
+  lockScreen.style.display = "flex";
+};
 
-/* KEY CHECK */
-window.checkKey = async function () {
+document.getElementById("unlockBtn").onclick = async () => {
   const key = document.getElementById("keyInput").value.trim();
-  const msg = document.getElementById("msg");
+  if (!key) return;
 
-  if (!key) {
-    msg.textContent = "Enter key";
+  // ADMIN KEY
+  const adminRef = doc(db, "admin_keys", key);
+  const adminSnap = await getDoc(adminRef);
+  if (adminSnap.exists()) {
+    msg.style.color = "#4ade80";
+    msg.textContent = "WE MAKIN IT OUT FR 🔥";
+    setTimeout(unlock, 700);
     return;
   }
 
-  const hwid = getHWID();
+  // UNUSED KEY
+  const keyRef = doc(db, "keys", key);
+  const keySnap = await getDoc(keyRef);
+  if (keySnap.exists()) {
+    await setDoc(doc(db, "used_keys", key), { hwid, time: Date.now() });
+    await deleteDoc(keyRef);
+    unlock();
+    return;
+  }
 
-  try {
-    const ref = doc(db, "keys", key);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      msg.textContent = "Invalid key";
-      return;
-    }
-
-    const data = snap.data();
-
-    if (!data.used) {
-      await updateDoc(ref, { used: true, hwid: hwid });
-      unlock();
-      return;
-    }
-
-    if (data.hwid === hwid) {
+  // USED KEY
+  const usedRef = doc(db, "used_keys", key);
+  const usedSnap = await getDoc(usedRef);
+  if (usedSnap.exists()) {
+    if (usedSnap.data().hwid === hwid) {
       unlock();
     } else {
-      msg.textContent = "Key already used on another device";
+      msg.textContent = "😈 Nice try haha, this key is locked to another device.";
     }
-  } catch (e) {
-    msg.textContent = "Connection error";
-    console.error(e);
+    return;
   }
+
+  msg.textContent = "❌ Invalid key.";
 };
+
+function unlock() {
+  lockScreen.remove();
+  loadGame();
+}
+
+function loadGame(){
+  const load = s => {
+    const e = document.createElement("script");
+    e.src = s; e.defer = true; document.head.appendChild(e);
+  };
+  load("error_screen.bundle.js");
+  load("main.bundle.js");
+}
 </script>
 
 </body>
 </html>
-
