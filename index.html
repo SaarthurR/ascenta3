@@ -10,65 +10,440 @@
 <title>ASCENT 2</title>
 
 <style>
+*{box-sizing:border-box}
 body{
-  margin:0;background:radial-gradient(circle at top,#111,#000);
-  color:white;font-family:system-ui;overflow:hidden
+  margin:0;
+  background:#000;
+  color:white;
+  font-family:system-ui,-apple-system,sans-serif;
+  overflow:hidden;
+  position:relative
 }
+
+/* Animated background */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(99,102,241,.15),transparent 60%),
+             radial-gradient(circle at 80% 80%,rgba(239,68,68,.1),transparent 50%),
+             radial-gradient(circle at 20% 60%,rgba(168,85,247,.08),transparent 40%);
+  animation:bgPulse 8s ease-in-out infinite
+}
+
+@keyframes bgPulse{
+  0%,100%{opacity:.8}
+  50%{opacity:1}
+}
+
+/* Floating particles */
+.particle{
+  position:fixed;
+  width:3px;
+  height:3px;
+  background:rgba(255,255,255,.4);
+  border-radius:50%;
+  pointer-events:none;
+  animation:float linear infinite
+}
+
+@keyframes float{
+  0%{transform:translateY(100vh) translateX(0) scale(0);opacity:0}
+  10%{opacity:.6}
+  90%{opacity:.6}
+  100%{transform:translateY(-100px) translateX(var(--drift)) scale(1);opacity:0}
+}
+
 #lock{
-  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  backdrop-filter:blur(10px);
+  animation:fadeIn .6s ease-out
 }
+
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
 .card{
-  width:92%;max-width:420px;background:#0d0d0d;padding:26px;border-radius:18px;
-  text-align:center;box-shadow:0 0 60px rgba(0,0,0,.8)
+  width:92%;
+  max-width:460px;
+  background:rgba(13,13,13,.95);
+  padding:40px 32px;
+  border-radius:24px;
+  text-align:center;
+  box-shadow:0 20px 80px rgba(0,0,0,.9),
+             0 0 0 1px rgba(255,255,255,.05);
+  backdrop-filter:blur(20px);
+  animation:slideUp .6s ease-out
 }
-h1{margin:0 0 6px;letter-spacing:3px}
-.red{color:#ff4d4d}
-p{font-size:13px;line-height:1.5;opacity:.85}
 
-input{
-  width:100%;padding:14px;border-radius:12px;border:none;
-  font-size:16px;margin-top:12px;background:#111;color:white
+@keyframes slideUp{
+  from{transform:translateY(30px);opacity:0}
+  to{transform:translateY(0);opacity:1}
 }
-button{
-  width:100%;padding:14px;border-radius:12px;border:none;
-  background:linear-gradient(135deg,#6366f1,#4338ca);
-  color:white;font-size:16px;margin-top:12px
-}
-#msg{min-height:22px;margin-top:8px}
 
-/* car animation */
-.road{position:relative;margin:14px 0;height:4px;background:#222;overflow:hidden}
+h1{
+  margin:0 0 8px;
+  letter-spacing:6px;
+  font-size:2.2em;
+  font-weight:900;
+  background:linear-gradient(135deg,#6366f1,#ec4899);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:glow 3s ease-in-out infinite
+}
+
+@keyframes glow{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(99,102,241,.4))}
+  50%{filter:drop-shadow(0 0 16px rgba(236,72,153,.6))}
+}
+
+.subtitle{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:3px;
+  opacity:.6;
+  margin:0 0 24px;
+  font-weight:600
+}
+
+.red{
+  color:#ff6b6b;
+  font-weight:500
+}
+
+p{
+  font-size:13.5px;
+  line-height:1.7;
+  opacity:.85;
+  margin:16px 0
+}
+
+/* Enhanced road with highway lines */
+.road-container{
+  position:relative;
+  margin:28px 0;
+  height:80px;
+  background:linear-gradient(180deg,#1a1a1a 0%,#0a0a0a 100%);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:inset 0 4px 12px rgba(0,0,0,.6)
+}
+
+.road-lines{
+  position:absolute;
+  top:50%;
+  left:0;
+  right:0;
+  height:3px;
+  transform:translateY(-50%)
+}
+
+.road-line{
+  position:absolute;
+  width:40px;
+  height:3px;
+  background:rgba(255,255,255,.3);
+  animation:roadScroll 1.5s linear infinite
+}
+
+.road-line:nth-child(1){left:0%;animation-delay:0s}
+.road-line:nth-child(2){left:20%;animation-delay:.3s}
+.road-line:nth-child(3){left:40%;animation-delay:.6s}
+.road-line:nth-child(4){left:60%;animation-delay:.9s}
+.road-line:nth-child(5){left:80%;animation-delay:1.2s}
+
+@keyframes roadScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(100px)}
+}
+
+/* Enhanced car */
 .car{
-  position:absolute;top:-18px;left:-90px;width:80px;height:36px;
-  background:#ff3b3b;border-radius:8px;animation:drive 3s linear infinite
+  position:absolute;
+  top:20px;
+  left:-120px;
+  width:90px;
+  height:40px;
+  animation:drive 4s ease-in-out infinite
 }
-.car:before,.car:after{
-  content:"";position:absolute;bottom:-10px;width:16px;height:16px;
-  background:#000;border-radius:50%
+
+.car-body{
+  position:relative;
+  width:100%;
+  height:100%;
+  background:linear-gradient(135deg,#ff3b3b,#ff6b6b);
+  border-radius:8px 8px 6px 6px;
+  box-shadow:0 4px 12px rgba(255,59,59,.4);
+  animation:carBounce .5s ease-in-out infinite alternate
 }
-.car:before{left:10px}
-.car:after{right:10px}
-@keyframes drive{from{left:-100px}to{left:110%}}
+
+@keyframes carBounce{
+  from{transform:translateY(0)}
+  to{transform:translateY(-2px)}
+}
+
+.car-window{
+  position:absolute;
+  top:4px;
+  left:8px;
+  width:35px;
+  height:18px;
+  background:rgba(100,150,255,.3);
+  border-radius:4px 4px 0 0;
+  border:1px solid rgba(255,255,255,.1)
+}
+
+.car-window::after{
+  content:"";
+  position:absolute;
+  right:-32px;
+  width:28px;
+  height:18px;
+  background:rgba(100,150,255,.3);
+  border-radius:4px 4px 0 0;
+  border:1px solid rgba(255,255,255,.1)
+}
+
+.wheel{
+  position:absolute;
+  bottom:-8px;
+  width:18px;
+  height:18px;
+  background:radial-gradient(circle,#333 40%,#000 70%);
+  border-radius:50%;
+  border:2px solid #111;
+  animation:wheelSpin .6s linear infinite
+}
+
+.wheel.left{left:12px}
+.wheel.right{right:12px}
+
+@keyframes wheelSpin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+.exhaust{
+  position:absolute;
+  left:-8px;
+  top:50%;
+  width:6px;
+  height:6px;
+  background:rgba(100,100,100,.4);
+  border-radius:50%;
+  animation:exhaust .3s ease-out infinite
+}
+
+@keyframes exhaust{
+  0%{transform:translateX(0) scale(1);opacity:.6}
+  100%{transform:translateX(-20px) scale(.3);opacity:0}
+}
+
+@keyframes drive{
+  0%{left:-120px;transform:translateY(0)}
+  20%{transform:translateY(-3px)}
+  40%{transform:translateY(0)}
+  60%{transform:translateY(-2px)}
+  80%{transform:translateY(0)}
+  100%{left:calc(100% + 20px);transform:translateY(0)}
+}
+
+/* Form elements */
+input{
+  width:100%;
+  padding:16px 20px;
+  border-radius:14px;
+  border:2px solid rgba(255,255,255,.08);
+  font-size:15px;
+  margin-top:20px;
+  background:rgba(17,17,17,.8);
+  color:white;
+  transition:all .3s ease;
+  outline:none
+}
+
+input:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 3px rgba(99,102,241,.15);
+  background:rgba(17,17,17,.95)
+}
+
+input::placeholder{
+  color:rgba(255,255,255,.4)
+}
+
+button{
+  width:100%;
+  padding:16px;
+  border-radius:14px;
+  border:none;
+  background:linear-gradient(135deg,#6366f1,#4338ca);
+  color:white;
+  font-size:16px;
+  font-weight:700;
+  margin-top:16px;
+  cursor:pointer;
+  transition:all .3s ease;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  position:relative;
+  overflow:hidden
+}
+
+button::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  opacity:0;
+  transition:opacity .3s ease
+}
+
+button:hover::before{
+  opacity:1
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(99,102,241,.4)
+}
+
+button:active{
+  transform:translateY(0)
+}
+
+button span{
+  position:relative;
+  z-index:1
+}
+
+#msg{
+  min-height:24px;
+  margin-top:16px;
+  font-weight:600;
+  font-size:14px;
+  animation:msgFade .3s ease-out
+}
+
+@keyframes msgFade{
+  from{opacity:0;transform:translateY(-5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.disclaimer-box{
+  background:rgba(255,59,59,.08);
+  border:1px solid rgba(255,59,59,.25);
+  border-radius:12px;
+  padding:16px;
+  margin:20px 0;
+  position:relative;
+  overflow:hidden
+}
+
+.disclaimer-box::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,#ff3b3b,transparent);
+  animation:scanline 2s linear infinite
+}
+
+@keyframes scanline{
+  from{transform:translateX(-100%)}
+  to{transform:translateX(100%)}
+}
+
+.warning-icon{
+  display:inline-block;
+  margin-right:6px;
+  animation:pulse 2s ease-in-out infinite
+}
+
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.1)}
+}
+
+/* Loading spinner */
+.spinner{
+  display:inline-block;
+  width:14px;
+  height:14px;
+  border:2px solid rgba(255,255,255,.2);
+  border-top-color:#6366f1;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  margin-right:8px;
+  vertical-align:middle
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 </style>
 </head>
 
 <body>
 
+<!-- Particles -->
+<script>
+for(let i=0;i<20;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(10+Math.random()*10)+'s';
+  p.style.animationDelay=Math.random()*5+'s';
+  p.style.setProperty('--drift',(Math.random()*200-100)+'px');
+  document.body.appendChild(p);
+}
+</script>
+
 <!-- LOCK + DISCLAIMER -->
 <div id="lock">
   <div class="card">
     <h1>ASCENT 2</h1>
+    <div class="subtitle">Secure Access System</div>
 
-    <div class="road"><div class="car"></div></div>
+    <div class="road-container">
+      <div class="road-lines">
+        <div class="road-line"></div>
+        <div class="road-line"></div>
+        <div class="road-line"></div>
+        <div class="road-line"></div>
+        <div class="road-line"></div>
+      </div>
+      <div class="car">
+        <div class="car-body">
+          <div class="car-window"></div>
+          <div class="wheel left"></div>
+          <div class="wheel right"></div>
+          <div class="exhaust"></div>
+        </div>
+      </div>
+    </div>
 
-    <p class="red">
-      We (KAS) remain anonymous and retain full ownership and rights to this website and all systems.
-      Any attempt to bypass, tamper, or exploit this service will be detected and may result in permanent
-      bans or further repercussions. By continuing, you are granted a limited license to use this website.
-    </p>
+    <div class="disclaimer-box">
+      <p class="red" style="margin:0">
+        <span class="warning-icon">⚠️</span>
+        <strong>IMPORTANT NOTICE</strong><br><br>
+        This system is operated by KAS (anonymous). All content, code, and systems remain under exclusive ownership and protection. Unauthorized access attempts, tampering, reverse engineering, or exploitation will be detected and result in immediate permanent device bans and potential legal action.<br><br>
+        By entering an access key, you acknowledge limited, revocable license terms and accept full responsibility for compliance with all applicable regulations.
+      </p>
+    </div>
 
-    <input id="keyInput" placeholder="Enter Access Key">
-    <button id="unlockBtn">UNLOCK</button>
+    <input id="keyInput" placeholder="Enter Access Key" autocomplete="off">
+    <button id="unlockBtn"><span>UNLOCK ACCESS</span></button>
     <p id="msg"></p>
   </div>
 </div>
@@ -98,22 +473,25 @@ const hwid = btoa(navigator.userAgent+screen.width+screen.height+navigator.langu
 
 const msg=document.getElementById("msg");
 const input=document.getElementById("keyInput");
+const btn=document.getElementById("unlockBtn");
 
-document.getElementById("unlockBtn").onclick=tryUnlock;
+btn.onclick=tryUnlock;
 input.addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock();});
 
 async function tryUnlock(){
   const key=input.value.trim();
   if(!key)return;
 
-  msg.textContent="Checking...";
+  msg.innerHTML='<span class="spinner"></span>Verifying access key...';
+  msg.style.color="#6366f1";
+  btn.disabled=true;
 
   // 👑 ADMIN KEY
   const adminSnap=await getDoc(doc(db,"admin_keys",key));
   if(adminSnap.exists()){
     msg.style.color="#4ade80";
-    msg.textContent="WE MAKIN IT OUT FR 🔥";
-    setTimeout(unlock,600);
+    msg.textContent="✅ Access granted! WE MAKIN IT OUT FR 🔥";
+    setTimeout(unlock,800);
     return;
   }
 
@@ -123,7 +501,9 @@ async function tryUnlock(){
   if(keySnap.exists()){
     await setDoc(doc(db,"used_keys",key),{hwid,time:Date.now()});
     await deleteDoc(keyRef);
-    unlock();
+    msg.style.color="#4ade80";
+    msg.textContent="✅ Access granted! Loading...";
+    setTimeout(unlock,600);
     return;
   }
 
@@ -131,22 +511,29 @@ async function tryUnlock(){
   const usedSnap=await getDoc(doc(db,"used_keys",key));
   if(usedSnap.exists()){
     if(usedSnap.data().hwid===hwid){
-      unlock();
+      msg.style.color="#4ade80";
+      msg.textContent="✅ Welcome back! Loading...";
+      setTimeout(unlock,600);
     }else{
       msg.style.color="#f87171";
-      msg.textContent="😈 Nice try haha, this key is locked to another device.";
+      msg.textContent="🔒 Access denied: Key locked to another device";
+      btn.disabled=false;
     }
     return;
   }
 
   msg.style.color="#f87171";
-  msg.textContent="❌ Invalid key.";
+  msg.textContent="❌ Invalid access key";
+  btn.disabled=false;
 }
 
 function unlock(){
-  document.getElementById("lock").remove();
-  load("error_screen.bundle.js");
-  load("main.bundle.js");
+  document.getElementById("lock").style.animation="fadeOut .4s ease-out forwards";
+  setTimeout(()=>{
+    document.getElementById("lock").remove();
+    load("error_screen.bundle.js");
+    load("main.bundle.js");
+  },400);
 }
 
 function load(s){
@@ -154,6 +541,12 @@ function load(s){
   e.src=s;e.defer=true;document.head.appendChild(e);
 }
 </script>
+
+<style>
+@keyframes fadeOut{
+  to{opacity:0;transform:scale(.95)}
+}
+</style>
 
 </body>
 </html>
