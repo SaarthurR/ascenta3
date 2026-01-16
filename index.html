@@ -1,25 +1,51 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+<meta charset="utf-8">
 
-  <link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
-  <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/>
-  <link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/>
+<link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
+<link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/>
+<link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/>
 
-  <link rel="manifest" href="manifest.json"/>
+<link rel="manifest" href="manifest.json"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ASCENT 2</title>
+
+<style>
+body{margin:0;background:#050505;color:white;font-family:system-ui}
+#lock{
+  position:fixed;inset:0;background:#050505;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+.box{
+  width:90%;max-width:360px;background:#0f0f0f;padding:24px;
+  border-radius:16px;text-align:center;box-shadow:0 0 40px rgba(0,0,0,.7)
+}
+h1{margin:0 0 6px;letter-spacing:2px}
+input{
+  width:100%;padding:14px;border-radius:10px;border:none;
+  font-size:16px;margin-top:10px
+}
+button{
+  width:100%;padding:14px;border-radius:10px;border:none;
+  background:#4f46e5;color:white;font-size:16px;margin-top:12px
+}
+#msg{margin-top:10px;min-height:22px}
+</style>
 </head>
 
-<body style="margin:0;background:black;color:white;font-family:system-ui">
+<body>
 
 <!-- LOCK SCREEN -->
-<div id="lock" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:black;z-index:9999">
-  <h2>Enter Key</h2>
-  <input id="keyInput" placeholder="Enter key" style="padding:10px;font-size:16px">
-  <button onclick="checkKey()" style="margin-top:10px;padding:10px 16px;font-size:16px">Unlock</button>
-  <p id="msg" style="color:red;margin-top:10px"></p>
+<div id="lock">
+  <div class="box">
+    <h1>ASCENT 2</h1>
+    <p style="opacity:.7;font-size:14px">Enter your access key</p>
+    <input id="keyInput" placeholder="Access Key">
+    <button id="unlockBtn">UNLOCK</button>
+    <p id="msg"></p>
+  </div>
 </div>
 
 <!-- GAME HUB -->
@@ -29,9 +55,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔴 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyA-xmCzHc0_sXOxOyAHppw1brgX0CX8dfU",
   authDomain: "hwid-lock.firebaseapp.com",
@@ -44,72 +69,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* HWID (browser fingerprint) */
-function getHWID() {
-  return btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height +
-    navigator.language +
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
-}
+const hwid = btoa(
+  navigator.userAgent +
+  screen.width +
+  screen.height +
+  navigator.language
+);
 
-/* LOAD GAME FILES */
-function load(s){
-  const e=document.createElement("script");
-  e.src=s;
-  e.defer=true;
-  document.head.appendChild(e);
+const msg = document.getElementById("msg");
+const input = document.getElementById("keyInput");
+
+document.getElementById("unlockBtn").onclick = tryUnlock;
+input.addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock();});
+
+async function tryUnlock(){
+  const key = input.value.trim();
+  if(!key) return;
+
+  msg.textContent="Checking...";
+
+  // 👑 ADMIN KEY (BYPASS)
+  const adminSnap = await getDoc(doc(db,"admin_keys",key));
+  if(adminSnap.exists()){
+    msg.style.color="#4ade80";
+    msg.textContent="WE MAKIN IT OUT FR 🔥";
+    setTimeout(unlock,600);
+    return;
+  }
+
+  // 🔑 UNUSED KEY
+  const keyRef = doc(db,"keys",key);
+  const keySnap = await getDoc(keyRef);
+  if(keySnap.exists()){
+    await setDoc(doc(db,"used_keys",key),{hwid,time:Date.now()});
+    await deleteDoc(keyRef);
+    unlock();
+    return;
+  }
+
+  // 🔒 USED KEY
+  const usedSnap = await getDoc(doc(db,"used_keys",key));
+  if(usedSnap.exists()){
+    if(usedSnap.data().hwid===hwid){
+      unlock();
+    } else {
+      msg.style.color="#f87171";
+      msg.textContent="😈 Nice try haha, this key is locked to another device.";
+    }
+    return;
+  }
+
+  msg.style.color="#f87171";
+  msg.textContent="❌ Invalid key.";
 }
 
 function unlock(){
-  document.getElementById("lock").style.display = "none";
+  document.getElementById("lock").remove();
   load("error_screen.bundle.js");
   load("main.bundle.js");
 }
 
-/* KEY CHECK */
-window.checkKey = async function () {
-  const key = document.getElementById("keyInput").value.trim();
-  const msg = document.getElementById("msg");
-
-  if (!key) {
-    msg.textContent = "Enter key";
-    return;
-  }
-
-  const hwid = getHWID();
-
-  try {
-    const ref = doc(db, "keys", key);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      msg.textContent = "Invalid key";
-      return;
-    }
-
-    const data = snap.data();
-
-    if (!data.used) {
-      await updateDoc(ref, { used: true, hwid: hwid });
-      unlock();
-      return;
-    }
-
-    if (data.hwid === hwid) {
-      unlock();
-    } else {
-      msg.textContent = "Key already used on another device";
-    }
-  } catch (e) {
-    msg.textContent = "Connection error";
-    console.error(e);
-  }
-};
+function load(s){
+  const e=document.createElement("script");
+  e.src=s;e.defer=true;document.head.appendChild(e);
+}
 </script>
 
 </body>
 </html>
-
