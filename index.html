@@ -1,1 +1,115 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/><link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/><link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/><link rel="manifest" href="manifest.json"/><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no"></head><body><script>const PASSCODE="kasbusinessmodel";let ok=sessionStorage.getItem("unlocked")==="1";if(!ok){const c=prompt("Enter access code:");if(c===PASSCODE){sessionStorage.setItem("unlocked","1");ok=true;}}if(!ok){document.body.innerHTML="<h1 style='color:white;background:black;height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui'>Access Denied</h1>";throw new Error("Denied");}function load(s){const e=document.createElement("script");e.src=s;e.defer=true;document.head.appendChild(e);}load("error_screen.bundle.js");load("main.bundle.js");</script><canvas id="screen"></canvas><div id="ui"></div><div id="transition-layer"></div></body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
+  <link rel="preload" href="images/logo.svg" as="image" type="image/svg+xml"/>
+  <link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/>
+
+  <link rel="manifest" href="manifest.json"/>
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+</head>
+
+<body style="margin:0;background:black;color:white;font-family:system-ui">
+
+<!-- LOCK SCREEN -->
+<div id="lock" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:black;z-index:9999">
+  <h2>Enter Key</h2>
+  <input id="keyInput" placeholder="Enter key" style="padding:10px;font-size:16px">
+  <button onclick="checkKey()" style="margin-top:10px;padding:10px 16px;font-size:16px">Unlock</button>
+  <p id="msg" style="color:red;margin-top:10px"></p>
+</div>
+
+<!-- GAME HUB -->
+<canvas id="screen"></canvas>
+<div id="ui"></div>
+<div id="transition-layer"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔴 YOUR FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyA-xmCzHc0_sXOxOyAHppw1brgX0CX8dfU",
+  authDomain: "hwid-lock.firebaseapp.com",
+  projectId: "hwid-lock",
+  storageBucket: "hwid-lock.firebasestorage.app",
+  messagingSenderId: "151533882029",
+  appId: "1:151533882029:web:561773ea8e9108ed99d424"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* HWID (browser fingerprint) */
+function getHWID() {
+  return btoa(
+    navigator.userAgent +
+    screen.width +
+    screen.height +
+    navigator.language +
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+}
+
+/* LOAD GAME FILES */
+function load(s){
+  const e=document.createElement("script");
+  e.src=s;
+  e.defer=true;
+  document.head.appendChild(e);
+}
+
+function unlock(){
+  document.getElementById("lock").style.display = "none";
+  load("error_screen.bundle.js");
+  load("main.bundle.js");
+}
+
+/* KEY CHECK */
+window.checkKey = async function () {
+  const key = document.getElementById("keyInput").value.trim();
+  const msg = document.getElementById("msg");
+
+  if (!key) {
+    msg.textContent = "Enter key";
+    return;
+  }
+
+  const hwid = getHWID();
+
+  try {
+    const ref = doc(db, "keys", key);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      msg.textContent = "Invalid key";
+      return;
+    }
+
+    const data = snap.data();
+
+    if (!data.used) {
+      await updateDoc(ref, { used: true, hwid: hwid });
+      unlock();
+      return;
+    }
+
+    if (data.hwid === hwid) {
+      unlock();
+    } else {
+      msg.textContent = "Key already used on another device";
+    }
+  } catch (e) {
+    msg.textContent = "Connection error";
+    console.error(e);
+  }
+};
+</script>
+
+</body>
+</html>
+
