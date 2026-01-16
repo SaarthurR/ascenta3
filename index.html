@@ -23,19 +23,24 @@ body{
 }
 
 #lock{
-  width:100%;
-  max-width:900px;
-  padding:20px;
-  position:relative;
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:stretch;
+  justify-content:stretch;
   z-index:10
 }
 
 .container{
   background:#0a0a0a;
-  border:1px solid #1a1a1a;
-  border-radius:8px;
+  border:none;
+  border-radius:0;
   overflow:hidden;
-  box-shadow:0 4px 40px rgba(0,0,0,.6)
+  box-shadow:none;
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column
 }
 
 .header{
@@ -94,7 +99,9 @@ body{
 }
 
 .content{
-  padding:48px
+  padding:48px;
+  flex:1;
+  overflow-y:auto
 }
 
 .road-section{
@@ -371,7 +378,7 @@ body:after{
 }
 
 @media(max-width:768px){
-  #lock{max-width:100%;padding:0}
+  #lock{padding:20px}
   .header,.content,.footer{padding:24px}
   .form-section{grid-template-columns:1fr;gap:10px}
   button{width:100%}
