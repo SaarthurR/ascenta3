@@ -884,6 +884,7 @@ function unlock(){
 document.getElementById("lock").style.transition="opacity .3s";
 document.getElementById("lock").style.opacity="0";
 setTimeout(()=>{
+sessionStorage.setItem("unlocked","1");
 document.getElementById("lock").remove();
 document.getElementById("hub").style.display="block";
 document.body.style.overflow="auto";
