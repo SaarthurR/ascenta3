@@ -1101,3 +1101,33 @@ document.getElementById('settingsBtn').onclick = () => {
 };
 
 document.getElementById('closeSettings').onclick = () => {
+  playSound();
+  document.getElementById('settingsModal').classList.remove('show');
+};
+
+document.getElementById('settingsModal').onclick = (e) => {
+  if(e.target.id === 'settingsModal') {
+    document.getElementById('settingsModal').classList.remove('show');
+  }
+};
+
+// Load images from uploaded files
+async function loadImages() {
+  try {
+    const polytrackData = await window.fs.readFile('image.png');
+    const bitlifeData = await window.fs.readFile('image (2).png');
+    const geodashData = await window.fs.readFile('image (1).png');
+    
+    const polytrackBlob = new Blob([polytrackData], {type: 'image/png'});
+    const bitlifeBlob = new Blob([bitlifeData], {type: 'image/png'});
+    const geodashBlob = new Blob([geodashData], {type: 'image/png'});
+    
+    document.querySelector('#polytrackCard img').src = URL.createObjectURL(polytrackBlob);
+    document.querySelector('#bitlifeCard img').src = URL.createObjectURL(bitlifeBlob);
+    document.querySelector('#geodashCard img').src = URL.createObjectURL(geodashBlob);
+  } catch(e) {
+    console.error('Error loading images:', e);
+  }
+}
+
+loadImages();
