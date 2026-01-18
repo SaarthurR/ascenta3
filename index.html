@@ -2,10 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-
-<link rel="preload" href="polytrack/forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
-<link rel="preload" href="polytrack/images/logo.svg" as="image" type="image/svg+xml"/>
-
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ASCENTA 2</title>
 
@@ -19,10 +15,93 @@ background:#0a0a0a;
 color:#fff
 }
 
+/* LOADING SCREEN */
+#loading{
+position:fixed;
+inset:0;
+background:#000;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:1000;
+opacity:1;
+transition:opacity .5s
+}
+
+#loading.fade-out{
+opacity:0;
+pointer-events:none
+}
+
+.loading-logo{
+width:120px;
+height:120px;
+background:linear-gradient(135deg,#e11d48,#9333ea);
+border-radius:20px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:900;
+font-size:60px;
+letter-spacing:-2px;
+margin-bottom:30px;
+animation:pulse 2s ease-in-out infinite;
+box-shadow:0 0 60px rgba(225,29,72,.5)
+}
+
+@keyframes pulse{
+0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(225,29,72,.5)}
+50%{transform:scale(1.05);box-shadow:0 0 80px rgba(225,29,72,.8)}
+}
+
+.loading-text{
+font-size:24px;
+font-weight:700;
+letter-spacing:2px;
+margin-bottom:20px;
+background:linear-gradient(90deg,#fff,#666,#fff);
+background-size:200% 100%;
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+animation:shimmer 2s linear infinite
+}
+
+@keyframes shimmer{
+0%{background-position:200% 0}
+100%{background-position:-200% 0}
+}
+
+.loading-bar{
+width:300px;
+height:4px;
+background:#1a1a1a;
+border-radius:2px;
+overflow:hidden;
+position:relative
+}
+
+.loading-progress{
+position:absolute;
+left:0;
+top:0;
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#e11d48,#9333ea);
+border-radius:2px;
+animation:loadProgress 3s ease-in-out forwards;
+box-shadow:0 0 20px rgba(225,29,72,.6)
+}
+
+@keyframes loadProgress{
+0%{width:0%}
+100%{width:100%}
+}
+
 #lock{
 position:fixed;
 inset:0;
-display:flex;
+display:none;
 align-items:stretch;
 justify-content:stretch;
 z-index:10
@@ -30,10 +109,6 @@ z-index:10
 
 .container{
 background:#0a0a0a;
-border:none;
-border-radius:0;
-overflow:hidden;
-box-shadow:none;
 width:100%;
 height:100%;
 display:flex;
@@ -214,9 +289,7 @@ border-radius:50%
 .wheel.f{left:12px}
 .wheel.r{right:8px}
 
-.notice-section{
-margin-bottom:32px
-}
+.notice-section{margin-bottom:32px}
 
 .notice-header{
 display:flex;
@@ -265,9 +338,7 @@ gap:12px;
 margin-bottom:20px
 }
 
-.input-wrapper{
-position:relative
-}
+.input-wrapper{position:relative}
 
 .input-wrapper:before{
 content:'🔑';
@@ -296,9 +367,7 @@ outline:none;
 border-color:#333
 }
 
-input::placeholder{
-color:#444
-}
+input::placeholder{color:#444}
 
 button{
 padding:14px 32px;
@@ -313,14 +382,8 @@ transition:background .2s;
 white-space:nowrap
 }
 
-button:hover{
-background:#e5e5e5
-}
-
-button:disabled{
-opacity:.5;
-cursor:not-allowed
-}
+button:hover{background:#e5e5e5}
+button:disabled{opacity:.5;cursor:not-allowed}
 
 #msg{
 font-size:13px;
@@ -340,21 +403,10 @@ font-size:11px;
 color:#555
 }
 
-.footer-links{
-display:flex;
-gap:20px
-}
+.footer-links{display:flex;gap:20px}
+.footer-links span{cursor:pointer;transition:color .2s}
+.footer-links span:hover{color:#888}
 
-.footer-links span{
-cursor:pointer;
-transition:color .2s
-}
-
-.footer-links span:hover{
-color:#888
-}
-
-/* Grid overlay */
 #lock:before{
 content:'';
 position:absolute;
@@ -367,7 +419,6 @@ pointer-events:none;
 z-index:1
 }
 
-/* Vignette */
 #lock:after{
 content:'';
 position:absolute;
@@ -377,7 +428,7 @@ pointer-events:none;
 z-index:1
 }
 
-/* HUB STYLES */
+/* HUB */
 #hub{
 display:none;
 min-height:100vh;
@@ -390,9 +441,75 @@ overflow:auto
 content:'';
 position:fixed;
 inset:0;
-background:radial-gradient(circle at 20% 30%, rgba(99,102,241,.08) 0%, transparent 50%),
-radial-gradient(circle at 80% 70%, rgba(236,72,153,.08) 0%, transparent 50%);
-pointer-events:none
+background:
+radial-gradient(circle at 20% 30%, rgba(99,102,241,.12) 0%, transparent 50%),
+radial-gradient(circle at 80% 70%, rgba(236,72,153,.12) 0%, transparent 50%);
+pointer-events:none;
+animation:bgPulse 8s ease-in-out infinite
+}
+
+@keyframes bgPulse{
+0%,100%{opacity:1}
+50%{opacity:.7}
+}
+
+.hub-header-bar{
+background:rgba(17,17,17,.95);
+backdrop-filter:blur(10px);
+border-bottom:1px solid #1f1f1f;
+padding:20px 48px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+position:sticky;
+top:0;
+z-index:100
+}
+
+.hub-logo-section{
+display:flex;
+align-items:center;
+gap:12px
+}
+
+.hub-logo-box{
+width:40px;
+height:40px;
+background:linear-gradient(135deg,#e11d48,#9333ea);
+border-radius:6px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:900;
+font-size:20px;
+letter-spacing:-1px
+}
+
+.hub-logo-text{
+font-size:20px;
+font-weight:700;
+letter-spacing:-0.5px
+}
+
+.settings-btn{
+background:#1a1a1a;
+border:1px solid #2a2a2a;
+color:#fff;
+padding:10px 20px;
+border-radius:8px;
+cursor:pointer;
+font-size:13px;
+font-weight:600;
+display:flex;
+align-items:center;
+gap:8px;
+transition:all .2s
+}
+
+.settings-btn:hover{
+background:#252525;
+border-color:#3a3a3a;
+transform:translateY(-1px)
 }
 
 .hub-wrap{
@@ -409,19 +526,25 @@ text-align:center
 }
 
 .hub-title{
-font-size:48px;
+font-size:52px;
 font-weight:800;
 letter-spacing:-2px;
 margin-bottom:12px;
-background:linear-gradient(135deg,#fff,#888);
+background:linear-gradient(135deg,#fff 0%,#999 100%);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-background-clip:text
+background-clip:text;
+animation:titleFloat 3s ease-in-out infinite
+}
+
+@keyframes titleFloat{
+0%,100%{transform:translateY(0)}
+50%{transform:translateY(-5px)}
 }
 
 .hub-sub{
-color:#666;
-font-size:16px;
+color:#777;
+font-size:17px;
 line-height:1.6;
 max-width:600px;
 margin:0 auto
@@ -429,20 +552,20 @@ margin:0 auto
 
 .hub-grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-gap:24px
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:28px
 }
 
 a.card{
 display:block;
 text-decoration:none;
 color:inherit;
-background:linear-gradient(135deg,#0f0f0f,#1a1a1a);
-border:1px solid #222;
-border-radius:20px;
+background:linear-gradient(135deg,#111,#1a1a1a);
+border:1px solid #252525;
+border-radius:24px;
 padding:0;
 overflow:hidden;
-transition:all .3s cubic-bezier(.4,0,.2,1);
+transition:all .4s cubic-bezier(.4,0,.2,1);
 position:relative
 }
 
@@ -450,47 +573,43 @@ a.card:before{
 content:'';
 position:absolute;
 inset:0;
-background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(236,72,153,.1));
+background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(236,72,153,.15));
 opacity:0;
-transition:opacity .3s
+transition:opacity .4s
 }
 
 a.card:hover{
-transform:translateY(-8px) scale(1.02);
-border-color:#444;
-box-shadow:0 20px 40px rgba(0,0,0,.4),
-0 0 0 1px rgba(255,255,255,.05)
+transform:translateY(-12px) scale(1.03);
+border-color:#3a3a3a;
+box-shadow:0 30px 60px rgba(0,0,0,.6),
+0 0 0 1px rgba(255,255,255,.08),
+0 0 40px rgba(225,29,72,.2)
 }
 
-a.card:hover:before{
-opacity:1
-}
+a.card:hover:before{opacity:1}
 
 .card-image{
 width:100%;
-height:200px;
-background:linear-gradient(135deg,#1a1a2e,#16213e);
+height:220px;
 position:relative;
 overflow:hidden;
-display:flex;
-align-items:center;
-justify-content:center;
-border-bottom:1px solid #222
+border-bottom:1px solid #252525;
+background:#0a0a0a
 }
 
-.card-image svg{
-width:120px;
-height:120px;
-opacity:.8;
-transition:transform .3s
+.card-image img{
+width:100%;
+height:100%;
+object-fit:cover;
+transition:transform .4s
 }
 
-a.card:hover .card-image svg{
-transform:scale(1.1) rotate(5deg)
+a.card:hover .card-image img{
+transform:scale(1.1)
 }
 
 .card-content{
-padding:24px;
+padding:28px;
 position:relative;
 z-index:1
 }
@@ -498,51 +617,52 @@ z-index:1
 .tag{
 display:inline-block;
 font-size:11px;
+font-weight:700;
 color:#a78bfa;
-background:rgba(139,92,246,.15);
-border:1px solid rgba(139,92,246,.3);
+background:rgba(139,92,246,.2);
+border:1px solid rgba(139,92,246,.4);
 border-radius:999px;
-padding:6px 12px;
-margin-bottom:12px;
-font-weight:600;
+padding:7px 14px;
+margin-bottom:14px;
 text-transform:uppercase;
-letter-spacing:1px
+letter-spacing:1.2px
 }
 
 .card:nth-child(2) .tag{
 color:#fbbf24;
-background:rgba(251,191,36,.15);
-border-color:rgba(251,191,36,.3)
+background:rgba(251,191,36,.2);
+border-color:rgba(251,191,36,.4)
 }
 
 .card:nth-child(3) .tag{
 color:#34d399;
-background:rgba(52,211,153,.15);
-border-color:rgba(52,211,153,.3)
+background:rgba(52,211,153,.2);
+border-color:rgba(52,211,153,.4)
 }
 
 .card-title{
-font-size:24px;
+font-size:26px;
 font-weight:700;
-margin:0 0 8px 0;
-letter-spacing:-.5px
+margin:0 0 10px 0;
+letter-spacing:-0.5px
 }
 
 .card-desc{
 margin:0;
-color:#888;
-font-size:14px;
-line-height:1.5
+color:#999;
+font-size:15px;
+line-height:1.6
 }
 
 .card-stats{
 display:flex;
 gap:16px;
-margin-top:16px;
-padding-top:16px;
-border-top:1px solid #222;
-font-size:12px;
-color:#666
+margin-top:18px;
+padding-top:18px;
+border-top:1px solid #252525;
+font-size:13px;
+color:#666;
+font-weight:600
 }
 
 .card-stat{
@@ -551,22 +671,155 @@ align-items:center;
 gap:6px
 }
 
+/* SETTINGS MODAL */
+.modal-overlay{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.85);
+backdrop-filter:blur(8px);
+z-index:200;
+align-items:center;
+justify-content:center;
+opacity:0;
+transition:opacity .3s
+}
+
+.modal-overlay.show{
+display:flex;
+opacity:1
+}
+
+.modal{
+background:linear-gradient(135deg,#111,#1a1a1a);
+border:1px solid #2a2a2a;
+border-radius:20px;
+width:90%;
+max-width:500px;
+padding:32px;
+position:relative;
+transform:scale(.9);
+transition:transform .3s;
+box-shadow:0 40px 80px rgba(0,0,0,.8)
+}
+
+.modal-overlay.show .modal{transform:scale(1)}
+
+.modal-header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:28px;
+padding-bottom:20px;
+border-bottom:1px solid #252525
+}
+
+.modal-title{
+font-size:24px;
+font-weight:700;
+letter-spacing:-0.5px
+}
+
+.close-btn{
+background:none;
+border:none;
+color:#666;
+font-size:28px;
+cursor:pointer;
+padding:0;
+width:32px;
+height:32px;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:color .2s
+}
+
+.close-btn:hover{color:#fff}
+
+.setting-group{margin-bottom:24px}
+
+.setting-label{
+font-size:14px;
+font-weight:600;
+color:#aaa;
+margin-bottom:10px;
+display:block
+}
+
+.setting-description{
+font-size:12px;
+color:#666;
+margin-bottom:12px;
+line-height:1.5
+}
+
+.toggle-switch{
+display:inline-flex;
+align-items:center;
+gap:12px;
+cursor:pointer;
+user-select:none
+}
+
+.toggle-switch input{display:none}
+
+.toggle-slider{
+width:50px;
+height:26px;
+background:#252525;
+border-radius:13px;
+position:relative;
+transition:background .3s;
+border:1px solid #3a3a3a
+}
+
+.toggle-slider:after{
+content:'';
+position:absolute;
+left:3px;
+top:3px;
+width:18px;
+height:18px;
+background:#666;
+border-radius:50%;
+transition:all .3s
+}
+
+.toggle-switch input:checked + .toggle-slider{
+background:linear-gradient(135deg,#e11d48,#9333ea)
+}
+
+.toggle-switch input:checked + .toggle-slider:after{
+left:27px;
+background:#fff
+}
+
 @media(max-width:768px){
-#lock{padding:20px}
 .header,.content,.footer{padding:24px}
 .form-section{grid-template-columns:1fr;gap:10px}
 button{width:100%}
-.hub-wrap{padding:40px 24px}
+.hub-wrap,.hub-header-bar{padding:24px}
 .hub-title{font-size:36px}
-.hub-grid{grid-template-columns:1fr;gap:16px}
-.card-image{height:160px}
+.hub-grid{grid-template-columns:1fr;gap:20px}
+.card-image{height:180px}
+.modal{padding:24px;width:95%}
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOCK SCREEN (UNCHANGED LOGIC) -->
+<!-- LOADING SCREEN -->
+<div id="loading">
+<div class="loading-logo">A2</div>
+<div class="loading-text">ASCENTA 2</div>
+<div class="loading-bar">
+<div class="loading-progress"></div>
+</div>
+</div>
+
+<!-- LOCK SCREEN -->
 <div id="lock">
 <div class="container">
 
@@ -635,8 +888,19 @@ button{width:100%}
 </div>
 </div>
 
-<!-- HUB (Enhanced with images) -->
+<!-- HUB -->
 <div id="hub">
+<div class="hub-header-bar">
+<div class="hub-logo-section">
+<div class="hub-logo-box">A2</div>
+<div class="hub-logo-text">ASCENTA 2</div>
+</div>
+<button class="settings-btn" id="settingsBtn">
+<span>⚙️</span>
+<span>Settings</span>
+</button>
+</div>
+
 <div class="hub-wrap">
 <div class="hub-header">
 <div class="hub-title">🎮 Game Hub</div>
@@ -644,14 +908,9 @@ button{width:100%}
 </div>
 
 <div class="hub-grid">
-<a class="card" href="polytrack/">
-<div class="card-image" style="background:linear-gradient(135deg,#dc2626,#991b1b)">
-<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M30 60 L45 45 L75 45 L90 60 L75 75 L45 75 Z" fill="#fff" opacity="0.9"/>
-<circle cx="45" cy="85" r="8" fill="#fff" opacity="0.9"/>
-<circle cx="75" cy="85" r="8" fill="#fff" opacity="0.9"/>
-<path d="M20 65 L100 65" stroke="#fff" stroke-width="2" opacity="0.5" stroke-dasharray="5,5"/>
-</svg>
+<a class="card" href="polytrack/" id="polytrackCard">
+<div class="card-image">
+<img src="" alt="PolyTrack">
 </div>
 <div class="card-content">
 <div class="tag">Racing</div>
@@ -664,14 +923,9 @@ button{width:100%}
 </div>
 </a>
 
-<a class="card" href="bitlife/">
-<div class="card-image" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
-<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="60" cy="45" r="18" fill="#fff" opacity="0.9"/>
-<path d="M60 63 L40 90 L50 90 L60 75 L70 90 L80 90 Z" fill="#fff" opacity="0.9"/>
-<path d="M35 35 L25 45 L35 55" stroke="#fff" stroke-width="3" opacity="0.6"/>
-<path d="M85 35 L95 45 L85 55" stroke="#fff" stroke-width="3" opacity="0.6"/>
-</svg>
+<a class="card" href="bitlife/" id="bitlifeCard">
+<div class="card-image">
+<img src="" alt="BitLife">
 </div>
 <div class="card-content">
 <div class="tag">Simulation</div>
@@ -684,15 +938,9 @@ button{width:100%}
 </div>
 </a>
 
-<a class="card" href="geodash/">
-<div class="card-image" style="background:linear-gradient(135deg,#10b981,#059669)">
-<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="30" y="50" width="20" height="20" fill="#fff" opacity="0.9" transform="rotate(45 40 60)"/>
-<path d="M10 80 L30 60 L50 80 L70 60 L90 80 L110 60" stroke="#fff" stroke-width="3" fill="none" opacity="0.7"/>
-<circle cx="85" cy="35" r="5" fill="#fff" opacity="0.8"/>
-<circle cx="70" cy="25" r="4" fill="#fff" opacity="0.7"/>
-<circle cx="95" cy="28" r="3" fill="#fff" opacity="0.6"/>
-</svg>
+<a class="card" href="geodash/" id="geodashCard">
+<div class="card-image">
+<img src="" alt="GeoDash">
 </div>
 <div class="card-content">
 <div class="tag">Platformer</div>
@@ -705,128 +953,38 @@ button{width:100%}
 </div>
 </a>
 
-<a class="card" href="8ball/">
-  <div class="card-image" style="background:linear-gradient(135deg,#2563eb,#1e40af)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="60" cy="60" r="28" fill="#fff" opacity="0.9"/>
-      <circle cx="60" cy="60" r="20" fill="#000"/>
-      <text x="60" y="67" text-anchor="middle" font-size="18" fill="#fff" font-weight="700">8</text>
-      <circle cx="20" cy="30" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="100" cy="30" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="30" cy="95" r="3" fill="#fff" opacity="0.6"/>
-      <circle cx="90" cy="95" r="3" fill="#fff" opacity="0.6"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Arcade</div>
-    <div class="card-title">8 Ball</div>
-    <p class="card-desc">Classic 8-ball pool with smooth physics and clean controls</p>
-    <div class="card-stats">
-      <div class="card-stat">🎱 Pool</div>
-      <div class="card-stat">🧠 Precision</div>
-    </div>
-  </div>
-</a>
-  
-  <a class="card" href="slowroads/">
-  <div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#0369a1)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M52 10 L68 10 L78 110 L62 110 Z" fill="#fff" opacity="0.9"/>
-      <path d="M42 110 L58 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
-      <path d="M78 110 L62 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
-      <path d="M18 88 C36 76, 36 56, 18 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
-      <path d="M102 88 C84 76, 84 56, 102 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Driving</div>
-    <div class="card-title">Slow Roads</div>
-    <p class="card-desc">Endless scenic driving with smooth vibes and chill exploration</p>
-    <div class="card-stats">
-      <div class="card-stat">🌄 Scenic</div>
-      <div class="card-stat">🧘 Chill</div>
-    </div>
-  </div>
-</a>
-
-  <a class="card" href="drifthunters/">
-  <div class="card-image" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M28 70 L42 52 L82 52 L96 70 L84 78 L40 78 Z" fill="#fff" opacity="0.9"/>
-      <circle cx="45" cy="82" r="7" fill="#fff" opacity="0.9"/>
-      <circle cx="79" cy="82" r="7" fill="#fff" opacity="0.9"/>
-      <path d="M18 86 C34 80, 40 74, 54 70" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
-      <path d="M12 96 C34 92, 46 84, 64 80" stroke="#fff" stroke-width="2" opacity="0.45" fill="none" stroke-dasharray="5,5"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Racing</div>
-    <div class="card-title">Drift Hunters</div>
-    <p class="card-desc">Slide through corners, tune cars, and chase perfect drift lines</p>
-    <div class="card-stats">
-      <div class="card-stat">💨 Drift</div>
-      <div class="card-stat">🔧 Tuning</div>
-    </div>
-  </div>
-</a>
-
-  <a class="card" href="1v1.lol/">
-  <div class="card-image" style="background:linear-gradient(135deg,#ef4444,#7f1d1d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- player -->
-      <circle cx="60" cy="34" r="10" fill="#fff" opacity="0.9"/>
-      <path d="M60 44 L60 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 56 L36 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 56 L84 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 78 L44 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 78 L76 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
-
-      <!-- build walls -->
-      <rect x="14" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
-      <rect x="86" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Shooter</div>
-    <div class="card-title">1v1.LOL</div>
-    <p class="card-desc">
-      Build, aim, and battle opponents in fast-paced competitive matches
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🔫 PvP</div>
-      <div class="card-stat">🧱 Build</div>
-    </div>
-  </div>
-</a>
-
-<a class="card" href="drivemad/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="26" y="54" width="68" height="18" rx="6" fill="#fff" opacity="0.9"/>
-      <rect x="46" y="42" width="28" height="14" rx="6" fill="#fff" opacity="0.75"/>
-      <circle cx="44" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <circle cx="82" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <path d="M10 88 L30 78 L50 88 L70 78 L90 88 L110 78" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Driving</div>
-    <div class="card-title">Drive Mad</div>
-    <p class="card-desc">Crazy physics driving levels that get harder and funnier fast</p>
-    <div class="card-stats">
-      <div class="card-stat">🚙 Physics</div>
-      <div class="card-stat">😵 Levels</div>
-    </div>
-  </div>
-</a>
-
-  
-
-
-  
 </div>
+</div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+<div class="modal">
+<div class="modal-header">
+<div class="modal-title">⚙️ Settings</div>
+<button class="close-btn" id="closeSettings">×</button>
+</div>
+
+<div class="setting-group">
+<label class="setting-label">Sound Effects</label>
+<div class="setting-description">Enable or disable system sound effects</div>
+<label class="toggle-switch">
+<input type="checkbox" id="soundToggle" checked>
+<div class="toggle-slider"></div>
+<span>Enabled</span>
+</label>
+</div>
+
+<div class="setting-group">
+<label class="setting-label">Animations</label>
+<div class="setting-description">Toggle UI animations and transitions</div>
+<label class="toggle-switch">
+<input type="checkbox" id="animToggle" checked>
+<div class="toggle-slider"></div>
+<span>Enabled</span>
+</label>
+</div>
+
 </div>
 </div>
 
@@ -848,6 +1006,31 @@ const db = getFirestore(app);
 
 const hwid = btoa(navigator.userAgent+screen.width+screen.height+navigator.language);
 
+// Sound effect
+const playSound = () => {
+  if(!document.getElementById('soundToggle').checked) return;
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  oscillator.frequency.value = 800;
+  gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + 0.2);
+};
+
+// Loading screen
+setTimeout(() => {
+  playSound();
+  document.getElementById('loading').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('loading').remove();
+    document.getElementById('lock').style.display = 'flex';
+  }, 500);
+}, 3000);
+
 const msg=document.getElementById("msg");
 const input=document.getElementById("keyInput");
 const btn=document.getElementById("unlockBtn");
@@ -863,29 +1046,29 @@ msg.textContent="Verifying...";
 msg.style.color="#666";
 btn.disabled=true;
 
-// 👑 ADMIN KEY
 const adminSnap=await getDoc(doc(db,"admin_keys",key));
 if(adminSnap.exists()){
 msg.style.color="#4ade80";
 msg.textContent="WE MAKIN IT OUT FR 🔥";
+playSound();
 setTimeout(unlock,600);
 return;
 }
 
-// 🔑 UNUSED KEY
 const keyRef=doc(db,"keys",key);
 const keySnap=await getDoc(keyRef);
 if(keySnap.exists()){
 await setDoc(doc(db,"used_keys",key),{hwid,time:Date.now()});
 await deleteDoc(keyRef);
+playSound();
 unlock();
 return;
 }
 
-// 🔒 USED KEY
 const usedSnap=await getDoc(doc(db,"used_keys",key));
 if(usedSnap.exists()){
 if(usedSnap.data().hwid===hwid){
+playSound();
 unlock();
 }else{
 msg.style.color="#dc2626";
@@ -904,14 +1087,17 @@ function unlock(){
 document.getElementById("lock").style.transition="opacity .3s";
 document.getElementById("lock").style.opacity="0";
 setTimeout(()=>{
-sessionStorage.setItem("unlocked","1");
 document.getElementById("lock").remove();
 document.getElementById("hub").style.display="block";
 document.body.style.overflow="auto";
 document.body.style.height="auto";
 },300);
 }
-</script>
 
-</body>
-</html>
+// Settings modal
+document.getElementById('settingsBtn').onclick = () => {
+  playSound();
+  document.getElementById('settingsModal').classList.add('show');
+};
+
+document.getElementById('closeSettings').onclick = () => {
