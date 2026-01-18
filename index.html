@@ -1036,6 +1036,7 @@ msg.textContent="Verifying...";
 msg.style.color="#666";
 btn.disabled=true;
 
+try{
 const adminSnap=await getDoc(doc(db,"admin_keys",key));
 if(adminSnap.exists()){
 msg.style.color="#4ade80";
@@ -1071,6 +1072,12 @@ return;
 msg.style.color="#dc2626";
 msg.textContent="Invalid key";
 btn.disabled=false;
+}catch(err){
+msg.style.color="#dc2626";
+msg.textContent="Error: " + err.message;
+btn.disabled=false;
+console.error(err);
+}
 }
 
 function unlock(){
