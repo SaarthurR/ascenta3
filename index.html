@@ -811,7 +811,7 @@ button{width:100%}
 <body>
 
 <!-- LOADING SCREEN -->
-<div id="loading">
+<div id="loading" style="display:none">
 <div class="loading-logo">A2</div>
 <div class="loading-text">ASCENTA 2</div>
 <div class="loading-bar">
@@ -820,7 +820,7 @@ button{width:100%}
 </div>
 
 <!-- LOCK SCREEN -->
-<div id="lock">
+<div id="lock" style="display:flex">
 <div class="container">
 
 <div class="header">
@@ -1021,16 +1021,6 @@ const playSound = () => {
   oscillator.stop(audioCtx.currentTime + 0.2);
 };
 
-// Loading screen
-setTimeout(() => {
-  playSound();
-  document.getElementById('loading').classList.add('fade-out');
-  setTimeout(() => {
-    document.getElementById('loading').remove();
-    document.getElementById('lock').style.display = 'flex';
-  }, 500);
-}, 3000);
-
 const msg=document.getElementById("msg");
 const input=document.getElementById("keyInput");
 const btn=document.getElementById("unlockBtn");
@@ -1084,14 +1074,34 @@ btn.disabled=false;
 }
 
 function unlock(){
+// Show loading screen again
+document.getElementById("loading").style.display = 'flex';
+document.getElementById("loading").classList.remove('fade-out');
+document.querySelector('.loading-progress').style.animation = 'none';
+setTimeout(() => {
+  document.querySelector('.loading-progress').style.animation = 'loadProgress 3s ease-in-out forwards';
+}, 10);
+
+playSound();
+
+// Hide lock screen
 document.getElementById("lock").style.transition="opacity .3s";
 document.getElementById("lock").style.opacity="0";
+
 setTimeout(()=>{
-document.getElementById("lock").remove();
-document.getElementById("hub").style.display="block";
-document.body.style.overflow="auto";
-document.body.style.height="auto";
-},300);
+document.getElementById("lock").style.display = 'none';
+
+// After 3 seconds, show hub
+setTimeout(() => {
+  document.getElementById('loading').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById("hub").style.display="block";
+    document.body.style.overflow="auto";
+    document.body.style.height="auto";
+  }, 500);
+}, 3000);
+}, 300);
 }
 
 // Settings modal
