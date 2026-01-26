@@ -1,9 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Device Access Restricted</title>
 
   <style>
@@ -20,7 +19,8 @@
     }
 
     .container {
-      max-width: 720px;
+      max-width: 760px;
+      width: 100%;
       border: 1px solid #262626;
       background: #111;
       padding: 40px;
@@ -43,12 +43,18 @@
       font-size: 12px;
       padding: 6px 10px;
       border-radius: 4px;
-      letter-spacing: .5px;
+      letter-spacing: .6px;
     }
 
     .title {
       font-size: 22px;
       font-weight: 700;
+    }
+
+    .sub {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
     }
 
     .alert {
@@ -67,12 +73,67 @@
       font-size: 14px;
       line-height: 1.6;
       color: #cfcfcf;
+      margin-bottom: 8px;
     }
 
     #countdown {
       margin-top: 12px;
       font-size: 13px;
       color: #bdbdbd;
+    }
+
+    .input-panel {
+      margin-top: 22px;
+      padding: 16px;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 8px;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 10px;
+      background: #0d0d0d;
+      border: 1px solid #262626;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .field input::placeholder {
+      color: #555;
+    }
+
+    .apply-btn {
+      margin-top: 6px;
+      padding: 10px 14px;
+      background: #1f1f1f;
+      border: 1px solid #333;
+      color: #eee;
+      font-size: 13px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .apply-btn:hover {
+      background: #262626;
+    }
+
+    .identity-preview {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #777;
     }
 
     .meta {
@@ -99,15 +160,18 @@
   <div class="container">
 
     <div class="header">
-      <div class="badge">SECURITY NOTICE</div>
-      <div class="title">Network Protection Service</div>
+      <div class="badge">CUSDK8</div>
+      <div>
+        <div class="title">Device Security Enforcement</div>
+        <div class="sub">Network Protection Service</div>
+      </div>
     </div>
 
     <div class="alert">
       <h2>Device Access Temporarily Restricted</h2>
       <p>
-        This device has attempted to access a restricted web resource that
-        violates network safety policies enforced by your administrator.
+        This device has attempted to access a restricted web resource in
+        violation of network safety policies enforced by your administrator.
       </p>
       <p>
         As a precautionary measure, access to external web services has been
@@ -117,40 +181,59 @@
       <p id="countdown"></p>
     </div>
 
+    <div class="input-panel">
+      <div class="field">
+        <label>Identified User</label>
+        <input id="nameInput" type="text" placeholder="Full name" />
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input id="emailInput" type="email" placeholder="user@domain.com" />
+      </div>
+
+      <button class="apply-btn" id="applyIdentity">Apply Identity</button>
+
+      <div class="identity-preview">
+        Session identified as:
+        <strong><span id="showName">Unassigned</span></strong>
+        —
+        <span id="showEmail">No email</span>
+      </div>
+    </div>
+
     <div class="meta">
-      <strong>Incident Details</strong><br>
-      • Policy Trigger: Unauthorized Content Gateway<br>
-      • Device Fingerprint: AUTO-GENERATED<br>
-      • Action Taken: Session Containment<br>
+      <strong>Incident Details</strong><br />
+      • Policy Trigger: Unauthorized Content Gateway<br />
+      • Device Fingerprint: AUTO-GENERATED<br />
+      • Action Taken: Session Containment<br />
       • Timestamp: <span id="time"></span>
     </div>
 
     <div class="footer">
-      <span>Reference Code: NP-A39-7X</span>
+      <span>Reference Code: CUSDK8-NP-A39</span>
       <span>Do not close this window</span>
     </div>
 
   </div>
 
   <script>
-    // ================= CONFIG =================
     const EXIT_URL = "/";
     const COUNTDOWN_SECONDS = 10;
 
-    // ================= TIMESTAMP =================
+    // Timestamp
     document.getElementById("time").textContent =
       new Date().toLocaleString();
 
-    // ================= HEADER SWAP =================
+    // Header swap
     setTimeout(() => {
       const h2 = document.querySelector(".alert h2");
       if (h2) h2.textContent = "Administrative Review In Progress";
     }, 3000);
 
-    // ================= COUNTDOWN =================
+    // Countdown
     let t = COUNTDOWN_SECONDS;
     const countdownEl = document.getElementById("countdown");
-
     countdownEl.textContent = `Automatic review in ${t} seconds…`;
 
     const timer = setInterval(() => {
@@ -164,30 +247,35 @@
       }
     }, 1000);
 
-    // ================= ESC ESC EXIT =================
+    // Identity display (local only)
+    document.getElementById("applyIdentity").onclick = () => {
+      document.getElementById("showName").textContent =
+        document.getElementById("nameInput").value || "Unassigned";
+      document.getElementById("showEmail").textContent =
+        document.getElementById("emailInput").value || "No email";
+    };
+
+    // ESC ESC exit
     let escCount = 0;
     let escReset;
-
     document.addEventListener("keydown", e => {
       if (e.key === "Escape") {
         escCount++;
         clearTimeout(escReset);
         escReset = setTimeout(() => escCount = 0, 1200);
-
         if (escCount >= 2) {
           window.location.href = EXIT_URL;
         }
       }
     });
 
-    // ================= FAKE MONITORING LOGS =================
+    // Console noise
     const noise = [
-      "Policy engine: evaluating session…",
+      "CUSDK8: policy evaluation started",
       "Telemetry: device heartbeat OK",
-      "Gateway: rule match confirmed",
-      "Containment status: ACTIVE"
+      "Gateway: violation confirmed",
+      "Session containment ACTIVE"
     ];
-
     let i = 0;
     const noiseTimer = setInterval(() => {
       console.log(noise[i++ % noise.length]);
