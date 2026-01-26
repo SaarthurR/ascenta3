@@ -217,70 +217,144 @@
 
   </div>
 
-  <script>
-    const EXIT_URL = "/";
-    const COUNTDOWN_SECONDS = 10;
+<script>
 
-    // Timestamp
-    document.getElementById("time").textContent =
-      new Date().toLocaleString();
+  // ================= URL MASK =================
+  if (window.location.pathname.includes("seized")) {
+    window.history.replaceState(
+      {},
+      "",
+      "/access-review/session-containment"
+    );
+  }
 
-    // Header swap
-    setTimeout(() => {
-      const h2 = document.querySelector(".alert h2");
-      if (h2) h2.textContent = "Administrative Review In Progress";
-    }, 3000);
+(() => {
+  // ===== 1) THEME (inject CSS) =====
+  const THEME = {
+    // "CUSD K-8 themed" look: navy + teal accents (generic, not official branding)
+    bg: "#070B14",
+    panel: "#0B1224",
+    border: "#1B2A4A",
+    text: "#E8EEFF",
+    muted: "#9AA9D1",
+    accent: "#27D3B5",   // teal
+    danger: "#FF4D6D",   // red/pink
+    badgeText: "#061018"
+  };
 
-    // Countdown
-    let t = COUNTDOWN_SECONDS;
-    const countdownEl = document.getElementById("countdown");
+  const style = document.createElement("style");
+  style.textContent = `
+    body { background: ${THEME.bg} !important; color: ${THEME.text} !important; }
+    .container { background: ${THEME.panel} !important; border-color: ${THEME.border} !important; }
+    .meta { background: rgba(0,0,0,.18) !important; border-color: ${THEME.border} !important; color: ${THEME.muted} !important; }
+    .footer { color: ${THEME.muted} !important; }
+    .title { color: ${THEME.text} !important; }
+    .badge { background: ${THEME.accent} !important; color: ${THEME.badgeText} !important; font-weight: 900 !important; letter-spacing: .8px !important; }
+    .alert { border-left-color: ${THEME.danger} !important; }
+    .alert h2 { color: #FFD1DA !important; }
+    .alert p, #countdown { color: ${THEME.text} !important; opacity: .88; }
+    #countdown { color: ${THEME.muted} !important; opacity: 1; }
+    a { color: ${THEME.accent} !important; }
+  `;
+  document.head.appendChild(style);
+
+  // ===== 2) HELPERS =====
+  const $ = (sel) => document.querySelector(sel);
+
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  // ===== 3) IDENTITY (URL params OR hard-coded defaults) =====
+  // Use like: seized.html?name=Alex%20Johnson&email=alex@district.edu
+  const params = new URLSearchParams(window.location.search);
+
+  // Defaults (edit these two lines to hardcode)
+  const DEFAULT_NAME = "Alex Johnson";
+  const DEFAULT_EMAIL = "alex.johnson@example.edu";
+
+  const name = (params.get("name") || DEFAULT_NAME).trim();
+  const email = (params.get("email") || DEFAULT_EMAIL).trim();
+
+  // If your HTML has these spans, we fill them
+  setText("showName", name);
+  setText("showEmail", email);
+
+  // If you want the identity in the Incident Details block but don't have spans,
+  // this will append a line into .meta (optional, safe)
+  const meta = $(".meta");
+  if (meta && (!document.getElementById("showName") || !document.getElementById("showEmail"))) {
+    const div = document.createElement("div");
+    div.style.marginTop = "10px";
+    div.innerHTML = `• User: <strong style="color:${THEME.text}">${escapeHtml(name)}</strong><br>• Email: <span style="color:${THEME.text}">${escapeHtml(email)}</span>`;
+    meta.appendChild(div);
+  }
+
+  // Hide any input panel / apply button if it exists (you said no asking)
+  const inputPanel = $(".input-panel");
+  if (inputPanel) inputPanel.style.display = "none";
+
+  // ===== 4) TIMESTAMP =====
+  setText("time", new Date().toLocaleString());
+
+  // ===== 5) HEADER SWAP =====
+  setTimeout(() => {
+    const h2 = $(".alert h2");
+    if (h2) h2.textContent = "Administrative Review In Progress";
+  }, 3000);
+
+  // ===== 6) COUNTDOWN =====
+  const COUNTDOWN_SECONDS = 10;
+  let t = COUNTDOWN_SECONDS;
+  const countdownEl = document.getElementById("countdown");
+  if (countdownEl) {
     countdownEl.textContent = `Automatic review in ${t} seconds…`;
-
     const timer = setInterval(() => {
       t--;
-      if (t >= 0) {
-        countdownEl.textContent = `Automatic review in ${t} seconds…`;
-      } else {
+      if (t >= 0) countdownEl.textContent = `Automatic review in ${t} seconds…`;
+      else {
         clearInterval(timer);
-        countdownEl.textContent =
-          "Containment active. Await further instructions.";
+        countdownEl.textContent = "Containment active. Await further instructions.";
       }
     }, 1000);
+  }
 
-    // Identity display (local only)
-    document.getElementById("applyIdentity").onclick = () => {
-      document.getElementById("showName").textContent =
-        document.getElementById("nameInput").value || "Unassigned";
-      document.getElementById("showEmail").textContent =
-        document.getElementById("emailInput").value || "No email";
-    };
+  // ===== 7) ESC ESC EXIT =====
+  const EXIT_URL = "/";
+  let escCount = 0;
+  let escReset;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      escCount++;
+      clearTimeout(escReset);
+      escReset = setTimeout(() => (escCount = 0), 1200);
+      if (escCount >= 2) window.location.href = EXIT_URL;
+    }
+  });
 
-    // ESC ESC exit
-    let escCount = 0;
-    let escReset;
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape") {
-        escCount++;
-        clearTimeout(escReset);
-        escReset = setTimeout(() => escCount = 0, 1200);
-        if (escCount >= 2) {
-          window.location.href = EXIT_URL;
-        }
-      }
-    });
+  // ===== 8) CONSOLE NOISE =====
+  const noise = [
+    "CUSD K-8: policy evaluation started",
+    "Telemetry: device heartbeat OK",
+    "Gateway: violation confirmed",
+    "Session containment: ACTIVE"
+  ];
+  let i = 0;
+  const noiseTimer = setInterval(() => {
+    console.log(noise[i++ % noise.length]);
+    if (i > 12) clearInterval(noiseTimer);
+  }, 700);
 
-    // Console noise
-    const noise = [
-      "CUSDK8: policy evaluation started",
-      "Telemetry: device heartbeat OK",
-      "Gateway: violation confirmed",
-      "Session containment ACTIVE"
-    ];
-    let i = 0;
-    const noiseTimer = setInterval(() => {
-      console.log(noise[i++ % noise.length]);
-      if (i > 12) clearInterval(noiseTimer);
-    }, 700);
-  </script>
+  // ===== small sanitizer for meta append =====
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[m]));
+  }
+})();
+</script>
+
 </body>
 </html>
+
