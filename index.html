@@ -1280,6 +1280,11 @@ input.addEventListener("keydown",e=>{if(e.key==="Enter")tryUnlock();});
 async function tryUnlock(){
 const key=input.value.trim();
 if(!key)return;
+  
+if (key === "KASBIZ") {
+  window.location.href = "seized.html";
+  return;
+}
 
 msg.textContent="Verifying...";
 msg.style.color="#666";
