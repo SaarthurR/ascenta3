@@ -163,7 +163,7 @@
       <div class="badge">CUSDK8</div>
       <div>
         <div class="title">Device Security Enforcement</div>
-        <div class="sub">Network Protection Service</div>
+        <div class="sub">Securly</div>
       </div>
     </div>
 
@@ -202,13 +202,16 @@
       </div>
     </div>
 
-    <div class="meta">
-      <strong>Incident Details</strong><br />
-      • Policy Trigger: Unauthorized Content Gateway<br />
-      • Device Fingerprint: AUTO-GENERATED<br />
-      • Action Taken: Session Containment<br />
-      • Timestamp: <span id="time"></span>
-    </div>
+  <div class="meta">
+  <strong>Incident Details</strong><br />
+  • User: <strong><span id="metaName">Unassigned</span></strong><br />
+  • Email: <span id="metaEmail">No email</span><br />
+  • Policy Trigger: Unauthorized Content Gateway<br />
+  • Device Fingerprint: AUTO-GENERATED<br />
+  • Action Taken: Session Containment<br />
+  • Timestamp: <span id="time"></span>
+</div>
+
 
     <div class="footer">
       <span>Reference Code: CUSDK8-NP-A39</span>
@@ -271,15 +274,18 @@
   const params = new URLSearchParams(window.location.search);
 
   // Defaults (edit these two lines to hardcode)
-  const DEFAULT_NAME = "Alex Johnson";
-  const DEFAULT_EMAIL = "alex.johnson@example.edu";
+  const DEFAULT_NAME = "Tamim Dawoud";
+  const DEFAULT_EMAIL = "384119@cusdk8.org";
 
   const name = (params.get("name") || DEFAULT_NAME).trim();
   const email = (params.get("email") || DEFAULT_EMAIL).trim();
 
   // If your HTML has these spans, we fill them
-  setText("showName", name);
-  setText("showEmail", email);
+setText("showName", name);
+setText("showEmail", email);
+setText("metaName", name);
+setText("metaEmail", email);
+
 
   // If you want the identity in the Incident Details block but don't have spans,
   // this will append a line into .meta (optional, safe)
@@ -357,4 +363,5 @@
 
 </body>
 </html>
+
 
