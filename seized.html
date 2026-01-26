@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Device Access Restricted</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+
+    body {
+      background: #0b0b0b;
+      color: #e5e5e5;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      border: 1px solid #262626;
+      background: #111;
+      padding: 40px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.03),
+        0 30px 60px rgba(0,0,0,.6);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      background: #dc2626;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      letter-spacing: .5px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .alert {
+      margin-top: 24px;
+      border-left: 4px solid #dc2626;
+      padding-left: 16px;
+    }
+
+    .alert h2 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #fca5a5;
+    }
+
+    .alert p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #cfcfcf;
+    }
+
+    #countdown {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #bdbdbd;
+    }
+
+    .meta {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #888;
+      background: #0a0a0a;
+      padding: 14px;
+      border: 1px solid #222;
+      line-height: 1.6;
+    }
+
+    .footer {
+      margin-top: 28px;
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="badge">SECURITY NOTICE</div>
+      <div class="title">Network Protection Service</div>
+    </div>
+
+    <div class="alert">
+      <h2>Device Access Temporarily Restricted</h2>
+      <p>
+        This device has attempted to access a restricted web resource that
+        violates network safety policies enforced by your administrator.
+      </p>
+      <p>
+        As a precautionary measure, access to external web services has been
+        temporarily limited while this activity is reviewed.
+      </p>
+
+      <p id="countdown"></p>
+    </div>
+
+    <div class="meta">
+      <strong>Incident Details</strong><br>
+      • Policy Trigger: Unauthorized Content Gateway<br>
+      • Device Fingerprint: AUTO-GENERATED<br>
+      • Action Taken: Session Containment<br>
+      • Timestamp: <span id="time"></span>
+    </div>
+
+    <div class="footer">
+      <span>Reference Code: NP-A39-7X</span>
+      <span>Do not close this window</span>
+    </div>
+
+  </div>
+
+  <script>
+    // ================= CONFIG =================
+    const EXIT_URL = "/";
+    const COUNTDOWN_SECONDS = 10;
+
+    // ================= TIMESTAMP =================
+    document.getElementById("time").textContent =
+      new Date().toLocaleString();
+
+    // ================= HEADER SWAP =================
+    setTimeout(() => {
+      const h2 = document.querySelector(".alert h2");
+      if (h2) h2.textContent = "Administrative Review In Progress";
+    }, 3000);
+
+    // ================= COUNTDOWN =================
+    let t = COUNTDOWN_SECONDS;
+    const countdownEl = document.getElementById("countdown");
+
+    countdownEl.textContent = `Automatic review in ${t} seconds…`;
+
+    const timer = setInterval(() => {
+      t--;
+      if (t >= 0) {
+        countdownEl.textContent = `Automatic review in ${t} seconds…`;
+      } else {
+        clearInterval(timer);
+        countdownEl.textContent =
+          "Containment active. Await further instructions.";
+      }
+    }, 1000);
+
+    // ================= ESC ESC EXIT =================
+    let escCount = 0;
+    let escReset;
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        escCount++;
+        clearTimeout(escReset);
+        escReset = setTimeout(() => escCount = 0, 1200);
+
+        if (escCount >= 2) {
+          window.location.href = EXIT_URL;
+        }
+      }
+    });
+
+    // ================= FAKE MONITORING LOGS =================
+    const noise = [
+      "Policy engine: evaluating session…",
+      "Telemetry: device heartbeat OK",
+      "Gateway: rule match confirmed",
+      "Containment status: ACTIVE"
+    ];
+
+    let i = 0;
+    const noiseTimer = setInterval(() => {
+      console.log(noise[i++ % noise.length]);
+      if (i > 12) clearInterval(noiseTimer);
+    }, 700);
+  </script>
+</body>
+</html>
