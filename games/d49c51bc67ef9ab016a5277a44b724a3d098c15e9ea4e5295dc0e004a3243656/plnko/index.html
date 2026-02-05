@@ -1,181 +1,670 @@
-<!-- Ultimate Game Stash file--> 
-<!-- For the regularly updating doc go to https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/ -->
-
-
+<!DOCTYPE html>
 <html lang="en">
-<base href="https://cdn.jsdelivr.net/gh/bubbls/UGS-Assets@main/plinko/">
 <head>
-  <meta charset="utf-8" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <meta property="og:description" content="A web-based Plinko game inspired by Stake.com, built using Svelte and Tailwind CSS" />
-
-  <link href="./_app/immutable/assets/0.DpmEpyNL.css" rel="stylesheet">
-  <link href="./_app/immutable/assets/3.Di7wuimg.css" rel="stylesheet">
-  <link rel="modulepreload" href="./_app/immutable/entry/start.Bx-xHRpc.js">
-  <link rel="modulepreload" href="./_app/immutable/chunks/entry.CPEt34_Q.js">
-  <link rel="modulepreload" href="./_app/immutable/chunks/scheduler.qUdTNcd4.js">
-  <link rel="modulepreload" href="./_app/immutable/chunks/index.CdPqlD-_.js">
-  <link rel="modulepreload" href="./_app/immutable/entry/app.DcW8juCo.js">
-  <link rel="modulepreload" href="./_app/immutable/chunks/index.CwLSBawM.js">
-  <link rel="modulepreload" href="./_app/immutable/nodes/0.DFoEgtk2.js">
-  <link rel="modulepreload" href="./_app/immutable/nodes/3.BWmqIxuo.js">
-  <link rel="modulepreload" href="./_app/immutable/chunks/Plinko.BrtK7NtZ.js">
-  <title>Free Plinko Game Online - Play &amp; Win Instant Rewards</title><!-- HEAD_svelte-f88f7m_START -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link rel="canonical" href="https://plinko-game-online.github.io/">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
-  <meta name="description" content="Experience authentic Plinko gameplay online! Drop discs through pegs for exciting rewards in this classic arcade game. No download or registration required - start playing instantly and win.">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Free Plinko Game Online">
-  <meta property="og:url" content="https://plinko-game-online.github.io/">
-  <meta property="og:image" content="/_app/immutable/assets/og_image.PzHn9Bxz.jpg">
-  <meta name="google-site-verification" content="lTwaQTJ2H6vMNYMUd9ooaLxzvssiGoQEuoRdsOYNX8g"><!-- HEAD_svelte-f88f7m_END -->
-
-  <!-- Google Tag Manager -->
-  <script>
-    (function(w, d, s, l, i) {
-      w[l] = w[l] || [];
-      w[l].push({
-        'gtm.start': new Date().getTime(),
-        event: 'gtm.js'
-      });
-      var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s),
-        dl = l != 'dataLayer' ? '&l=' + l : '';
-      j.async = true;
-      j.src =
-        'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-      f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', 'GTM-NKW5KHS4');
-  </script>
-  <!-- End Google Tag Manager -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Plinko Game</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #1a202e;
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.nav {
+  background: #2d3748;
+  padding: 14px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  font-style: italic;
+  color: #fff;
+  font-family: cursive;
+}
+.balance-wrap {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.balance {
+  display: flex;
+  gap: 8px;
+  background: #0f1728;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 16px;
+}
+.balance .symbol { color: #64748b; }
+.balance .amount { min-width: 80px; text-align: right; }
+.add-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+.add-btn:hover { background: #2563eb; }
+.add-btn:active { background: #1d4ed8; }
+.container {
+  display: flex;
+  flex-direction: column-reverse;
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 20px;
+  gap: 0;
+}
+@media (min-width: 1024px) {
+  .container { flex-direction: row; }
+}
+.sidebar {
+  background: #475569;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+@media (max-width: 1023px) {
+  .sidebar { max-width: 100%; border-radius: 12px 12px 0 0; }
+}
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: #0f1728;
+  border-radius: 9999px;
+  padding: 4px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+.mode-btn.active { background: #475569; }
+.mode-btn:not(.active):hover { background: #334155; }
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.input-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+.input-row {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.bet-input-wrap {
+  position: relative;
+  flex: 1;
+}
+.bet-input {
+  width: 100%;
+  padding: 10px 12px 10px 32px;
+  background: #0f1728;
+  border: 2px solid #334155;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 8px 0 0 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.bet-input:focus { border-color: #475569; }
+.dollar-sign {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+.bet-btn {
+  padding: 0 16px;
+  border: none;
+  background: #475569;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-left: 2px solid #0f1728;
+}
+.bet-btn:hover { background: #334155; }
+.bet-btn:active { background: #1e293b; }
+.bet-btn:first-of-type { border-radius: 0; }
+.bet-btn:last-of-type { border-radius: 0 8px 8px 0; }
+select {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0f1728;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.2s;
+}
+select:hover, select:focus { border-color: #475569; }
+.drop-btn {
+  width: 100%;
+  padding: 14px;
+  background: #10b981;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.drop-btn:hover { background: #059669; }
+.drop-btn:active { background: #047857; }
+.drop-btn:disabled {
+  background: #52525b;
+  color: #a1a1aa;
+  cursor: not-allowed;
+}
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  gap: 16px;
+}
+.icon-btn {
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+.icon-btn:hover { background: #475569; }
+.icon-btn:active { background: #334155; }
+.game-area {
+  flex: 1;
+  background: #0f1728;
+  border-radius: 12px;
+  position: relative;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 1023px) {
+  .game-area { border-radius: 0 0 12px 12px; }
+}
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#plinkoCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  border-radius: 8px;
+}
+.multipliers-wrap {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.multiplier-box {
+  padding: 8px 12px;
+  background: #ff9500;
+  color: #000;
+  text-align: center;
+  min-width: 50px;
+}
+.bins-row {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 20px 20px;
+}
+.bin {
+  min-width: 35px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: #000;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+}
+</style>
 </head>
+<body>
 
-<body data-sveltekit-preload-data="hover">
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NKW5KHS4" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
-  <div style="display: contents">
-    <div class="relative flex min-h-dvh w-full flex-col">
-      <nav class="sticky top-0 z-10 w-full bg-gray-700 px-5 drop-shadow-lg">
-        <div class="mx-auto flex h-14 max-w-7xl items-center justify-between"><img src="/_app/immutable/assets/logo.Bq7oLjZC.svg" alt="logo" class="h-6 sm:h-7">
-          <div class="mx-auto">
-            <div class="flex overflow-hidden rounded-md">
-              <div class="flex gap-2 bg-slate-900 px-3 py-2 text-sm font-semibold tabular-nums text-white sm:text-base"><span class="select-none text-gray-500" data-svelte-h="svelte-1d17qqv">$</span> <span class="min-w-16 text-right">200.00</span></div> <button role="button" aria-haspopup="dialog" aria-expanded="false" data-state="closed" id="ShSOLlMuVY" data-melt-popover-trigger="" data-popover-trigger="" type="button" class="bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 active:bg-blue-700 sm:text-base">Add</button>
-            </div>
-          </div>
-        </div>
-      </nav>
-      <div class="flex-1 px-5">
-        <div class="mx-auto mt-5 min-w-[300px] max-w-xl drop-shadow-xl md:mt-10 lg:max-w-7xl">
-          <div class="flex flex-col-reverse overflow-hidden rounded-lg lg:w-full lg:flex-row">
-            <div class="flex flex-col gap-5 bg-slate-700 p-3 lg:max-w-80">
-              <div class="flex gap-1 rounded-full bg-slate-900 p-1"><button class="flex-1 rounded-full py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:bg-slate-600 active:[&amp;:not(:disabled)]:bg-slate-500 bg-slate-600">Manual </button><button class="flex-1 rounded-full py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:bg-slate-600 active:[&amp;:not(:disabled)]:bg-slate-500">Auto </button></div>
-              <div class="relative"><label for="betAmount" class="text-sm font-medium text-slate-300" data-svelte-h="svelte-pvr00n">Bet Amount</label>
-                <div class="flex">
-                  <div class="relative flex-1"><input id="betAmount" value="1" type="number" min="0" step="0.01" inputmode="decimal" class="w-full rounded-l-md border-2 border-slate-600 bg-slate-900 py-2 pl-7 pr-2 text-sm text-white transition-colors hover:cursor-pointer focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:border-slate-500">
-                    <div class="absolute left-3 top-2 select-none text-slate-500" aria-hidden data-svelte-h="svelte-1g0vqh5">$</div>
-                  </div> <button class="touch-manipulation bg-slate-600 px-4 font-bold diagonal-fractions text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:bg-slate-500 active:[&amp;:not(:disabled)]:bg-slate-400">1/2</button> <button class="relative touch-manipulation rounded-r-md bg-slate-600 px-4 text-sm font-bold text-white transition-colors after:absolute after:left-0 after:inline-block after:h-1/2 after:w-[2px] after:bg-slate-800 after:content-[''] disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:bg-slate-500 active:[&amp;:not(:disabled)]:bg-slate-400">2×</button>
-                </div>
-              </div>
-              <div><label for="riskLevel" class="text-sm font-medium text-slate-300" data-svelte-h="svelte-1flxhk9">Risk</label>
-                <div class="relative"><select class="block w-full appearance-none rounded-md border-2 border-slate-600 bg-slate-900 py-2 pl-3 pr-8 text-sm text-white transition hover:cursor-pointer focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:border-slate-500" id="riskLevel">
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                  </select> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="absolute right-3 top-3 text-slate-500">
-                    <rect width="256" height="256" fill="none"></rect>
-                    <path d="M216.49,104.49l-80,80a12,12,0,0,1-17,0l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17Z"></path>
-                  </svg></div>
-              </div>
-              <div><label for="rowCount" class="text-sm font-medium text-slate-300" data-svelte-h="svelte-ooiw11">Rows</label>
-                <div class="relative"><select class="block w-full appearance-none rounded-md border-2 border-slate-600 bg-slate-900 py-2 pl-3 pr-8 text-sm text-white transition hover:cursor-pointer focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 hover:[&amp;:not(:disabled)]:border-slate-500" id="rowCount">
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="13">13</option>
-                    <option value="14">14</option>
-                    <option value="15">15</option>
-                    <option value="16">16</option>
-                  </select> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="absolute right-3 top-3 text-slate-500">
-                    <rect width="256" height="256" fill="none"></rect>
-                    <path d="M216.49,104.49l-80,80a12,12,0,0,1-17,0l-80-80a12,12,0,0,1,17-17L128,159l71.51-71.52a12,12,0,0,1,17,17Z"></path>
-                  </svg></div>
-              </div> <button disabled class="touch-manipulation rounded-md bg-green-500 py-3 font-semibold text-slate-900 transition-colors hover:bg-green-400 active:bg-green-600 disabled:bg-neutral-600 disabled:text-neutral-400">Drop Ball</button>
-              <div class="mt-auto pt-5">
-                <div class="flex items-center gap-4 border-t border-slate-600 pt-3"> <button aria-describedby="8aLhg1NRT4" id="KR2mptfVMb" data-state="closed" data-melt-tooltip-trigger="" data-tooltip-trigger="" class="rounded-full p-2 text-slate-300 transition hover:bg-slate-600 active:bg-slate-500"> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="size-6">
-                      <rect width="256" height="256" fill="none"></rect>
-                      <path d="M237.94,107.21a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A111.92,111.92,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.63a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"></path>
-                    </svg></button> <button aria-describedby="Ns7WkltGpR" id="31bQ57nPZh" data-state="closed" data-melt-tooltip-trigger="" data-tooltip-trigger="" class="rounded-full p-2 text-slate-300 transition hover:bg-slate-600 active:bg-slate-500"> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="size-6">
-                      <rect width="256" height="256" fill="none"></rect>
-                      <path d="M236,208a12,12,0,0,1-12,12H32a12,12,0,0,1-12-12V48a12,12,0,0,1,24,0v85.55L88.1,95a12,12,0,0,1,15.1-.57l56.22,42.16L216.1,87A12,12,0,1,1,231.9,105l-64,56a12,12,0,0,1-15.1.57L96.58,119.44,44,165.45V196H224A12,12,0,0,1,236,208Z"></path>
-                    </svg></button> </div>
-              </div>
-            </div>
-            <div class="flex-1">
-              <div class="relative bg-gray-900">
-                <div class="mx-auto flex h-full flex-col px-4 pb-4" style="max-width: 760px;">
-                  <div class="relative w-full" style="aspect-ratio: 760 / 570;">
-                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="size-20 animate-spin text-slate-600">
-                        <rect width="256" height="256" fill="none"></rect>
-                        <path d="M236,128a108,108,0,0,1-216,0c0-42.52,24.73-81.34,63-98.9A12,12,0,1,1,93,50.91C63.24,64.57,44,94.83,44,128a84,84,0,0,0,168,0c0-33.17-19.24-63.43-49-77.09A12,12,0,1,1,173,29.1C211.27,46.66,236,85.48,236,128Z"></path>
-                      </svg></div> <canvas width="760" height="570" class="absolute inset-0 h-full w-full"></canvas>
-                  </div>
-                  <div class="flex h-[clamp(10px,0.352px+2.609vw,16px)] w-full justify-center lg:h-7"></div>
-                </div>
-                <div class="absolute right-[5%] top-1/2 -translate-y-1/2">
-                  <div class="flex w-[clamp(1.5rem,0.893rem+2.857vw,2rem)] flex-col overflow-hidden rounded-sm text-[clamp(8px,5.568px+0.714vw,10px)] md:rounded-md lg:w-12 lg:text-sm" style="aspect-ratio: 1 / 4;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <footer class="px-5 pb-4 pt-16">
-        <div class="mx-auto max-w-[40rem]">
-          <div aria-hidden="true" class="h-[1px] bg-slate-700"></div>
-          <div class="flex items-center justify-between p-2">
-            <p class="text-sm text-slate-500" data-svelte-h="svelte-10v85bh"><a href="/" target="_blank" rel="noreferrer" class="text-cyan-600 transition hover:text-cyan-500">Plinko Game Online</a>
-              © 2024</p> <a href="https://github.com/plinko-game-online/plinko-game-online.github.io" target="_blank" rel="noreferrer" class="flex items-center gap-1 p-1 text-sm text-slate-500 transition hover:text-cyan-500"> <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 256 256" class="size-4">
-                <rect width="256" height="256" fill="none"></rect>
-                <path d="M212.62,75.17A63.7,63.7,0,0,0,206.39,26,12,12,0,0,0,196,20a63.71,63.71,0,0,0-50,24H126A63.71,63.71,0,0,0,76,20a12,12,0,0,0-10.39,6,63.7,63.7,0,0,0-6.23,49.17A61.5,61.5,0,0,0,52,104v8a60.1,60.1,0,0,0,45.76,58.28A43.66,43.66,0,0,0,92,192v4H76a20,20,0,0,1-20-20,44.05,44.05,0,0,0-44-44,12,12,0,0,0,0,24,20,20,0,0,1,20,20,44.05,44.05,0,0,0,44,44H92v12a12,12,0,0,0,24,0V192a20,20,0,0,1,40,0v40a12,12,0,0,0,24,0V192a43.66,43.66,0,0,0-5.76-21.72A60.1,60.1,0,0,0,220,112v-8A61.5,61.5,0,0,0,212.62,75.17ZM196,112a36,36,0,0,1-36,36H112a36,36,0,0,1-36-36v-8a37.87,37.87,0,0,1,6.13-20.12,11.65,11.65,0,0,0,1.58-11.49,39.9,39.9,0,0,1-.4-27.72,39.87,39.87,0,0,1,26.41,17.8A12,12,0,0,0,119.82,68h32.35a12,12,0,0,0,10.11-5.53,39.84,39.84,0,0,1,26.41-17.8,39.9,39.9,0,0,1-.4,27.72,12,12,0,0,0,1.61,11.53A37.85,37.85,0,0,1,196,104Z"></path>
-              </svg> <span data-svelte-h="svelte-sri54o">Source Code</span></a>
-          </div>
-        </div>
-      </footer>
+<div class="nav">
+  <div class="logo">Plinko</div>
+  <div class="balance-wrap">
+    <div class="balance">
+      <span class="symbol">$</span>
+      <span class="amount" id="balanceDisplay">200.00</span>
+    </div>
+    <button class="add-btn" onclick="addBalance()">Add</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar">
+    <div class="mode-toggle">
+      <button class="mode-btn active">Manual</button>
+      <button class="mode-btn">Auto</button>
     </div>
 
-    <script>
-      {
-        __sveltekit_1ahsfp = {
-          base: new URL(".", location).pathname.slice(0, -1)
-        };
+    <div class="input-group">
+      <label>Bet Amount</label>
+      <div class="input-row">
+        <div class="bet-input-wrap">
+          <span class="dollar-sign">$</span>
+          <input type="number" class="bet-input" id="betAmount" value="1" min="0.01" step="0.01">
+        </div>
+        <button class="bet-btn" onclick="halveBet()">½</button>
+        <button class="bet-btn" onclick="doubleBet()">2×</button>
+      </div>
+    </div>
 
-        const element = document.currentScript.parentElement;
+    <div class="input-group">
+      <label>Risk</label>
+      <select id="riskSelect" onchange="updateGame()">
+        <option value="LOW">Low</option>
+        <option value="MEDIUM" selected>Medium</option>
+        <option value="HIGH">High</option>
+      </select>
+    </div>
 
-        const data = [null, null];
+    <div class="input-group">
+      <label>Rows</label>
+      <select id="rowsSelect" onchange="updateGame()">
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16" selected>16</option>
+      </select>
+    </div>
 
-        Promise.all([
-          import("./_app/immutable/entry/start.Bx-xHRpc.js"),
-          import("./_app/immutable/entry/app.DcW8juCo.js")
-        ]).then(([kit, app]) => {
-          kit.start(app, element, {
-            node_ids: [0, 3],
-            data,
-            form: null,
-            error: null
-          });
-        });
-      }
-    </script>
+    <button class="drop-btn" id="dropBtn" onclick="dropBall()">Drop Ball</button>
+
+    <div class="sidebar-footer">
+      <button class="icon-btn" title="Settings">⚙️</button>
+      <button class="icon-btn" title="Statistics">📊</button>
+    </div>
   </div>
-</body>
 
+  <div class="game-area">
+    <div class="canvas-wrap">
+      <canvas id="plinkoCanvas" width="760" height="570"></canvas>
+      <div class="multipliers-wrap" id="multipliersDisplay"></div>
+    </div>
+    <div class="bins-row" id="binsRow"></div>
+  </div>
+</div>
+
+<script>
+// Game state
+let balance = 200;
+let betAmount = 1;
+let currentRows = 16;
+let currentRisk = 'MEDIUM';
+let isDropping = false;
+
+// Payout multipliers for each configuration
+const PAYOUTS = {
+  8: {
+    LOW: [5.6, 2.1, 1.1, 1, 0.5, 1, 1.1, 2.1, 5.6],
+    MEDIUM: [13, 3, 1.3, 0.7, 0.4, 0.7, 1.3, 3, 13],
+    HIGH: [29, 4, 1.5, 0.3, 0.2, 0.3, 1.5, 4, 29]
+  },
+  9: {
+    LOW: [5.6, 2, 1.6, 1, 0.7, 0.7, 1, 1.6, 2, 5.6],
+    MEDIUM: [18, 4, 1.7, 0.9, 0.5, 0.5, 0.9, 1.7, 4, 18],
+    HIGH: [43, 7, 2, 0.6, 0.2, 0.2, 0.6, 2, 7, 43]
+  },
+  10: {
+    LOW: [8.9, 3, 1.4, 1.1, 1, 0.5, 1, 1.1, 1.4, 3, 8.9],
+    MEDIUM: [22, 5, 2, 1.4, 0.6, 0.4, 0.6, 1.4, 2, 5, 22],
+    HIGH: [76, 10, 3, 0.9, 0.3, 0.2, 0.3, 0.9, 3, 10, 76]
+  },
+  11: {
+    LOW: [8.4, 3, 1.9, 1.3, 1, 0.7, 0.7, 1, 1.3, 1.9, 3, 8.4],
+    MEDIUM: [24, 6, 3, 1.8, 0.7, 0.5, 0.5, 0.7, 1.8, 3, 6, 24],
+    HIGH: [120, 14, 5.2, 1.4, 0.4, 0.2, 0.2, 0.4, 1.4, 5.2, 14, 120]
+  },
+  12: {
+    LOW: [10, 3, 1.6, 1.4, 1.1, 1, 0.5, 1, 1.1, 1.4, 1.6, 3, 10],
+    MEDIUM: [33, 11, 4, 2, 1.1, 0.6, 0.3, 0.6, 1.1, 2, 4, 11, 33],
+    HIGH: [170, 24, 8.1, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 8.1, 24, 170]
+  },
+  13: {
+    LOW: [8.1, 4, 3, 1.9, 1.2, 0.9, 0.7, 0.7, 0.9, 1.2, 1.9, 3, 4, 8.1],
+    MEDIUM: [43, 13, 6, 3, 1.3, 0.7, 0.4, 0.4, 0.7, 1.3, 3, 6, 13, 43],
+    HIGH: [260, 37, 11, 4, 1, 0.2, 0.2, 0.2, 0.2, 1, 4, 11, 37, 260]
+  },
+  14: {
+    LOW: [7.1, 4, 1.9, 1.4, 1.3, 1.1, 1, 0.5, 1, 1.1, 1.3, 1.4, 1.9, 4, 7.1],
+    MEDIUM: [58, 15, 7, 4, 1.9, 1, 0.5, 0.2, 0.5, 1, 1.9, 4, 7, 15, 58],
+    HIGH: [420, 56, 18, 5, 1.9, 0.3, 0.2, 0.2, 0.2, 0.3, 1.9, 5, 18, 56, 420]
+  },
+  15: {
+    LOW: [15, 8, 3, 2, 1.5, 1.1, 1, 0.7, 0.7, 1, 1.1, 1.5, 2, 3, 8, 15],
+    MEDIUM: [88, 18, 11, 5, 3, 1.3, 0.5, 0.3, 0.3, 0.5, 1.3, 3, 5, 11, 18, 88],
+    HIGH: [620, 83, 27, 8, 3, 0.5, 0.2, 0.2, 0.2, 0.2, 0.5, 3, 8, 27, 83, 620]
+  },
+  16: {
+    LOW: [16, 9, 2, 1.4, 1.4, 1.2, 1.1, 1, 0.5, 1, 1.1, 1.2, 1.4, 1.4, 2, 9, 16],
+    MEDIUM: [110, 41, 10, 5, 3, 1.5, 1, 0.5, 0.3, 0.5, 1, 1.5, 3, 5, 10, 41, 110],
+    HIGH: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000]
+  }
+};
+
+// Canvas and pins setup
+const canvas = document.getElementById('plinkoCanvas');
+const ctx = canvas.getContext('2d');
+const PADDING_X = 52;
+const PADDING_TOP = 36;
+const PADDING_BOTTOM = 28;
+let pins = [];
+let balls = [];
+
+// Ball physics
+class Ball {
+  constructor(x, y, betAmount) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = 0;
+    this.radius = 8;
+    this.betAmount = betAmount;
+    this.gravity = 0.5;
+    this.bounce = 0.6;
+    this.friction = 0.98;
+  }
+
+  update() {
+    this.vy += this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    
+    // Check collision with pins
+    pins.forEach(pin => {
+      const dx = this.x - pin.x;
+      const dy = this.y - pin.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist < this.radius + pin.radius) {
+        const angle = Math.atan2(dy, dx);
+        const targetX = pin.x + Math.cos(angle) * (this.radius + pin.radius);
+        const targetY = pin.y + Math.sin(angle) * (this.radius + pin.radius);
+        
+        this.x = targetX;
+        this.y = targetY;
+        
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.vx = Math.cos(angle) * speed * this.bounce;
+        this.vy = Math.sin(angle) * speed * this.bounce;
+      }
+    });
+    
+    // Wall collision
+    if (this.x - this.radius < 50) {
+      this.x = 50 + this.radius;
+      this.vx = Math.abs(this.vx) * this.bounce;
+    }
+    if (this.x + this.radius > canvas.width - 50) {
+      this.x = canvas.width - 50 - this.radius;
+      this.vx = -Math.abs(this.vx) * this.bounce;
+    }
+    
+    this.vx *= this.friction;
+    this.vy *= 0.99;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff0000';
+    ctx.fill();
+  }
+
+  isAtBottom() {
+    return this.y > canvas.height - 40;
+  }
+
+  getBinIndex() {
+    const bins = PAYOUTS[currentRows][currentRisk].length;
+    const binWidth = (canvas.width - PADDING_X * 2) / (bins - 1);
+    const relativeX = this.x - PADDING_X;
+    let binIndex = Math.floor(relativeX / binWidth);
+    binIndex = Math.max(0, Math.min(bins - 1, binIndex));
+    return binIndex;
+  }
+}
+
+function setupPins() {
+  pins = [];
+  const rows = currentRows;
+  const pinRadius = (24 - rows) / 2;
+  
+  for (let row = 0; row < rows; row++) {
+    const pinsInRow = 3 + row;
+    const rowY = PADDING_TOP + ((canvas.height - PADDING_TOP - PADDING_BOTTOM) / (rows - 1)) * row;
+    const rowPaddingX = PADDING_X + ((rows - 1 - row) * (canvas.width - PADDING_X * 2) / (2 + rows)) / 2;
+    
+    for (let col = 0; col < pinsInRow; col++) {
+      const colX = rowPaddingX + ((canvas.width - rowPaddingX * 2) / (pinsInRow - 1)) * col;
+      pins.push({ x: colX, y: rowY, radius: pinRadius });
+    }
+  }
+}
+
+function drawPins() {
+  pins.forEach(pin => {
+    ctx.beginPath();
+    ctx.arc(pin.x, pin.y, pin.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  });
+}
+
+function updateBins() {
+  const binsRow = document.getElementById('binsRow');
+  const payouts = PAYOUTS[currentRows][currentRisk];
+  
+  binsRow.innerHTML = '';
+  payouts.forEach((mult, i) => {
+    const bin = document.createElement('div');
+    bin.className = 'bin';
+    bin.textContent = mult >= 1 ? `${mult}×` : `${mult}×`;
+    
+    // Color based on multiplier
+    if (mult >= 10) {
+      bin.style.background = '#ff003f';
+    } else if (mult >= 3) {
+      bin.style.background = '#ff5722';
+    } else if (mult >= 1.5) {
+      bin.style.background = '#ff9500';
+    } else if (mult >= 1) {
+      bin.style.background = '#ffc107';
+    } else if (mult >= 0.5) {
+      bin.style.background = '#ffeb3b';
+    } else {
+      bin.style.background = '#ffc107';
+    }
+    
+    binsRow.appendChild(bin);
+  });
+}
+
+function updateMultipliersDisplay() {
+  const display = document.getElementById('multipliersDisplay');
+  const payouts = PAYOUTS[currentRows][currentRisk];
+  const maxPayout = Math.max(...payouts);
+  
+  // Show top 4 unique payouts
+  const uniquePayouts = [...new Set(payouts)].sort((a, b) => b - a).slice(0, 4);
+  
+  display.innerHTML = '';
+  uniquePayouts.forEach(mult => {
+    const box = document.createElement('div');
+    box.className = 'multiplier-box';
+    box.textContent = mult >= 1 ? `${mult}×` : `${mult}×`;
+    
+    if (mult >= 10) {
+      box.style.background = '#ff003f';
+      box.style.color = '#fff';
+    } else if (mult >= 3) {
+      box.style.background = '#ff9500';
+    } else if (mult >= 1) {
+      box.style.background = '#ffc107';
+    } else {
+      box.style.background = '#ffeb3b';
+    }
+    
+    display.appendChild(box);
+  });
+}
+
+function gameLoop() {
+  ctx.fillStyle = '#0f1728';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  drawPins();
+  
+  balls = balls.filter(ball => {
+    ball.update();
+    ball.draw();
+    
+    if (ball.isAtBottom()) {
+      const binIndex = ball.getBinIndex();
+      const multiplier = PAYOUTS[currentRows][currentRisk][binIndex];
+      const payout = ball.betAmount * multiplier;
+      
+      balance += payout;
+      updateBalanceDisplay();
+      
+      // Flash the bin
+      const bins = document.querySelectorAll('.bin');
+      if (bins[binIndex]) {
+        bins[binIndex].style.transform = 'scale(1.2)';
+        bins[binIndex].style.boxShadow = '0 0 20px rgba(255,255,255,0.8)';
+        setTimeout(() => {
+          bins[binIndex].style.transform = 'scale(1)';
+          bins[binIndex].style.boxShadow = '0 3px 0 rgba(0,0,0,0.3)';
+        }, 300);
+      }
+      
+      isDropping = false;
+      document.getElementById('dropBtn').disabled = false;
+      return false;
+    }
+    return true;
+  });
+  
+  requestAnimationFrame(gameLoop);
+}
+
+function dropBall() {
+  const bet = parseFloat(document.getElementById('betAmount').value) || 1;
+  
+  if (bet > balance) {
+    alert('Insufficient balance!');
+    return;
+  }
+  
+  if (isDropping) return;
+  
+  isDropping = true;
+  document.getElementById('dropBtn').disabled = true;
+  balance -= bet;
+  updateBalanceDisplay();
+  
+  const startX = canvas.width / 2 + (Math.random() - 0.5) * 40;
+  balls.push(new Ball(startX, 0, bet));
+}
+
+function halveBet() {
+  const input = document.getElementById('betAmount');
+  input.value = (parseFloat(input.value) / 2).toFixed(2);
+}
+
+function doubleBet() {
+  const input = document.getElementById('betAmount');
+  input.value = (parseFloat(input.value) * 2).toFixed(2);
+}
+
+function addBalance() {
+  balance += 100;
+  updateBalanceDisplay();
+}
+
+function updateBalanceDisplay() {
+  document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
+}
+
+function updateGame() {
+  currentRows = parseInt(document.getElementById('rowsSelect').value);
+  currentRisk = document.getElementById('riskSelect').value;
+  setupPins();
+  updateBins();
+  updateMultipliersDisplay();
+  balls = []; // Clear any existing balls
+}
+
+// Initialize
+setupPins();
+updateBins();
+updateMultipliersDisplay();
+updateBalanceDisplay();
+gameLoop();
+</script>
+</body>
 </html>
