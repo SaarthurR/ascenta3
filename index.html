@@ -325,14 +325,13 @@ transition:color .2s;
 color:#71717a;
 }
 
-/* HUB STYLES */
-/* HUB STYLES */
+/* HUB STYLES - ORIGINAL DESIGN */
 #hub{
 display:none;
 min-height:100vh;
 background:#0a0a0a;
 position:relative;
-overflow:auto
+overflow:auto;
 }
 
 #hub:before{
@@ -341,7 +340,7 @@ position:fixed;
 inset:0;
 background:radial-gradient(circle at 20% 30%, rgba(99,102,241,.08) 0%, transparent 50%),
 radial-gradient(circle at 80% 70%, rgba(236,72,153,.08) 0%, transparent 50%);
-pointer-events:none
+pointer-events:none;
 }
 
 .hub-wrap{
@@ -349,12 +348,12 @@ padding:60px 48px;
 max-width:1400px;
 margin:0 auto;
 position:relative;
-z-index:1
+z-index:1;
 }
 
 .hub-header{
 margin-bottom:48px;
-text-align:center
+text-align:center;
 }
 
 .hub-title{
@@ -365,7 +364,7 @@ margin-bottom:12px;
 background:linear-gradient(135deg,#fff,#888);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-background-clip:text
+background-clip:text;
 }
 
 .hub-sub{
@@ -373,13 +372,13 @@ color:#666;
 font-size:16px;
 line-height:1.6;
 max-width:600px;
-margin:0 auto
+margin:0 auto;
 }
 
 .hub-grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-gap:24px
+gap:24px;
 }
 
 a.card{
@@ -392,7 +391,7 @@ border-radius:20px;
 padding:0;
 overflow:hidden;
 transition:all .3s cubic-bezier(.4,0,.2,1);
-position:relative
+position:relative;
 }
 
 a.card:before{
@@ -401,23 +400,23 @@ position:absolute;
 inset:0;
 background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(236,72,153,.1));
 opacity:0;
-transition:opacity .3s
+transition:opacity .3s;
 }
 
 a.card:hover{
 transform:translateY(-8px) scale(1.02);
 border-color:#444;
 box-shadow:0 20px 40px rgba(0,0,0,.4),
-0 0 0 1px rgba(255,255,255,.05)
+0 0 0 1px rgba(255,255,255,.05);
 }
 
 a.card:hover:before{
-opacity:1
+opacity:1;
 }
 
 .card-image{
 width:100%;
-height:120px;            /* ↓ was 200px */
+height:200px;
 background:linear-gradient(135deg,#1a1a2e,#16213e);
 position:relative;
 overflow:hidden;
@@ -427,18 +426,21 @@ justify-content:center;
 border-bottom:1px solid #222;
 }
 
-/* scale SVGs nicely */
 .card-image svg{
-width:60px;
-height:60px;
-max-width:70%;
-max-height:70%;
+width:120px;
+height:120px;
+opacity:.8;
+transition:transform .3s;
+}
+
+a.card:hover .card-image svg{
+transform:scale(1.1) rotate(5deg);
 }
 
 .card-content{
 padding:24px;
 position:relative;
-z-index:1
+z-index:1;
 }
 
 .tag{
@@ -452,21 +454,33 @@ padding:6px 12px;
 margin-bottom:12px;
 font-weight:600;
 text-transform:uppercase;
-letter-spacing:1px
+letter-spacing:1px;
+}
+
+.card:nth-child(2) .tag{
+color:#fbbf24;
+background:rgba(251,191,36,.15);
+border-color:rgba(251,191,36,.3);
+}
+
+.card:nth-child(3) .tag{
+color:#34d399;
+background:rgba(52,211,153,.15);
+border-color:rgba(52,211,153,.3);
 }
 
 .card-title{
 font-size:24px;
 font-weight:700;
 margin:0 0 8px 0;
-letter-spacing:-.5px
+letter-spacing:-.5px;
 }
 
 .card-desc{
 margin:0;
 color:#888;
 font-size:14px;
-line-height:1.5
+line-height:1.5;
 }
 
 .card-stats{
@@ -476,16 +490,14 @@ margin-top:16px;
 padding-top:16px;
 border-top:1px solid #222;
 font-size:12px;
-color:#666
+color:#666;
 }
 
 .card-stat{
 display:flex;
 align-items:center;
-gap:6px
+gap:6px;
 }
-
-
 
 /* Responsive */
 @media(max-width:768px){
@@ -494,7 +506,7 @@ gap:6px
 .hub-wrap{padding:40px 24px}
 .hub-title{font-size:36px}
 .hub-grid{grid-template-columns:1fr;gap:16px}
-.card-image{height:140px}
+.card-image{height:160px}
 }
 </style>
 </head>
@@ -554,7 +566,7 @@ gap:6px
 </div>
 </div>
 
-<!-- HUB -->
+<!-- HUB - ORIGINAL DESIGN -->
 <div id="hub">
 <div class="hub-wrap">
 <div class="hub-header">
@@ -563,6 +575,7 @@ gap:6px
 </div>
 
 <div class="hub-grid">
+
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/polytrack/">
 <div class="card-image" style="background:linear-gradient(135deg,#dc2626,#991b1b)">
 <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -575,7 +588,7 @@ gap:6px
 <div class="card-content">
 <div class="tag">Racing</div>
 <div class="card-title">PolyTrack</div>
-<p class="card-desc">Experience high-speed racing on polygon tracks with precision physics and  trials</p>
+<p class="card-desc">Experience high-speed racing on polygon tracks with precision physics and time trials</p>
 <div class="card-stats">
 <div class="card-stat">⚡ Fast-paced</div>
 <div class="card-stat">🏁 Time Trials</div>
@@ -625,546 +638,459 @@ gap:6px
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/8ball/">
-  <div class="card-image" style="background:linear-gradient(135deg,#2563eb,#1e40af)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="60" cy="60" r="28" fill="#fff" opacity="0.9"/>
-      <circle cx="60" cy="60" r="20" fill="#000"/>
-      <text x="60" y="67" text-anchor="middle" font-size="18" fill="#fff" font-weight="700">8</text>
-      <circle cx="20" cy="30" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="100" cy="30" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="30" cy="95" r="3" fill="#fff" opacity="0.6"/>
-      <circle cx="90" cy="95" r="3" fill="#fff" opacity="0.6"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Arcade</div>
-    <div class="card-title">8 Ball</div>
-    <p class="card-desc">Classic 8-ball pool with smooth physics and clean controls</p>
-    <div class="card-stats">
-      <div class="card-stat">🎱 Pool</div>
-      <div class="card-stat">🧠 Precision</div>
-    </div>
-  </div>
-</a>
-  
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/slowroads/">
-  <div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#0369a1)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M52 10 L68 10 L78 110 L62 110 Z" fill="#fff" opacity="0.9"/>
-      <path d="M42 110 L58 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
-      <path d="M78 110 L62 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
-      <path d="M18 88 C36 76, 36 56, 18 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
-      <path d="M102 88 C84 76, 84 56, 102 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Driving</div>
-    <div class="card-title">Slow Roads</div>
-    <p class="card-desc">Endless scenic driving with smooth vibes and chill exploration</p>
-    <div class="card-stats">
-      <div class="card-stat">🌄 Scenic</div>
-      <div class="card-stat">🧘 Chill</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#2563eb,#1e40af)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="60" r="28" fill="#fff" opacity="0.9"/>
+<circle cx="60" cy="60" r="20" fill="#000"/>
+<text x="60" y="67" text-anchor="middle" font-size="18" fill="#fff" font-weight="700">8</text>
+<circle cx="20" cy="30" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="100" cy="30" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="30" cy="95" r="3" fill="#fff" opacity="0.6"/>
+<circle cx="90" cy="95" r="3" fill="#fff" opacity="0.6"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Arcade</div>
+<div class="card-title">8 Ball</div>
+<p class="card-desc">Classic 8-ball pool with smooth physics and clean controls</p>
+<div class="card-stats">
+<div class="card-stat">🎱 Pool</div>
+<div class="card-stat">🧠 Precision</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/drifthunters/">
-  <div class="card-image" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M28 70 L42 52 L82 52 L96 70 L84 78 L40 78 Z" fill="#fff" opacity="0.9"/>
-      <circle cx="45" cy="82" r="7" fill="#fff" opacity="0.9"/>
-      <circle cx="79" cy="82" r="7" fill="#fff" opacity="0.9"/>
-      <path d="M18 86 C34 80, 40 74, 54 70" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
-      <path d="M12 96 C34 92, 46 84, 64 80" stroke="#fff" stroke-width="2" opacity="0.45" fill="none" stroke-dasharray="5,5"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Racing</div>
-    <div class="card-title">Drift Hunters</div>
-    <p class="card-desc">Slide through corners, tune cars, and chase perfect drift lines</p>
-    <div class="card-stats">
-      <div class="card-stat">💨 Drift</div>
-      <div class="card-stat">🔧 Tuning</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/slowroads/">
+<div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#0369a1)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M52 10 L68 10 L78 110 L62 110 Z" fill="#fff" opacity="0.9"/>
+<path d="M42 110 L58 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
+<path d="M78 110 L62 10" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
+<path d="M18 88 C36 76, 36 56, 18 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
+<path d="M102 88 C84 76, 84 56, 102 44" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Driving</div>
+<div class="card-title">Slow Roads</div>
+<p class="card-desc">Endless scenic driving with smooth vibes and chill exploration</p>
+<div class="card-stats">
+<div class="card-stat">🌄 Scenic</div>
+<div class="card-stat">🧘 Chill</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/1v1.lol/">
-  <div class="card-image" style="background:linear-gradient(135deg,#ef4444,#7f1d1d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- player -->
-      <circle cx="60" cy="34" r="10" fill="#fff" opacity="0.9"/>
-      <path d="M60 44 L60 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 56 L36 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 56 L84 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 78 L44 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M60 78 L76 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/drifthunters/">
+<div class="card-image" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M28 70 L42 52 L82 52 L96 70 L84 78 L40 78 Z" fill="#fff" opacity="0.9"/>
+<circle cx="45" cy="82" r="7" fill="#fff" opacity="0.9"/>
+<circle cx="79" cy="82" r="7" fill="#fff" opacity="0.9"/>
+<path d="M18 86 C34 80, 40 74, 54 70" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
+<path d="M12 96 C34 92, 46 84, 64 80" stroke="#fff" stroke-width="2" opacity="0.45" fill="none" stroke-dasharray="5,5"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Racing</div>
+<div class="card-title">Drift Hunters</div>
+<p class="card-desc">Slide through corners, tune cars, and chase perfect drift lines</p>
+<div class="card-stats">
+<div class="card-stat">💨 Drift</div>
+<div class="card-stat">🔧 Tuning</div>
+</div>
+</div>
+</a>
 
-      <!-- build walls -->
-      <rect x="14" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
-      <rect x="86" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Shooter</div>
-    <div class="card-title">1v1.LOL</div>
-    <p class="card-desc">
-      Build, aim, and battle opponents in fast-paced competitive matches
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🔫 PvP</div>
-      <div class="card-stat">🧱 Build</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/1v1.lol/">
+<div class="card-image" style="background:linear-gradient(135deg,#ef4444,#7f1d1d)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="34" r="10" fill="#fff" opacity="0.9"/>
+<path d="M60 44 L60 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M60 56 L36 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M60 56 L84 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M60 78 L44 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M60 78 L76 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<rect x="14" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
+<rect x="86" y="64" width="20" height="20" stroke="#fff" stroke-width="2" opacity="0.6"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Shooter</div>
+<div class="card-title">1v1.LOL</div>
+<p class="card-desc">Build, aim, and battle opponents in fast-paced competitive matches</p>
+<div class="card-stats">
+<div class="card-stat">🔫 PvP</div>
+<div class="card-stat">🧱 Build</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/drivemad/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="26" y="54" width="68" height="18" rx="6" fill="#fff" opacity="0.9"/>
-      <rect x="46" y="42" width="28" height="14" rx="6" fill="#fff" opacity="0.75"/>
-      <circle cx="44" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <circle cx="82" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <path d="M10 88 L30 78 L50 88 L70 78 L90 88 L110 78" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
-    </svg>
-  </div>
-  <div class="card-content">
-    <div class="tag">Driving</div>
-    <div class="card-title">Drive Mad</div>
-    <p class="card-desc">Crazy physics driving levels that get harder and funnier fast</p>
-    <div class="card-stats">
-      <div class="card-stat">🚙 Physics</div>
-      <div class="card-stat">😵 Levels</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="26" y="54" width="68" height="18" rx="6" fill="#fff" opacity="0.9"/>
+<rect x="46" y="42" width="28" height="14" rx="6" fill="#fff" opacity="0.75"/>
+<circle cx="44" cy="78" r="8" fill="#fff" opacity="0.9"/>
+<circle cx="82" cy="78" r="8" fill="#fff" opacity="0.9"/>
+<path d="M10 88 L30 78 L50 88 L70 78 L90 88 L110 78" stroke="#fff" stroke-width="3" opacity="0.6" fill="none"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Driving</div>
+<div class="card-title">Drive Mad</div>
+<p class="card-desc">Crazy physics driving levels that get harder and funnier fast</p>
+<div class="card-stats">
+<div class="card-stat">🚙 Physics</div>
+<div class="card-stat">😵 Levels</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/retrobowl/">
-  <div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#1d4ed8)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- football -->
-      <ellipse cx="62" cy="58" rx="34" ry="22" fill="#fff" opacity="0.9" transform="rotate(-20 62 58)"/>
-      <path d="M48 58 L80 58" stroke="#000" stroke-width="4" opacity="0.9" transform="rotate(-20 64 58)"/>
-      <path d="M54 50 L54 66" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 54 58)"/>
-      <path d="M62 48 L62 68" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 62 58)"/>
-      <path d="M70 46 L70 70" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 70 58)"/>
-      <!-- motion lines -->
-      <path d="M14 62 C26 54, 26 42, 14 34" stroke="#fff" stroke-width="3" opacity="0.5" fill="none"/>
-      <path d="M18 78 C34 70, 34 56, 18 48" stroke="#fff" stroke-width="2" opacity="0.35" fill="none" stroke-dasharray="6,6"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Sports</div>
-    <div class="card-title">Retro Bowl</div>
-    <p class="card-desc">Manage your team, call the plays, and win the championship in pixel football style</p>
-    <div class="card-stats">
-      <div class="card-stat">🏈 Football</div>
-      <div class="card-stat">🧠 Strategy</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/retrobowl/">
+<div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#1d4ed8)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="62" cy="58" rx="34" ry="22" fill="#fff" opacity="0.9" transform="rotate(-20 62 58)"/>
+<path d="M48 58 L80 58" stroke="#000" stroke-width="4" opacity="0.9" transform="rotate(-20 64 58)"/>
+<path d="M54 50 L54 66" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 54 58)"/>
+<path d="M62 48 L62 68" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 62 58)"/>
+<path d="M70 46 L70 70" stroke="#000" stroke-width="2" opacity="0.8" transform="rotate(-20 70 58)"/>
+<path d="M14 62 C26 54, 26 42, 14 34" stroke="#fff" stroke-width="3" opacity="0.5" fill="none"/>
+<path d="M18 78 C34 70, 34 56, 18 48" stroke="#fff" stroke-width="2" opacity="0.35" fill="none" stroke-dasharray="6,6"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Sports</div>
+<div class="card-title">Retro Bowl</div>
+<p class="card-desc">Manage your team, call the plays, and win the championship in pixel football style</p>
+<div class="card-stats">
+<div class="card-stat">🏈 Football</div>
+<div class="card-stat">🧠 Strategy</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/flappybird/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- bird body -->
-      <circle cx="52" cy="60" r="18" fill="#fff" opacity="0.9"/>
-      <!-- wing -->
-      <ellipse cx="46" cy="66" rx="10" ry="6" fill="#000" opacity="0.15"/>
-      <!-- eye -->
-      <circle cx="58" cy="56" r="3" fill="#000"/>
-      <!-- beak -->
-      <polygon points="70,60 86,56 86,64" fill="#facc15"/>
-      <!-- pipes -->
-      <rect x="92" y="0" width="12" height="40" fill="#fff" opacity="0.35"/>
-      <rect x="92" y="80" width="12" height="40" fill="#fff" opacity="0.35"/>
-      <!-- motion lines -->
-      <path d="M10 54 L26 50" stroke="#fff" stroke-width="3" opacity="0.6"/>
-      <path d="M12 70 L28 66" stroke="#fff" stroke-width="2" opacity="0.4" stroke-dasharray="5,5"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Arcade</div>
-    <div class="card-title">Flappy Bird</div>
-    <p class="card-desc">Tap to fly, dodge the pipes, and survive as long as possible</p>
-    <div class="card-stats">
-      <div class="card-stat">🐤 Reflex</div>
-      <div class="card-stat">⚡ One-Tap</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="52" cy="60" r="18" fill="#fff" opacity="0.9"/>
+<ellipse cx="46" cy="66" rx="10" ry="6" fill="#000" opacity="0.15"/>
+<circle cx="58" cy="56" r="3" fill="#000"/>
+<polygon points="70,60 86,56 86,64" fill="#facc15"/>
+<rect x="92" y="0" width="12" height="40" fill="#fff" opacity="0.35"/>
+<rect x="92" y="80" width="12" height="40" fill="#fff" opacity="0.35"/>
+<path d="M10 54 L26 50" stroke="#fff" stroke-width="3" opacity="0.6"/>
+<path d="M12 70 L28 66" stroke="#fff" stroke-width="2" opacity="0.4" stroke-dasharray="5,5"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Arcade</div>
+<div class="card-title">Flappy Bird</div>
+<p class="card-desc">Tap to fly, dodge the pipes, and survive as long as possible</p>
+<div class="card-stats">
+<div class="card-stat">🐤 Reflex</div>
+<div class="card-stat">⚡ One-Tap</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/tnyfsh/">
-  <div class="card-image" style="background:linear-gradient(135deg,#06b6d4,#0e7490)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- water -->
-      <rect x="0" y="60" width="120" height="60" fill="#0ea5e9" opacity="0.85"/>
-      
-      <!-- fish -->
-      <ellipse cx="58" cy="78" rx="14" ry="8" fill="#fff" opacity="0.9"/>
-      <polygon points="72,78 90,70 90,86" fill="#fff" opacity="0.9"/>
-      <circle cx="52" cy="76" r="2" fill="#000"/>
-
-      <!-- hook -->
-      <line x1="80" y1="10" x2="80" y2="55" stroke="#fff" stroke-width="3"/>
-      <path d="M80 55 C78 62, 86 62, 84 70" stroke="#fff" stroke-width="3" fill="none"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Idle</div>
-    <div class="card-title">Tiny Fishing</div>
-    <p class="card-desc">
-      Relaxing idle fishing game where you upgrade gear and catch rare fish
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🎣 Idle</div>
-      <div class="card-stat">💰 Upgrades</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#06b6d4,#0e7490)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="60" width="120" height="60" fill="#0ea5e9" opacity="0.85"/>
+<ellipse cx="58" cy="78" rx="14" ry="8" fill="#fff" opacity="0.9"/>
+<polygon points="72,78 90,70 90,86" fill="#fff" opacity="0.9"/>
+<circle cx="52" cy="76" r="2" fill="#000"/>
+<line x1="80" y1="10" x2="80" y2="55" stroke="#fff" stroke-width="3"/>
+<path d="M80 55 C78 62, 86 62, 84 70" stroke="#fff" stroke-width="3" fill="none"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Idle</div>
+<div class="card-title">Tiny Fishing</div>
+<p class="card-desc">Relaxing idle fishing game where you upgrade gear and catch rare fish</p>
+<div class="card-stats">
+<div class="card-stat">🎣 Idle</div>
+<div class="card-stat">💰 Upgrades</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/tzfe/">
-  <div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- tiles -->
-      <rect x="14" y="14" width="40" height="40" rx="8" fill="#fff" opacity="0.9"/>
-      <rect x="66" y="14" width="40" height="40" rx="8" fill="#fff" opacity="0.75"/>
-      <rect x="14" y="66" width="40" height="40" rx="8" fill="#fff" opacity="0.75"/>
-      <rect x="66" y="66" width="40" height="40" rx="8" fill="#fff" opacity="0.9"/>
-
-      <!-- numbers -->
-      <text x="34" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#000">2</text>
-      <text x="86" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#000">4</text>
-      <text x="34" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#000">8</text>
-      <text x="86" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#000">2048</text>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Puzzle</div>
-    <div class="card-title">2048</div>
-    <p class="card-desc">
-      Slide and merge numbered tiles to reach the legendary 2048 tile
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🧩 Logic</div>
-      <div class="card-stat">⬆️ Strategy</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/tzfe/">
+<div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="14" y="14" width="40" height="40" rx="8" fill="#fff" opacity="0.9"/>
+<rect x="66" y="14" width="40" height="40" rx="8" fill="#fff" opacity="0.75"/>
+<rect x="14" y="66" width="40" height="40" rx="8" fill="#fff" opacity="0.75"/>
+<rect x="66" y="66" width="40" height="40" rx="8" fill="#fff" opacity="0.9"/>
+<text x="34" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#000">2</text>
+<text x="86" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#000">4</text>
+<text x="34" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#000">8</text>
+<text x="86" y="94" text-anchor="middle" font-size="14" font-weight="700" fill="#000">2048</text>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Puzzle</div>
+<div class="card-title">2048</div>
+<p class="card-desc">Slide and merge numbered tiles to reach the legendary 2048 tile</p>
+<div class="card-stats">
+<div class="card-stat">🧩 Logic</div>
+<div class="card-stat">⬆️ Strategy</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/socbros/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#166534)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- ball -->
-      <circle cx="60" cy="62" r="18" fill="#fff" opacity="0.9"/>
-      <polygon points="60,48 66,58 60,68 54,58" fill="#000" opacity="0.8"/>
-      <polygon points="48,60 58,66 58,54" fill="#000" opacity="0.8"/>
-      <polygon points="72,60 62,66 62,54" fill="#000" opacity="0.8"/>
-
-      <!-- players -->
-      <circle cx="28" cy="46" r="6" fill="#fff" opacity="0.8"/>
-      <path d="M28 52 L28 78" stroke="#fff" stroke-width="3"/>
-      <path d="M28 60 L18 68" stroke="#fff" stroke-width="3"/>
-      <path d="M28 60 L38 68" stroke="#fff" stroke-width="3"/>
-
-      <circle cx="92" cy="46" r="6" fill="#fff" opacity="0.8"/>
-      <path d="M92 52 L92 78" stroke="#fff" stroke-width="3"/>
-      <path d="M92 60 L82 68" stroke="#fff" stroke-width="3"/>
-      <path d="M92 60 L102 68" stroke="#fff" stroke-width="3"/>
-
-      <!-- motion -->
-      <path d="M16 86 C36 78, 48 72, 60 70" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
-      <path d="M60 70 C72 68, 84 62, 104 54" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Sports</div>
-    <div class="card-title">Soccer Bros</div>
-    <p class="card-desc">
-      Chaotic arcade soccer battles with wild physics and fast-paced action
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">⚽ Soccer</div>
-      <div class="card-stat">👥 PvP</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#22c55e,#166534)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="60" cy="62" r="18" fill="#fff" opacity="0.9"/>
+<polygon points="60,48 66,58 60,68 54,58" fill="#000" opacity="0.8"/>
+<polygon points="48,60 58,66 58,54" fill="#000" opacity="0.8"/>
+<polygon points="72,60 62,66 62,54" fill="#000" opacity="0.8"/>
+<circle cx="28" cy="46" r="6" fill="#fff" opacity="0.8"/>
+<path d="M28 52 L28 78" stroke="#fff" stroke-width="3"/>
+<path d="M28 60 L18 68" stroke="#fff" stroke-width="3"/>
+<path d="M28 60 L38 68" stroke="#fff" stroke-width="3"/>
+<circle cx="92" cy="46" r="6" fill="#fff" opacity="0.8"/>
+<path d="M92 52 L92 78" stroke="#fff" stroke-width="3"/>
+<path d="M92 60 L82 68" stroke="#fff" stroke-width="3"/>
+<path d="M92 60 L102 68" stroke="#fff" stroke-width="3"/>
+<path d="M16 86 C36 78, 48 72, 60 70" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
+<path d="M60 70 C72 68, 84 62, 104 54" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Sports</div>
+<div class="card-title">Soccer Bros</div>
+<p class="card-desc">Chaotic arcade soccer battles with wild physics and fast-paced action</p>
+<div class="card-stats">
+<div class="card-stat">⚽ Soccer</div>
+<div class="card-stat">👥 PvP</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/plnko/">
-  <div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- pegs -->
-      <circle cx="30" cy="28" r="4" fill="#fff" opacity="0.8"/>
-      <circle cx="60" cy="28" r="4" fill="#fff" opacity="0.8"/>
-      <circle cx="90" cy="28" r="4" fill="#fff" opacity="0.8"/>
-
-      <circle cx="20" cy="46" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="50" cy="46" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="80" cy="46" r="4" fill="#fff" opacity="0.7"/>
-      <circle cx="110" cy="46" r="4" fill="#fff" opacity="0.7"/>
-
-      <circle cx="30" cy="64" r="4" fill="#fff" opacity="0.6"/>
-      <circle cx="60" cy="64" r="4" fill="#fff" opacity="0.6"/>
-      <circle cx="90" cy="64" r="4" fill="#fff" opacity="0.6"/>
-
-      <!-- falling chip -->
-      <circle cx="60" cy="12" r="6" fill="#fff" opacity="0.95"/>
-      <path d="M60 18 C54 28, 66 36, 60 46" stroke="#fff" stroke-width="2" opacity="0.5" fill="none"/>
-      <path d="M60 46 C54 56, 66 64, 60 76" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
-
-      <!-- bins -->
-      <rect x="12" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
-      <rect x="32" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
-      <rect x="52" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
-      <rect x="72" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
-      <rect x="92" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Casino</div>
-    <div class="card-title">Stakes Plinko</div>
-    <p class="card-desc">
-      Drop the chip, watch it bounce, and hope it lands big in this luck-based classic
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🎯 Chance</div>
-      <div class="card-stat">💰 Risk</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="30" cy="28" r="4" fill="#fff" opacity="0.8"/>
+<circle cx="60" cy="28" r="4" fill="#fff" opacity="0.8"/>
+<circle cx="90" cy="28" r="4" fill="#fff" opacity="0.8"/>
+<circle cx="20" cy="46" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="50" cy="46" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="80" cy="46" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="110" cy="46" r="4" fill="#fff" opacity="0.7"/>
+<circle cx="30" cy="64" r="4" fill="#fff" opacity="0.6"/>
+<circle cx="60" cy="64" r="4" fill="#fff" opacity="0.6"/>
+<circle cx="90" cy="64" r="4" fill="#fff" opacity="0.6"/>
+<circle cx="60" cy="12" r="6" fill="#fff" opacity="0.95"/>
+<path d="M60 18 C54 28, 66 36, 60 46" stroke="#fff" stroke-width="2" opacity="0.5" fill="none"/>
+<path d="M60 46 C54 56, 66 64, 60 76" stroke="#fff" stroke-width="2" opacity="0.4" fill="none"/>
+<rect x="12" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
+<rect x="32" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
+<rect x="52" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
+<rect x="72" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
+<rect x="92" y="86" width="16" height="18" fill="#fff" opacity="0.35"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Casino</div>
+<div class="card-title">Stakes Plinko</div>
+<p class="card-desc">Drop the chip, watch it bounce, and hope it lands big in this luck-based classic</p>
+<div class="card-stats">
+<div class="card-stat">🎯 Chance</div>
+<div class="card-stat">💰 Risk</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/helios/">
-  <div class="card-image" style="background:linear-gradient(135deg,#6366f1,#4338ca)">
-    <svg viewBox="0 0 120 120" fill="none">
-      <rect x="20" y="24" width="80" height="56" rx="8" stroke="#fff" stroke-width="4"/>
-      <circle cx="40" cy="52" r="6" fill="#fff"/>
-      <circle cx="60" cy="52" r="6" fill="#fff"/>
-      <circle cx="80" cy="52" r="6" fill="#fff"/>
-      <path d="M30 90 L90 90" stroke="#fff" stroke-width="4"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Proxy</div>
-    <div class="card-title">Helios Browser</div>
-    <p class="card-desc">
-      Browse websites through the Helios web proxy
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🌐 Web</div>
-      <div class="card-stat">🛡 Proxy</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#6366f1,#4338ca)">
+<svg viewBox="0 0 120 120" fill="none">
+<rect x="20" y="24" width="80" height="56" rx="8" stroke="#fff" stroke-width="4"/>
+<circle cx="40" cy="52" r="6" fill="#fff"/>
+<circle cx="60" cy="52" r="6" fill="#fff"/>
+<circle cx="80" cy="52" r="6" fill="#fff"/>
+<path d="M30 90 L90 90" stroke="#fff" stroke-width="4"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Proxy</div>
+<div class="card-title">Helios Browser</div>
+<p class="card-desc">Browse websites through the Helios web proxy</p>
+<div class="card-stats">
+<div class="card-stat">🌐 Web</div>
+<div class="card-stat">🛡 Proxy</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/sandstone/">
-  <div class="card-image" style="background:linear-gradient(135deg,#64748b,#334155)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22 40 H98 V86 H22 Z" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M34 54 H86" stroke="#fff" stroke-width="4" opacity="0.8"/>
-      <path d="M34 66 H72" stroke="#fff" stroke-width="4" opacity="0.65"/>
-      <circle cx="90" cy="56" r="4" fill="#fff"/>
-      <circle cx="90" cy="68" r="4" fill="#fff" opacity="0.8"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Apps</div>
-    <div class="card-title">Sandstone</div>
-    <p class="card-desc">Experimental utility app (opens as a standalone page)</p>
-    <div class="card-stats">
-      <div class="card-stat">🧪 Experimental</div>
-      <div class="card-stat">🧰 Utility</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/sandstone/">
+<div class="card-image" style="background:linear-gradient(135deg,#64748b,#334155)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22 40 H98 V86 H22 Z" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M34 54 H86" stroke="#fff" stroke-width="4" opacity="0.8"/>
+<path d="M34 66 H72" stroke="#fff" stroke-width="4" opacity="0.65"/>
+<circle cx="90" cy="56" r="4" fill="#fff"/>
+<circle cx="90" cy="68" r="4" fill="#fff" opacity="0.8"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Apps</div>
+<div class="card-title">Sandstone</div>
+<p class="card-desc">Experimental utility app (opens as a standalone page)</p>
+<div class="card-stats">
+<div class="card-stat">🧪 Experimental</div>
+<div class="card-stat">🧰 Utility</div>
+</div>
+</div>
 </a>
 
- <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/silk/">
-  <div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- flowing lines -->
-      <path d="M20 70 C40 40, 80 40, 100 70" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
-      <path d="M20 50 C40 80, 80 80, 100 50" stroke="#fff" stroke-width="3" opacity="0.5" fill="none"/>
-      <path d="M20 90 C40 60, 80 60, 100 90" stroke="#fff" stroke-width="2" opacity="0.35" fill="none"/>
-
-      <!-- center glow -->
-      <circle cx="60" cy="60" r="10" fill="#fff" opacity="0.85"/>
-      <circle cx="60" cy="60" r="18" fill="#fff" opacity="0.25"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Art</div>
-    <div class="card-title">Silk</div>
-    <p class="card-desc">
-      Calming generative art that responds to your touch and movement
-    </p>
-    <div class="card-stats">
-      <div class="card-stat">🎨 Generative</div>
-      <div class="card-stat">🧘 Relaxing</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/silk/">
+<div class="card-image" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 70 C40 40, 80 40, 100 70" stroke="#fff" stroke-width="3" opacity="0.7" fill="none"/>
+<path d="M20 50 C40 80, 80 80, 100 50" stroke="#fff" stroke-width="3" opacity="0.5" fill="none"/>
+<path d="M20 90 C40 60, 80 60, 100 90" stroke="#fff" stroke-width="2" opacity="0.35" fill="none"/>
+<circle cx="60" cy="60" r="10" fill="#fff" opacity="0.85"/>
+<circle cx="60" cy="60" r="18" fill="#fff" opacity="0.25"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Art</div>
+<div class="card-title">Silk</div>
+<p class="card-desc">Calming generative art that responds to your touch and movement</p>
+<div class="card-stats">
+<div class="card-stat">🎨 Generative</div>
+<div class="card-stat">🧘 Relaxing</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/indsim/">
-  <div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- truck body -->
-      <rect x="22" y="52" width="56" height="22" rx="4" fill="#fff" opacity="0.9"/>
-      <!-- cab -->
-      <rect x="78" y="56" width="20" height="18" rx="3" fill="#fff" opacity="0.85"/>
-      <rect x="82" y="59" width="8" height="7" rx="1.5" fill="#000" opacity="0.25"/>
-      <!-- wheels -->
-      <circle cx="40" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <circle cx="40" cy="78" r="4" fill="#000" opacity="0.35"/>
-      <circle cx="86" cy="78" r="8" fill="#fff" opacity="0.9"/>
-      <circle cx="86" cy="78" r="4" fill="#000" opacity="0.35"/>
-      <!-- road -->
-      <path d="M12 94 H108" stroke="#fff" stroke-width="3" opacity="0.35" stroke-dasharray="8,8"/>
-      <!-- motion lines -->
-      <path d="M18 58 H10" stroke="#fff" stroke-width="3" opacity="0.4"/>
-      <path d="M18 66 H6" stroke="#fff" stroke-width="2" opacity="0.25"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Driving</div>
-    <div class="card-title">Indian Truck Simulator</div>
-    <p class="card-desc">Haul cargo, navigate highways, and master big-rig driving</p>
-    <div class="card-stats">
-      <div class="card-stat">🚛 Trucks</div>
-      <div class="card-stat">🛣️ Roads</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/indsim/">
+<div class="card-image" style="background:linear-gradient(135deg,#f97316,#c2410c)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="52" width="56" height="22" rx="4" fill="#fff" opacity="0.9"/>
+<rect x="78" y="56" width="20" height="18" rx="3" fill="#fff" opacity="0.85"/>
+<rect x="82" y="59" width="8" height="7" rx="1.5" fill="#000" opacity="0.25"/>
+<circle cx="40" cy="78" r="8" fill="#fff" opacity="0.9"/>
+<circle cx="40" cy="78" r="4" fill="#000" opacity="0.35"/>
+<circle cx="86" cy="78" r="8" fill="#fff" opacity="0.9"/>
+<circle cx="86" cy="78" r="4" fill="#000" opacity="0.35"/>
+<path d="M12 94 H108" stroke="#fff" stroke-width="3" opacity="0.35" stroke-dasharray="8,8"/>
+<path d="M18 58 H10" stroke="#fff" stroke-width="3" opacity="0.4"/>
+<path d="M18 66 H6" stroke="#fff" stroke-width="2" opacity="0.25"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Driving</div>
+<div class="card-title">Indian Truck Simulator</div>
+<p class="card-desc">Haul cargo, navigate highways, and master big-rig driving</p>
+<div class="card-stats">
+<div class="card-stat">🚛 Trucks</div>
+<div class="card-stat">🛣️ Roads</div>
+</div>
+</div>
 </a>
 
-  <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/jhnnytrig/">
-  <div class="card-image" style="background:linear-gradient(135deg,#ef4444,#7f1d1d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- agent -->
-      <circle cx="48" cy="38" r="9" fill="#fff" opacity="0.9"/>
-      <path d="M48 47 L48 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M48 58 L30 70" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M48 58 L66 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M48 78 L36 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
-      <path d="M48 78 L58 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
-
-      <!-- pistol -->
-      <rect x="68" y="60" width="18" height="6" rx="2" fill="#fff" opacity="0.9"/>
-      <rect x="80" y="58" width="10" height="4" rx="2" fill="#fff" opacity="0.85"/>
-      <path d="M72 66 L76 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
-
-      <!-- action lines -->
-      <path d="M94 56 L110 50" stroke="#fff" stroke-width="3" opacity="0.5"/>
-      <path d="M94 64 L112 64" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
-      <circle cx="106" cy="48" r="3" fill="#fff" opacity="0.7"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Action</div>
-    <div class="card-title">Johnny Trigger</div>
-    <p class="card-desc">Flip, aim, and take down targets in stylish slow-mo action</p>
-    <div class="card-stats">
-      <div class="card-stat">🔫 Shooter</div>
-      <div class="card-stat">🕶️ Style</div>
-    </div>
-  </div>
+<a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/jhnnytrig/">
+<div class="card-image" style="background:linear-gradient(135deg,#ef4444,#7f1d1d)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="48" cy="38" r="9" fill="#fff" opacity="0.9"/>
+<path d="M48 47 L48 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M48 58 L30 70" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M48 58 L66 66" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M48 78 L36 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M48 78 L58 102" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<rect x="68" y="60" width="18" height="6" rx="2" fill="#fff" opacity="0.9"/>
+<rect x="80" y="58" width="10" height="4" rx="2" fill="#fff" opacity="0.85"/>
+<path d="M72 66 L76 78" stroke="#fff" stroke-width="4" opacity="0.9"/>
+<path d="M94 56 L110 50" stroke="#fff" stroke-width="3" opacity="0.5"/>
+<path d="M94 64 L112 64" stroke="#fff" stroke-width="2" opacity="0.35" stroke-dasharray="6,6"/>
+<circle cx="106" cy="48" r="3" fill="#fff" opacity="0.7"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Action</div>
+<div class="card-title">Johnny Trigger</div>
+<p class="card-desc">Flip, aim, and take down targets in stylish slow-mo action</p>
+<div class="card-stats">
+<div class="card-stat">🔫 Shooter</div>
+<div class="card-stat">🕶️ Style</div>
+</div>
+</div>
 </a>
 
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/mncrft/demo/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- grass block -->
-      <rect x="26" y="34" width="68" height="60" rx="8" fill="#fff" opacity="0.9"/>
-      <rect x="26" y="34" width="68" height="18" rx="8" fill="#000" opacity="0.18"/>
-
-      <!-- pixel cracks -->
-      <path d="M38 58 H52 V72 H38 Z" fill="#000" opacity="0.12"/>
-      <path d="M56 62 H70 V76 H56 Z" fill="#000" opacity="0.10"/>
-      <path d="M74 54 H82 V62 H74 Z" fill="#000" opacity="0.10"/>
-
-      <!-- pickaxe -->
-      <path d="M78 34 L96 46" stroke="#fff" stroke-width="4" opacity="0.85"/>
-      <path d="M96 46 L88 54" stroke="#fff" stroke-width="4" opacity="0.85"/>
-      <path d="M90 40 L82 48" stroke="#fff" stroke-width="4" opacity="0.55"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">Sandbox</div>
-    <div class="card-title">Minecraft</div>
-    <p class="card-desc">Mine, build, and explore in an open-world sandbox adventure</p>
-    <div class="card-stats">
-      <div class="card-stat">⛏️ Build</div>
-      <div class="card-stat">🌍 Explore</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#22c55e,#15803d)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="26" y="34" width="68" height="60" rx="8" fill="#fff" opacity="0.9"/>
+<rect x="26" y="34" width="68" height="18" rx="8" fill="#000" opacity="0.18"/>
+<path d="M38 58 H52 V72 H38 Z" fill="#000" opacity="0.12"/>
+<path d="M56 62 H70 V76 H56 Z" fill="#000" opacity="0.10"/>
+<path d="M74 54 H82 V62 H74 Z" fill="#000" opacity="0.10"/>
+<path d="M78 34 L96 46" stroke="#fff" stroke-width="4" opacity="0.85"/>
+<path d="M96 46 L88 54" stroke="#fff" stroke-width="4" opacity="0.85"/>
+<path d="M90 40 L82 48" stroke="#fff" stroke-width="4" opacity="0.55"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">Sandbox</div>
+<div class="card-title">Minecraft</div>
+<p class="card-desc">Mine, build, and explore in an open-world sandbox adventure</p>
+<div class="card-stats">
+<div class="card-stat">⛏️ Build</div>
+<div class="card-stat">🌍 Explore</div>
+</div>
+</div>
 </a>
 
-<!-- Agar.io -->
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/agar/">
-  <div class="card-image" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- big cell -->
-      <circle cx="62" cy="62" r="26" fill="#fff" opacity="0.9"/>
-      <circle cx="54" cy="56" r="6" fill="#000" opacity="0.12"/>
-      <!-- small cells -->
-      <circle cx="28" cy="44" r="8" fill="#fff" opacity="0.55"/>
-      <circle cx="92" cy="34" r="6" fill="#fff" opacity="0.45"/>
-      <circle cx="30" cy="86" r="5" fill="#fff" opacity="0.35"/>
-      <!-- motion hint -->
-      <path d="M18 62 C26 58, 34 56, 42 56" stroke="#fff" stroke-width="3" opacity="0.35" fill="none"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">.io</div>
-    <div class="card-title">Agar.io</div>
-    <p class="card-desc">Grow by consuming cells—avoid bigger players and dominate the arena</p>
-    <div class="card-stats">
-      <div class="card-stat">🟢 Grow</div>
-      <div class="card-stat">⚔️ PvP</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#22c55e,#16a34a)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="62" cy="62" r="26" fill="#fff" opacity="0.9"/>
+<circle cx="54" cy="56" r="6" fill="#000" opacity="0.12"/>
+<circle cx="28" cy="44" r="8" fill="#fff" opacity="0.55"/>
+<circle cx="92" cy="34" r="6" fill="#fff" opacity="0.45"/>
+<circle cx="30" cy="86" r="5" fill="#fff" opacity="0.35"/>
+<path d="M18 62 C26 58, 34 56, 42 56" stroke="#fff" stroke-width="3" opacity="0.35" fill="none"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">.io</div>
+<div class="card-title">Agar.io</div>
+<p class="card-desc">Grow by consuming cells—avoid bigger players and dominate the arena</p>
+<div class="card-stats">
+<div class="card-stat">🟢 Grow</div>
+<div class="card-stat">⚔️ PvP</div>
+</div>
+</div>
 </a>
 
-<!-- Slither.io -->
 <a class="card" href="games/d49c51bc67ef9ab016a5277a44b724a3d098c15e9ea4e5295dc0e004a3243656/slither/">
-  <div class="card-image" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- snake body -->
-      <path d="M18 78 C34 58, 52 92, 66 66 C76 48, 92 52, 104 36"
-            stroke="#fff" stroke-width="10" opacity="0.9" stroke-linecap="round" fill="none"/>
-      <!-- head -->
-      <circle cx="104" cy="36" r="8" fill="#fff" opacity="0.95"/>
-      <circle cx="107" cy="34" r="2" fill="#000" opacity="0.35"/>
-      <!-- pellets -->
-      <circle cx="34" cy="40" r="3" fill="#fff" opacity="0.55"/>
-      <circle cx="54" cy="30" r="3" fill="#fff" opacity="0.45"/>
-      <circle cx="72" cy="40" r="3" fill="#fff" opacity="0.4"/>
-      <circle cx="82" cy="22" r="3" fill="#fff" opacity="0.35"/>
-    </svg>
-  </div>
-
-  <div class="card-content">
-    <div class="tag">.io</div>
-    <div class="card-title">Slither.io</div>
-    <p class="card-desc">Eat glowing pellets, grow longer, and outplay other snakes</p>
-    <div class="card-stats">
-      <div class="card-stat">🐍 Snake</div>
-      <div class="card-stat">⚡ Boost</div>
-    </div>
-  </div>
+<div class="card-image" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M18 78 C34 58, 52 92, 66 66 C76 48, 92 52, 104 36"
+      stroke="#fff" stroke-width="10" opacity="0.9" stroke-linecap="round" fill="none"/>
+<circle cx="104" cy="36" r="8" fill="#fff" opacity="0.95"/>
+<circle cx="107" cy="34" r="2" fill="#000" opacity="0.35"/>
+<circle cx="34" cy="40" r="3" fill="#fff" opacity="0.55"/>
+<circle cx="54" cy="30" r="3" fill="#fff" opacity="0.45"/>
+<circle cx="72" cy="40" r="3" fill="#fff" opacity="0.4"/>
+<circle cx="82" cy="22" r="3" fill="#fff" opacity="0.35"/>
+</svg>
+</div>
+<div class="card-content">
+<div class="tag">.io</div>
+<div class="card-title">Slither.io</div>
+<p class="card-desc">Eat glowing pellets, grow longer, and outplay other snakes</p>
+<div class="card-stats">
+<div class="card-stat">🐍 Snake</div>
+<div class="card-stat">⚡ Boost</div>
+</div>
+</div>
 </a>
+
 </div>
 </div>
 </div>
