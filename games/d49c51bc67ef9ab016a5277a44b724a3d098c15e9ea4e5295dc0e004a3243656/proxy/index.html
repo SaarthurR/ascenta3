@@ -2,120 +2,178 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
+    <!-- 🔥 REQUIRED for proper full-screen sizing -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Moonlight | Proxy Hub</title>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="proxy.css">
+
+    <!-- 🔥 Fullscreen layout fixes -->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body.proxy-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ui-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .top-nav {
+            flex: 0 0 auto;
+        }
+
+        /* MAIN WINDOW */
+        .window-container {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+
+            /* small margins only */
+            margin: 16px;
+            width: calc(100% - 32px);
+
+            min-height: 0; /* VERY IMPORTANT */
+        }
+
+        .iframe-wrapper {
+            flex: 1 1 auto;
+            position: relative;
+            min-height: 0; /* VERY IMPORTANT */
+        }
+
+        #proxy-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #000;
+        }
+    </style>
 </head>
+
 <body class="proxy-page">
-    <canvas id="starfield"></canvas>
 
-    <div class="ui-wrapper">
-        <nav class="top-nav">
-            <div class="nav-logo" onclick="window.location.href='main.html'" style="cursor:pointer">M // BACK</div>
-            
-            <div class="proxy-selector">
-                <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
-                <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
+<canvas id="starfield"></canvas>
+
+<div class="ui-wrapper">
+
+    <!-- ================= NAV ================= -->
+    <nav class="top-nav">
+        <div class="nav-logo" onclick="window.location.href='main.html'" style="cursor:pointer">
+            M // BACK
+        </div>
+
+        <div class="proxy-selector">
+            <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
+            <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
+        </div>
+
+        <div class="nav-links">
+            <span onclick="toggleFullscreen()" style="cursor:pointer; margin-right:20px;">
+                [ FULLSCREEN ]
+            </span>
+            <span class="nav-status">
+                TUNNEL: <span id="active-node-name">INTEL_EDU</span>
+            </span>
+        </div>
+    </nav>
+
+    <!-- ================= WINDOW ================= -->
+    <div class="window-container">
+
+        <div class="window-header">
+            <div class="status-indicator"></div>
+            <span class="window-title">SECURE_TUNNEL // ENCRYPTED_FEED</span>
+        </div>
+
+        <div class="iframe-wrapper">
+
+            <div id="loading-overlay">
+                <div class="spinner"></div>
+                <p id="load-text">ESTABLISHING ENCRYPTED LINK...</p>
             </div>
 
-            <div class="nav-links">
-                <span onclick="toggleFullscreen()" style="cursor:pointer; margin-right: 20px;">[ FULLSCREEN ]</span>
-                <span class="nav-status">TUNNEL: <span id="active-node-name">INTEL_EDU</span></span>
-            </div>
-        </nav>
+            <iframe
+                id="proxy-frame"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-popups">
+            </iframe>
 
-        <div class="window-container">
-            <div class="window-header">
-                <div class="status-indicator"></div>
-                <span class="window-title">SECURE_TUNNEL // ENCRYPTED_FEED</span>
-            </div>
-            
-            <div class="iframe-wrapper">
-                <div id="loading-overlay">
-                    <div class="spinner"></div>
-                    <p id="load-text">ESTABLISHING ENCRYPTED LINK...</p>
-                </div>
-                <iframe id="proxy-frame" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
-            </div>
         </div>
     </div>
+</div>
 
-    <script src="script.js"></script>
-    <script>
-        // Obfuscated Links
-        const nodes = {
-            1: "https://intelleducation.netlify.app/",
-            2: "https://vm.mathfilm.dk/"
-        };
+<script src="script.js"></script>
 
-        const frame = document.getElementById('proxy-frame');
-        const overlay = document.getElementById('loading-overlay');
-        const nodeNameDisplay = document.getElementById('active-node-name');
+<script>
+/* ===============================
+   PROXY LOGIC
+   =============================== */
 
-        function switchNode(id, btn) {
-            // UI Updates
-            document.querySelectorAll('.node-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Trigger Loading Effect
-            overlay.style.display = 'flex';
-            overlay.style.opacity = '1';
-            nodeNameDisplay.innerText = id === 1 ? "NEBULO" : "MATH";
+const nodes = {
+    1: "https://intelleducation.netlify.app/",
+    2: "https://vm.mathfilm.dk/"
+};
 
-            // Inject Source
-            setTimeout(() => {
-                frame.src = nodes[id];
-            }, 500);
-        }
+const frame = document.getElementById('proxy-frame');
+const overlay = document.getElementById('loading-overlay');
+const nodeNameDisplay = document.getElementById('active-node-name');
 
-        // Hide overlay when iframe finishes loading
-        frame.onload = () => {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 500);
-        };
+function switchNode(id, btn) {
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-
-        // Initialize with Node 1
-        window.onload = () => switchNode(1, document.querySelector('.node-btn'));
-
-        // Prevent Right-Click to hide "Inspect Frame"
-        document.addEventListener('contextmenu', e => e.preventDefault());
-
-        function switchNode(id, btn) {
     const frameContainer = document.querySelector('.window-container');
-    
-    // 1. Remove active class from all buttons
-    document.querySelectorAll('.node-btn').forEach(b => {
-        b.classList.remove('active', 'flicker-active');
-    });
 
-    // 2. Apply Flicker to the new button and the window
+    document.querySelectorAll('.node-btn')
+        .forEach(b => b.classList.remove('active', 'flicker-active'));
+
     btn.classList.add('active', 'flicker-active');
     frameContainer.classList.add('flicker-active');
 
-    // 3. Show Loading Overlay
     overlay.style.display = 'flex';
     overlay.style.opacity = '1';
-    nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM";
 
-    // 4. Swap the Source
+    nodeNameDisplay.innerText =
+        id === 1 ? "INTEL_EDU" : "MATH_VM";
+
     setTimeout(() => {
         frame.src = nodes[id];
-        
-        // Remove flicker class so it can be re-triggered later
+
         setTimeout(() => {
             frameContainer.classList.remove('flicker-active');
             btn.classList.remove('flicker-active');
         }, 400);
     }, 300);
 }
-    </script>
+
+frame.onload = () => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 400);
+};
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement)
+        document.documentElement.requestFullscreen();
+    else
+        document.exitFullscreen();
+}
+
+window.onload = () =>
+    switchNode(1, document.querySelector('.node-btn'));
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+
 </body>
 </html>
