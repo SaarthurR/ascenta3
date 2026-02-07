@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moonlight | Proxy Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="proxy.css">
+</head>
+<body class="proxy-page">
+    <canvas id="starfield"></canvas>
+
+    <div class="ui-wrapper">
+        <nav class="top-nav">
+            <div class="nav-logo" onclick="window.location.href='main.html'" style="cursor:pointer">M // BACK</div>
+            
+            <div class="proxy-selector">
+                <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
+                <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
+            </div>
+
+            <div class="nav-links">
+                <span onclick="toggleFullscreen()" style="cursor:pointer; margin-right: 20px;">[ FULLSCREEN ]</span>
+                <span class="nav-status">TUNNEL: <span id="active-node-name">INTEL_EDU</span></span>
+            </div>
+        </nav>
+
+        <div class="window-container">
+            <div class="window-header">
+                <div class="status-indicator"></div>
+                <span class="window-title">SECURE_TUNNEL // ENCRYPTED_FEED</span>
+            </div>
+            
+            <div class="iframe-wrapper">
+                <div id="loading-overlay">
+                    <div class="spinner"></div>
+                    <p id="load-text">ESTABLISHING ENCRYPTED LINK...</p>
+                </div>
+                <iframe id="proxy-frame" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Obfuscated Links
+        const nodes = {
+            1: "https://intelleducation.netlify.app/",
+            2: "https://vm.mathfilm.dk/"
+        };
+
+        const frame = document.getElementById('proxy-frame');
+        const overlay = document.getElementById('loading-overlay');
+        const nodeNameDisplay = document.getElementById('active-node-name');
+
+        function switchNode(id, btn) {
+            // UI Updates
+            document.querySelectorAll('.node-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Trigger Loading Effect
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+            nodeNameDisplay.innerText = id === 1 ? "NEBULO" : "MATH";
+
+            // Inject Source
+            setTimeout(() => {
+                frame.src = nodes[id];
+            }, 500);
+        }
+
+        // Hide overlay when iframe finishes loading
+        frame.onload = () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 500);
+        };
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        // Initialize with Node 1
+        window.onload = () => switchNode(1, document.querySelector('.node-btn'));
+
+        // Prevent Right-Click to hide "Inspect Frame"
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        function switchNode(id, btn) {
+    const frameContainer = document.querySelector('.window-container');
+    
+    // 1. Remove active class from all buttons
+    document.querySelectorAll('.node-btn').forEach(b => {
+        b.classList.remove('active', 'flicker-active');
+    });
+
+    // 2. Apply Flicker to the new button and the window
+    btn.classList.add('active', 'flicker-active');
+    frameContainer.classList.add('flicker-active');
+
+    // 3. Show Loading Overlay
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM";
+
+    // 4. Swap the Source
+    setTimeout(() => {
+        frame.src = nodes[id];
+        
+        // Remove flicker class so it can be re-triggered later
+        setTimeout(() => {
+            frameContainer.classList.remove('flicker-active');
+            btn.classList.remove('flicker-active');
+        }, 400);
+    }, 300);
+}
+    </script>
+</body>
+</html>
