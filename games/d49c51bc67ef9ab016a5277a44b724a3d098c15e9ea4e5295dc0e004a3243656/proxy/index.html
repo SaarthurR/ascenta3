@@ -2,178 +2,393 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <!-- 🔥 REQUIRED for proper full-screen sizing -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Moonlight | Proxy Hub</title>
-
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="proxy.css">
-
-    <!-- 🔥 Fullscreen layout fixes -->
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body.proxy-page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        body {
+            font-family: 'Syncopate', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
         }
 
+        .proxy-page {
+            position: relative;
+        }
+
+        /* Starfield Canvas */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* UI Wrapper */
         .ui-wrapper {
-            flex: 1;
+            position: relative;
+            z-index: 1;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 0;
         }
 
+        /* Top Navigation */
         .top-nav {
-            flex: 0 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
-        /* MAIN WINDOW */
+        .nav-logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .nav-logo:hover {
+            opacity: 0.7;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+
+        .nav-status {
+            opacity: 0.6;
+        }
+
+        /* Proxy Selector */
+        .proxy-selector {
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+
+        .node-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 2px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .node-btn::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: currentColor;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .node-btn:hover:not(.active) {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .node-btn.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            transform: translateY(0);
+        }
+
+        /* Flicker Animation */
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            10% { opacity: 0.8; }
+            20% { opacity: 1; }
+            30% { opacity: 0.9; }
+            40% { opacity: 1; }
+        }
+
+        .flicker-active {
+            animation: flicker 0.4s ease-in-out;
+        }
+
+        /* Window Container */
         .window-container {
-            flex: 1 1 auto;
+            flex: 1;
+            margin: 20px 60px 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
 
-            /* small margins only */
-            margin: 16px;
-            width: calc(100% - 32px);
+        .window-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-            min-height: 0; /* VERY IMPORTANT */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 15px;
+            box-shadow: 0 0 8px #00ff00;
+        }
+
+        .window-title {
+            font-family: 'Syncopate';
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            opacity: 0.6;
         }
 
         .iframe-wrapper {
-            flex: 1 1 auto;
             position: relative;
-            min-height: 0; /* VERY IMPORTANT */
+            flex: 1;
+            width: 100%;
         }
 
         #proxy-frame {
             width: 100%;
             height: 100%;
             border: none;
-            display: block;
             background: #000;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        #loading-overlay p {
+            font-family: 'Syncopate';
+            font-size: 0.5rem;
+            letter-spacing: 3px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 15px 20px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .window-container {
+                margin: 15px 20px 20px;
+            }
+
+            .proxy-selector {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
-
 <body class="proxy-page">
+    <canvas id="starfield"></canvas>
 
-<canvas id="starfield"></canvas>
-
-<div class="ui-wrapper">
-
-    <!-- ================= NAV ================= -->
-    <nav class="top-nav">
-        <div class="nav-logo" onclick="window.location.href='main.html'" style="cursor:pointer">
-            M // BACK
-        </div>
-
-        <div class="proxy-selector">
-            <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
-            <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
-        </div>
-
-        <div class="nav-links">
-            <span onclick="toggleFullscreen()" style="cursor:pointer; margin-right:20px;">
-                [ FULLSCREEN ]
-            </span>
-            <span class="nav-status">
-                TUNNEL: <span id="active-node-name">INTEL_EDU</span>
-            </span>
-        </div>
-    </nav>
-
-    <!-- ================= WINDOW ================= -->
-    <div class="window-container">
-
-        <div class="window-header">
-            <div class="status-indicator"></div>
-            <span class="window-title">SECURE_TUNNEL // ENCRYPTED_FEED</span>
-        </div>
-
-        <div class="iframe-wrapper">
-
-            <div id="loading-overlay">
-                <div class="spinner"></div>
-                <p id="load-text">ESTABLISHING ENCRYPTED LINK...</p>
+    <div class="ui-wrapper">
+        <nav class="top-nav">
+            <div class="nav-logo" onclick="window.location.href='main.html'" style="cursor:pointer">M // BACK</div>
+            
+            <div class="proxy-selector">
+                <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
+                <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
             </div>
 
-            <iframe
-                id="proxy-frame"
-                sandbox="allow-forms allow-scripts allow-same-origin allow-popups">
-            </iframe>
+            <div class="nav-links">
+                <span onclick="toggleFullscreen()" style="cursor:pointer; margin-right: 20px;">[ FULLSCREEN ]</span>
+                <span class="nav-status">TUNNEL: <span id="active-node-name">INTEL_EDU</span></span>
+            </div>
+        </nav>
 
+        <div class="window-container">
+            <div class="window-header">
+                <div class="status-indicator"></div>
+                <span class="window-title">SECURE_TUNNEL // ENCRYPTED_FEED</span>
+            </div>
+            
+            <div class="iframe-wrapper">
+                <div id="loading-overlay">
+                    <div class="spinner"></div>
+                    <p id="load-text">ESTABLISHING ENCRYPTED LINK...</p>
+                </div>
+                <iframe id="proxy-frame" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <script>
+        // Starfield Animation
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-<script>
-/* ===============================
-   PROXY LOGIC
-   =============================== */
+        const stars = [];
+        const numStars = 200;
 
-const nodes = {
-    1: "https://intelleducation.netlify.app/",
-    2: "https://vm.mathfilm.dk/"
-};
+        for (let i = 0; i < numStars; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
 
-const frame = document.getElementById('proxy-frame');
-const overlay = document.getElementById('loading-overlay');
-const nodeNameDisplay = document.getElementById('active-node-name');
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            
+            requestAnimationFrame(drawStars);
+        }
 
-function switchNode(id, btn) {
+        drawStars();
 
-    const frameContainer = document.querySelector('.window-container');
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
 
-    document.querySelectorAll('.node-btn')
-        .forEach(b => b.classList.remove('active', 'flicker-active'));
+        // Proxy Functionality
+        const nodes = {
+            1: "https://intelleducation.netlify.app/",
+            2: "https://vm.mathfilm.dk/"
+        };
 
-    btn.classList.add('active', 'flicker-active');
-    frameContainer.classList.add('flicker-active');
+        const frame = document.getElementById('proxy-frame');
+        const overlay = document.getElementById('loading-overlay');
+        const nodeNameDisplay = document.getElementById('active-node-name');
 
-    overlay.style.display = 'flex';
-    overlay.style.opacity = '1';
+        function switchNode(id, btn) {
+            const frameContainer = document.querySelector('.window-container');
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.node-btn').forEach(b => {
+                b.classList.remove('active', 'flicker-active');
+            });
 
-    nodeNameDisplay.innerText =
-        id === 1 ? "INTEL_EDU" : "MATH_VM";
+            // Apply Flicker to the new button and the window
+            btn.classList.add('active', 'flicker-active');
+            frameContainer.classList.add('flicker-active');
 
-    setTimeout(() => {
-        frame.src = nodes[id];
+            // Show Loading Overlay
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+            nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM";
 
-        setTimeout(() => {
-            frameContainer.classList.remove('flicker-active');
-            btn.classList.remove('flicker-active');
-        }, 400);
-    }, 300);
-}
+            // Swap the Source
+            setTimeout(() => {
+                frame.src = nodes[id];
+                
+                // Remove flicker class so it can be re-triggered later
+                setTimeout(() => {
+                    frameContainer.classList.remove('flicker-active');
+                    btn.classList.remove('flicker-active');
+                }, 400);
+            }, 300);
+        }
 
-frame.onload = () => {
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 400);
-};
+        // Hide overlay when iframe finishes loading
+        frame.onload = () => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 500);
+        };
 
-function toggleFullscreen() {
-    if (!document.fullscreenElement)
-        document.documentElement.requestFullscreen();
-    else
-        document.exitFullscreen();
-}
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
 
-window.onload = () =>
-    switchNode(1, document.querySelector('.node-btn'));
+        // Initialize with Node 1
+        window.onload = () => {
+            switchNode(1, document.querySelector('.node-btn'));
+        };
 
-document.addEventListener('contextmenu', e => e.preventDefault());
-</script>
-
+        // Prevent Right-Click to hide "Inspect Frame"
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
 </body>
 </html>
