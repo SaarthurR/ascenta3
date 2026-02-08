@@ -260,6 +260,7 @@
             <div class="proxy-selector">
                 <button class="node-btn active" onclick="switchNode(1, this)">PROXY_01</button>
                 <button class="node-btn" onclick="switchNode(2, this)">PROXY_02</button>
+                <button class="node-btn" onclick="switchNode(3, this)">PROXY_03</button>
             </div>
 
             <div class="nav-links">
@@ -331,8 +332,9 @@
 
         // Proxy Functionality
         const nodes = {
-            1: "https://nirbytesovercloaked.ho-danone.id/",
+            1: "https://nirbytesovercloaked.ho-danone.id/"
             2: "https://nirfern.ho-danone.id/"
+            3: "https://helanirmg.riseelevetors.com/"
         };
 
         const frame = document.getElementById('proxy-frame');
@@ -354,7 +356,7 @@
             // Show Loading Overlay
             overlay.style.display = 'flex';
             overlay.style.opacity = '1';
-            nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM";
+            nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM"; "SCIENCE_VM;
 
             // Swap the Source
             setTimeout(() => {
