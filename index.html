@@ -8,6 +8,28 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap');
 
+.search-wrap{
+  margin: 28px auto 40px;
+  max-width: 420px;
+}
+
+#gameSearch{
+  width:100%;
+  padding:14px 18px;
+  border-radius:10px;
+  border:1px solid #222;
+  background:#111;
+  color:#fff;
+  font-size:14px;
+  outline:none;
+  transition:.2s;
+}
+
+#gameSearch:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 2px rgba(99,102,241,.25);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 
 body{
@@ -570,6 +592,9 @@ gap:6px;
 <div id="hub">
 <div class="hub-wrap">
 <div class="hub-header">
+<div class="search-wrap">
+  <input id="gameSearch" type="text" placeholder="Search games..." />
+</div>
 <div class="hub-title">🎮 Game Hub</div>
 <div class="hub-sub">Choose your experience. High-performance games optimized for maximum entertainment.</div>
 </div>
@@ -1170,6 +1195,21 @@ document.body.style.overflow="auto";
 document.body.style.height="auto";
 },500);
 }
+/* Game search */
+const search = document.getElementById("gameSearch");
+
+if (search) {
+  search.addEventListener("input", () => {
+    const term = search.value.trim().toLowerCase();
+    document.querySelectorAll(".card").forEach((card) => {
+      const titleEl = card.querySelector(".card-title");
+      const title = (titleEl?.textContent || "").toLowerCase();
+      card.style.display = title.includes(term) ? "" : "none";
+    });
+  });
+}
+
+
 </script>
 
 </body>
