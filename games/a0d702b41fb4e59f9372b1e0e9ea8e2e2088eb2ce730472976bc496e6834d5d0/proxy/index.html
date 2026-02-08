@@ -356,7 +356,14 @@
             // Show Loading Overlay
             overlay.style.display = 'flex';
             overlay.style.opacity = '1';
-            nodeNameDisplay.innerText = id === 1 ? "INTEL_EDU" : "MATH_VM"; "SCIENCE_VM;
+            const names = {
+    1: "INTEL_EDU",
+    2: "MATH_VM",
+    3: "SCIENCE_VM" // rename if needed
+};
+
+nodeNameDisplay.innerText = names[id];
+
 
             // Swap the Source
             setTimeout(() => {
