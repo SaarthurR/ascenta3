@@ -1152,7 +1152,7 @@ const btn=document.getElementById('unlockBtn');
 btn.addEventListener('click',tryUnlock);
 input.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
 
-// UI convenience for the current tab; the server-side cookie still guards /games.
+// auto-skip if already unlocked this session
 if(sessionStorage.getItem('ascenta_unlocked')==='1'){
   // skip directly to hub on reload
   setTimeout(()=>{ enterHub(true); }, 30);
@@ -1210,34 +1210,33 @@ async function tryUnlock(){
 }
 
 function beginWarp(){
-  // PHASE 1 — fade out all lock text/UI, leave only the starry background
-  //          (1100ms — slow, deliberate; "access granted" lingers a beat)
-  lock.style.transition='opacity 1.1s ease';
+  // PHASE 1 — warp begins IMMEDIATELY. Stars start drifting then accelerate.
+  //          The lock text fades concurrently so it feels like we're flying
+  //          THROUGH the text, not waiting for it to clear.
+  mode='warp';
+  warpStart=performance.now();
+  stars=[];
+
+  // text dissolves while we're already moving
+  lock.style.transition='opacity 1.4s ease';
   lock.style.opacity='0';
+  // remove from layout once invisible so it doesn't capture clicks
+  setTimeout(()=>{ if(lock.parentNode) lock.style.pointerEvents='none'; }, 60);
 
-  // PHASE 2 — after text is gone, the warp begins.
-  //          Stars accelerate radially. Build over ~1.6s.
-  setTimeout(()=>{
-    mode='warp';
-    warpStart=performance.now();
-    stars=[];
-  }, 1150);
-
-  // PHASE 3 — speed crescendos to white. Fade the flash IN slowly so the
-  //           whiteout feels like it's overtaking you, not slammed on.
-  const flashInDur = 1300; // slower fade-in (was 700)
-  const flashStartDelay = 1150 + 1500; // begin whiteout ~1.5s into warp
+  // PHASE 2 — speed crescendos to white. The warp curve already ramps slowly
+  //           then hard; we just time the white veil to peak after streaks max.
+  const flashInDur = 1300;
+  const flashStartDelay = 1700; // begin whiteout ~1.7s in (warp at full tilt)
   setTimeout(()=>{
     flash.style.transition='opacity '+flashInDur+'ms cubic-bezier(.5,0,.7,.4)';
     flash.style.opacity='1';
   }, flashStartDelay);
 
-  // PHASE 4 — once screen is fully white, swap lock -> hub behind the veil,
+  // PHASE 3 — once screen is fully white, swap lock -> hub behind the veil,
   //           then fade the white away slowly to reveal the hub.
   const swapDelay = flashStartDelay + flashInDur + 80;
   setTimeout(()=>{
     enterHub(false);
-    // hold on white briefly so the hub settles in DOM, then fade slowly
     setTimeout(()=>{
       flash.style.transition='opacity 1700ms ease';
       flash.style.opacity='0';
@@ -1441,43 +1440,49 @@ function openDetail(id, srcEl){
 
 function closeDetail(){
   if(!currentGame) return;
-  const t = targetRect();
+  // recompute against the LIVE current size of the detail panel — not the
+  // original target rect — so the FLIP math stays accurate even after resize
+  const live = detail.getBoundingClientRect();
   const r = (detail._src && detail._src.getBoundingClientRect()) || originRect;
-  if(r){
-    const dx = r.left - t.x;
-    const dy = r.top - t.y;
-    const sx = r.width / t.w;
-    const sy = r.height / t.h;
-    // commit + cancel the open animation so close starts from a clean style
+  if(r && live.width>0 && live.height>0){
+    const dx = r.left - live.left;
+    const dy = r.top  - live.top;
+    const sx = r.width  / live.width;
+    const sy = r.height / live.height;
+    // cancel the open animation cleanly
     if(detail._anim){
-      try{ detail._anim.commitStyles(); }catch(e){}
       try{ detail._anim.cancel(); }catch(e){}
       detail._anim=null;
     }
+    // ensure the panel sits at its current visual position before animating
+    detail.style.transform='translate(0,0) scale(1,1)';
+    detail.style.transformOrigin='top left';
     const anim = detail.animate(
       [
         {transform:'translate(0,0) scale(1,1)', opacity:1},
-        {transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`, opacity:0.4}
+        {transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`, opacity:0}
       ],
-      {duration:360, easing:'cubic-bezier(.4,.0,.2,1)', fill:'forwards'}
+      {duration:380, easing:'cubic-bezier(.4,0,.2,1)', fill:'forwards'}
     );
     detail._anim=anim;
     anim.onfinish=()=>{
+      // restore source card BEFORE clearing the detail so there's no flash of nothing
+      if(detail._src) detail._src.style.visibility='';
       detail.classList.remove('live');
       detail.style.cssText='';
-      detail.style.transform='';
-      if(detail._src) detail._src.style.visibility='';
       scrim.classList.remove('on');
       document.body.style.overflow='auto';
       currentGame=null;
       detail._anim=null;
     };
-  } else {
-    detail.classList.remove('live');
-    scrim.classList.remove('on');
-    document.body.style.overflow='auto';
-    currentGame=null;
+    return;
   }
+  // fallback (no source rect): just hide
+  detail.classList.remove('live');
+  detail.style.cssText='';
+  scrim.classList.remove('on');
+  document.body.style.overflow='auto';
+  currentGame=null;
 }
 
 scrim.addEventListener('click',closeDetail);
