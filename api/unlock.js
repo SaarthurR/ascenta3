@@ -1,16 +1,8 @@
+import { buildSessionCookie, createSessionValue } from "../lib/session.mjs";
+
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
 const SESSION_SECRET = process.env.SESSION_SECRET;
-
-let sessionHelpersPromise;
-
-function getSessionHelpers() {
-  if (!sessionHelpersPromise) {
-    sessionHelpersPromise = import("../lib/session.mjs");
-  }
-
-  return sessionHelpersPromise;
-}
 
 function shouldUseSecureCookies(req) {
   const forwardedProto = req.headers["x-forwarded-proto"];
@@ -22,7 +14,6 @@ function shouldUseSecureCookies(req) {
 }
 
 async function grantSession(res, req) {
-  const { buildSessionCookie, createSessionValue } = await getSessionHelpers();
   const sessionValue = await createSessionValue(SESSION_SECRET);
 
   res.setHeader("Set-Cookie", buildSessionCookie(sessionValue, {
