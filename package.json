@@ -1,0 +1,8 @@
+{
+  "name": "ascenta3",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/functions": "^3.5.0"
+  }
+}
