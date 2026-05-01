@@ -1,5 +1,34 @@
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
+let sessionHelpersPromise;
+
+function getSessionHelpers() {
+  if (!sessionHelpersPromise) {
+    sessionHelpersPromise = import("../lib/session.mjs");
+  }
+
+  return sessionHelpersPromise;
+}
+
+function shouldUseSecureCookies(req) {
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const normalizedProto = Array.isArray(forwardedProto)
+    ? forwardedProto[0]
+    : String(forwardedProto || "").split(",")[0].trim();
+
+  return normalizedProto === "https" || process.env.NODE_ENV === "production";
+}
+
+async function grantSession(res, req) {
+  const { buildSessionCookie, createSessionValue } = await getSessionHelpers();
+  const sessionValue = await createSessionValue(SESSION_SECRET);
+
+  res.setHeader("Set-Cookie", buildSessionCookie(sessionValue, {
+    secure: shouldUseSecureCookies(req),
+  }));
+}
 
 function documentUrl(collection, id) {
   const path = `${encodeURIComponent(collection)}/${encodeURIComponent(id)}`;
@@ -73,12 +102,18 @@ async function readJsonBody(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
   if (!FIREBASE_API_KEY || !FIREBASE_PROJECT_ID) {
     return res.status(500).json({
       error: "Unlock service is not configured",
+    });
+  }
+
+  if (!SESSION_SECRET) {
+    return res.status(500).json({
+      error: "Session secret is not configured",
     });
   }
 
@@ -95,6 +130,7 @@ module.exports = async function handler(req, res) {
 
     const adminDoc = await getDocument("admin_keys", key);
     if (adminDoc) {
+      await grantSession(res, req);
       return res.status(200).json({ status: "granted" });
     }
 
@@ -105,6 +141,7 @@ module.exports = async function handler(req, res) {
         time: { integerValue: String(Date.now()) },
       });
       await deleteDocument("keys", key);
+      await grantSession(res, req);
       return res.status(200).json({ status: "granted" });
     }
 
@@ -112,6 +149,7 @@ module.exports = async function handler(req, res) {
     if (usedDoc) {
       const usedHwid = usedDoc.fields?.hwid?.stringValue ?? "";
       if (usedHwid === hwid) {
+        await grantSession(res, req);
         return res.status(200).json({ status: "granted" });
       }
 
@@ -123,4 +161,4 @@ module.exports = async function handler(req, res) {
     console.error("Unlock failed", error);
     return res.status(500).json({ error: "Unlock service failed" });
   }
-};
+}
