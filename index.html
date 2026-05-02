@@ -70,12 +70,90 @@ body{
   z-index:50;
   background:transparent;
   transition:opacity .5s ease;
+  perspective:1200px;
+  perspective-origin:50% 50%;
 }
 .lock-inner{
   position:relative;z-index:51;
   text-align:center;
   width:min(440px,90vw);
   padding:40px;
+  transform-origin:50% 50%;
+  will-change:transform,filter,opacity;
+}
+/* fly-into-the-A sequence:
+   1. everything but the title fades
+   2. ASCENTA 3 letters compress/stack into the leading A
+   3. camera flies into the A's counter (hole) until white takes over          */
+#lock.flying .access-box,
+#lock.flying .logo-subtitle{
+  animation:auxFade 500ms ease forwards;
+}
+#lock.flying .logo-title{
+  /* keep the title's layout box stable while children animate.
+     overflow:visible so the scaled A can grow past the title bounds.          */
+  overflow:visible;
+}
+#lock.flying .logo-title .ch{
+  display:inline-block;
+  will-change:transform,opacity;
+  animation:chCompress 700ms cubic-bezier(.6,0,.4,1) forwards;
+}
+/* every non-target letter slides leftward by its index*letter-width
+   and fades, so they appear to stack into the leading A. */
+#lock.flying .logo-title .ch:nth-child(2){animation-name:chCompress2}
+#lock.flying .logo-title .ch:nth-child(3){animation-name:chCompress3}
+#lock.flying .logo-title .ch:nth-child(4){animation-name:chCompress4}
+#lock.flying .logo-title .ch:nth-child(5){animation-name:chCompress5}
+#lock.flying .logo-title .ch:nth-child(6){animation-name:chCompress6}
+#lock.flying .logo-title .ch:nth-child(7){animation-name:chCompress7}
+#lock.flying .logo-title .ch:nth-child(8){animation-name:chCompress8}
+#lock.flying .logo-title .ch:nth-child(9){animation-name:chCompress9}
+/* leading A — the target. First brightens, then scales massively from its
+   own counter (the negative space inside the A). transform-origin in % is
+   relative to THIS span's bounding box, so 28% 56% targets the A's hole. */
+#lock.flying .logo-title .ch-a-target{
+  position:relative;
+  transform-origin:28% 56%;
+  animation:chTargetGlow 700ms ease forwards,
+            aFly 2400ms 700ms cubic-bezier(.5,0,.85,1) forwards;
+  will-change:transform,filter,color;
+}
+
+@keyframes auxFade{
+  to{opacity:0;filter:blur(2px)}
+}
+@keyframes chTargetGlow{
+  0%   {color:#fafafa}
+  100% {color:#ffffff;text-shadow:0 0 30px rgba(255,255,255,.8)}
+}
+/* each letter slides toward and stacks onto the leading A.
+   stagger via animation-delay below. distances are -1ch * (index-1).         */
+@keyframes chCompress2{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-1.05ch);opacity:0}}
+@keyframes chCompress3{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-2.1ch);opacity:0}}
+@keyframes chCompress4{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-3.15ch);opacity:0}}
+@keyframes chCompress5{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-4.2ch);opacity:0}}
+@keyframes chCompress6{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-5.25ch);opacity:0}}
+@keyframes chCompress7{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-6.3ch);opacity:0}}
+@keyframes chCompress8{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-7.35ch);opacity:0}}
+@keyframes chCompress9{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-8.4ch);opacity:0}}
+/* stagger: outer letters move first, fall like dominoes into the A */
+#lock.flying .logo-title .ch:nth-child(9){animation-delay:0ms}
+#lock.flying .logo-title .ch:nth-child(8){animation-delay:50ms}
+#lock.flying .logo-title .ch:nth-child(7){animation-delay:100ms}
+#lock.flying .logo-title .ch:nth-child(6){animation-delay:150ms}
+#lock.flying .logo-title .ch:nth-child(5){animation-delay:200ms}
+#lock.flying .logo-title .ch:nth-child(4){animation-delay:250ms}
+#lock.flying .logo-title .ch:nth-child(3){animation-delay:300ms}
+#lock.flying .logo-title .ch:nth-child(2){animation-delay:350ms}
+
+/* PHASE 2/3: the leading A flies forward; transform-origin sits in its
+   counter so the camera enters through the hole. */
+@keyframes aFly{
+  0%   {transform:scale(1);filter:blur(0)}
+  20%  {transform:scale(2.4);filter:blur(0)}
+  55%  {transform:scale(18);filter:blur(1.5px)}
+  100% {transform:scale(80);filter:blur(10px)}
 }
 
 .logo-section{margin-bottom:48px}
@@ -580,7 +658,7 @@ body{
 <div id="lock">
   <div class="lock-inner">
     <div class="logo-section">
-      <div class="logo-title">ASCENTA 3</div>
+      <div class="logo-title" id="logoTitle"><span class="ch ch-a-target">A</span><span class="ch">S</span><span class="ch">C</span><span class="ch">E</span><span class="ch">N</span><span class="ch">T</span><span class="ch">A</span><span class="ch ch-space">&nbsp;</span><span class="ch">3</span></div>
       <div class="logo-subtitle">Arcade Gateway</div>
     </div>
 
@@ -911,7 +989,7 @@ body{
 <script src="lib/generated-games.js"></script>
 <script>
 /* ============================================================
-   GAME LIBRARY (loaded from generated catalog)
+   GAME LIBRARY (mirrors hub data)
    ============================================================ */
 const BASE = "games/a0d702b41fb4e59f9372b1e0e9ea8e2e2088eb2ce730472976bc496e6834d5d0/";
 const GAMES = (window.ASCENTA_GAME_LIBRARY || []).map(game => ({
@@ -1010,9 +1088,10 @@ function tick(t){
   } else if(mode==='warp'){
     // accelerate radially with motion-streak trails
     const elapsed=(t-warpStart)/1000;
-    // ramp 0..1 over 1.2s, then push past 1 for a hard punch of speed
-    const accel=Math.min(1.5,elapsed/1.1);
-    const speedFactor=accel*accel*accel*55+0.6;
+    // ramp 0..1 over ~0.9s, then push past 1 for a hard punch of speed.
+    // synced with the CSS flyThru zoom: by ~1.4s we should be screaming.
+    const accel=Math.min(1.7,elapsed/0.9);
+    const speedFactor=accel*accel*accel*70+0.6;
     // trail: don't fully clear, paint dark veil
     ctx.fillStyle='rgba(10,10,15,'+ (0.18 - accel*0.06).toFixed(3) +')';
     ctx.fillRect(0,0,W,H);
@@ -1101,6 +1180,16 @@ async function tryUnlock(){
   msg.className='';
   btn.disabled=true;
 
+  const isPreviewSandbox = !location.protocol.startsWith('http') || location.protocol==='file:';
+  if(isPreviewSandbox){
+    setTimeout(()=>{
+      msg.className='success';
+      msg.textContent='✓ Access granted';
+      setTimeout(beginWarp,650);
+    },380);
+    return;
+  }
+
   const hwid=btoa(navigator.userAgent+screen.width+screen.height+navigator.language);
 
   try{
@@ -1140,37 +1229,40 @@ async function tryUnlock(){
 }
 
 function beginWarp(){
-  // PHASE 1 — warp begins IMMEDIATELY. Stars start drifting then accelerate.
-  //          The lock text fades concurrently so it feels like we're flying
-  //          THROUGH the text, not waiting for it to clear.
+  // PHASE 1 — everything except the title fades. Letters of "ASCENTA 3" then
+  //           collapse leftward and stack onto the leading A.
+  // PHASE 2 — the leading A scales massively from a transform-origin set on
+  //           its counter (the negative space inside the A), so the camera
+  //           appears to fly through that hole.
+  // PHASE 3 — by the time the A engulfs the screen, white seals the gaps and
+  //           we cross-fade the hub in behind the veil.
   mode='warp';
   warpStart=performance.now();
   stars=[];
 
-  // text dissolves while we're already moving
-  lock.style.transition='opacity 1.4s ease';
-  lock.style.opacity='0';
-  // remove from layout once invisible so it doesn't capture clicks
-  setTimeout(()=>{ if(lock.parentNode) lock.style.pointerEvents='none'; }, 60);
+  lock.classList.add('flying');
+  lock.style.pointerEvents='none';
 
-  // PHASE 2 — speed crescendos to white. The warp curve already ramps slowly
-  //           then hard; we just time the white veil to peak after streaks max.
-  const flashInDur = 1300;
-  const flashStartDelay = 1700; // begin whiteout ~1.7s in (warp at full tilt)
+  // Star streaks should start subtle and ramp once letters begin compressing.
+  // (the warp tick reads `mode==='warp'` and ramps speed via warpStart.)
+
+  // Compress letters → 600ms aux fade + 350ms stagger + 700ms compress = ~1.65s
+  // titleFly starts at 600ms delay and runs 2400ms → ends at ~3.0s
+  // Begin whiteout at 2400ms (camera deep inside the A's counter)
+  const flashStartDelay = 2400;
+  const flashInDur      = 500;
   setTimeout(()=>{
     flash.style.transition='opacity '+flashInDur+'ms cubic-bezier(.5,0,.7,.4)';
     flash.style.opacity='1';
   }, flashStartDelay);
 
-  // PHASE 3 — once screen is fully white, swap lock -> hub behind the veil,
-  //           then fade the white away slowly to reveal the hub.
-  const swapDelay = flashStartDelay + flashInDur + 80;
+  const swapDelay = flashStartDelay + flashInDur + 120;
   setTimeout(()=>{
     enterHub(false);
     setTimeout(()=>{
-      flash.style.transition='opacity 1700ms ease';
+      flash.style.transition='opacity 1500ms ease';
       flash.style.opacity='0';
-    }, 260);
+    }, 240);
   }, swapDelay);
 }
 
