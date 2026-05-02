@@ -993,8 +993,9 @@ body{
    GAME LIBRARY (mirrors hub data)
    ============================================================ */
 const BASE = "games/a0d702b41fb4e59f9372b1e0e9ea8e2e2088eb2ce730472976bc496e6834d5d0/";
-const GAMES = (window.ASCENTA_GAME_LIBRARY || []).map(game => ({
+const GAMES = (window.ASCENTA_GAME_LIBRARY || []).map((game, index) => ({
   ...game,
+  _catalogIndex:index,
   path: game.path || (BASE + game.id + "/"),
 }));
 
