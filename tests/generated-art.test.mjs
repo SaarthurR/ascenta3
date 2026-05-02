@@ -5,6 +5,7 @@ globalThis.window = {};
 await import("../lib/generated-art.js");
 
 const { buildBadgeText, generateGameArt } = globalThis.window.ASCENTA_GENERATED_ART;
+const { pickColorSlot } = globalThis.window.ASCENTA_GENERATED_ART;
 
 test("buildBadgeText derives initials from readable titles", () => {
   assert.equal(
@@ -39,6 +40,15 @@ test("generateGameArt creates distinct visuals for different games", () => {
 
   assert.notEqual(first.bg, second.bg);
   assert.notEqual(first.svg, second.svg);
+});
+
+test("pickColorSlot spreads adjacent catalog entries across the palette cycle", () => {
+  const slots = [0, 1, 2, 3, 4].map((index) =>
+    pickColorSlot({ id: `arcade-${index}`, title: `Arcade ${index}`, tag: "Arcade", _catalogIndex: index }, 1234),
+  );
+
+  assert.deepEqual(slots, [3, 10, 5, 0, 7]);
+  assert.equal(new Set(slots).size, slots.length);
 });
 
 test("generateGameArt returns a complete svg payload", () => {
