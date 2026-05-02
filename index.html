@@ -908,86 +908,16 @@ body{
 
 </template>
 
+<script src="lib/generated-games.js"></script>
 <script>
 /* ============================================================
-   GAME LIBRARY (mirrors hub data)
+   GAME LIBRARY (loaded from generated catalog)
    ============================================================ */
 const BASE = "games/a0d702b41fb4e59f9372b1e0e9ea8e2e2088eb2ce730472976bc496e6834d5d0/";
-const GAMES = [
-  {id:"polytrack", art:"art-polytrack", title:"PolyTrack", tag:"Racing",
-   desc:"High-speed racing on polygon tracks. Precision physics, sharp drifts, and time trials that demand a clean line.",
-   long:"Carve through low-poly circuits at speed. Optimised lines beat raw acceleration — every shortcut counts.",
-   controls:"Arrow keys / WASD", players:"1", path:BASE+"polytrack/"},
-  {id:"bitlife", art:"art-bitlife", title:"BitLife", tag:"Sim",
-   desc:"Live a simulated life from birth to retirement. Endless choices, endless consequences.",
-   controls:"Click", players:"1", path:BASE+"bitlife/"},
-  {id:"geodash", art:"art-geodash", title:"GeoDash", tag:"Arcade",
-   desc:"Jump through geometric obstacles in this rhythm-based platforming gauntlet. One wrong tap restarts everything.",
-   controls:"Space / Click", players:"1", path:BASE+"geodash/"},
-  {id:"8ball", art:"art-8ball", title:"8 Ball", tag:"Arcade",
-   desc:"Classic 8-ball pool with smooth physics and clean controls. Aim, set the power, sink the eight.",
-   controls:"Mouse", players:"1–2", path:BASE+"8ball/"},
-  {id:"slowroads", art:"art-slowroads", title:"Slow Roads", tag:"Driving",
-   desc:"Endless scenic driving. Procedural landscapes, soft synths, no objectives — just road.",
-   controls:"WASD / Gamepad", players:"1", path:BASE+"slowroads/"},
-  {id:"drifthunters", art:"art-drifthunters", title:"Drift Hunters", tag:"Racing",
-   desc:"Slide through corners, tune your build, chase perfect drift lines across a roster of legends.",
-   controls:"WASD + Shift", players:"1", path:BASE+"drifthunters/"},
-  {id:"1v1.lol", art:"art-1v1", title:"1v1.LOL", tag:"Shooter",
-   desc:"Build, aim, eliminate. Fast-paced competitive matches against bots or other players online.",
-   controls:"WASD + Mouse", players:"1–2", path:BASE+"1v1.lol/"},
-  {id:"drivemad", art:"art-drivemad", title:"Drive Mad", tag:"Driving",
-   desc:"Crazy physics-based driving levels that escalate from cute to ridiculous in record time.",
-   controls:"Arrow keys", players:"1", path:BASE+"drivemad/"},
-  {id:"retrobowl", art:"art-retrobowl", title:"Retro Bowl", tag:"Sports",
-   desc:"Manage the team, call the plays, win the championship. Pixel football with surprising depth.",
-   controls:"Mouse / Drag", players:"1", path:BASE+"retrobowl/"},
-  {id:"flappybird", art:"art-flappybird", title:"Flappy Bird", tag:"Arcade",
-   desc:"Tap to fly. Dodge the pipes. Survive longer than is reasonable.",
-   controls:"Space / Click", players:"1", path:BASE+"flappybird/"},
-  {id:"tnyfsh", art:"art-tnyfsh", title:"Tiny Fishing", tag:"Idle",
-   desc:"Cast, reel, upgrade, repeat. A relaxing idle fishing loop with rare catches and gear upgrades.",
-   controls:"Mouse", players:"1", path:BASE+"tnyfsh/"},
-  {id:"tzfe", art:"art-tzfe", title:"2048", tag:"Puzzle",
-   desc:"Slide and merge numbered tiles. Reach 2048. Then keep going.",
-   controls:"Arrow keys", players:"1", path:BASE+"tzfe/"},
-  {id:"socbros", art:"art-socbros", title:"Soccer Bros", tag:"Sports",
-   desc:"Chaotic arcade soccer battles with absurd physics. Two-player couch action.",
-   controls:"WASD / Arrows", players:"1–2", path:BASE+"socbros/"},
-  {id:"silk", art:"art-silk", title:"Silk", tag:"Art",
-   desc:"Calming generative art that responds to your touch. Draw symmetric ribbons in colour.",
-   controls:"Mouse / Touch", players:"1", path:BASE+"silk/"},
-  {id:"indsim", art:"art-indsim", title:"Indian Truck Simulator", tag:"Driving",
-   desc:"Haul cargo, navigate highways, master a big-rig across long-distance routes.",
-   controls:"WASD", players:"1", path:BASE+"indsim/"},
-  {id:"jhnnytrig", art:"art-jhnnytrig", title:"Johnny Trigger", tag:"Action",
-   desc:"Flip, aim, take down targets in stylish slow-motion. Time the shots perfectly.",
-   controls:"Click / Tap", players:"1", path:BASE+"jhnnytrig/"},
-  {id:"mncrft", art:"art-mncrft", title:"Voxel Sandbox", tag:"Sandbox",
-   desc:"Mine, build, and explore in a familiar open-world voxel adventure. Survival or creative — your call.",
-   controls:"WASD + Mouse", players:"1", path:BASE+"mncrft/demo/"},
-  {id:"basketbros", art:"art-basketbros", title:"Basketball Bros", tag:"Sports",
-   desc:"Fast arcade basketball battles with crazy physics and head-to-head matches.",
-   controls:"WASD / Arrows", players:"1–2", path:BASE+"basketbros/"},
-  {id:"vietsniper", art:"art-vietsniper", title:"Vietnam Sniper", tag:"Shooter",
-   desc:"Stealth sniper missions through jungle battlefields. Aim carefully and take the shot.",
-   controls:"Mouse", players:"1", path:BASE+"vietsniper/"},
-  {id:"proxy", art:"art-proxy", title:"Proxy Hub", tag:"Sim",
-   desc:"Browse the open web through a fast proxy node. Useful when the local network won't cooperate.",
-   controls:"Mouse / Keyboard", players:"1", path:BASE+"proxy/"},
-  {id:"ultcarsim", art:"art-ultcarsim", title:"Ultimate Car Sim", tag:"Driving",
-   desc:"Open-world driving with realistic physics, free roam, and stunt parks.",
-   controls:"WASD", players:"1", path:BASE+"ultcarsim/"},
-  {id:"rcardriver", art:"art-rcardriver", title:"Russian Car Driver", tag:"Driving",
-   desc:"Explore cities, complete missions, and drive realistic Russian vehicles across snowy terrain.",
-   controls:"WASD", players:"1", path:BASE+"rcardriver/"},
-  {id:"driveinrussia", art:"art-driveinrussia", title:"Drive in Russia", tag:"Driving",
-   desc:"Cruise highways, survive traffic, and master long-distance driving challenges.",
-   controls:"WASD", players:"1", path:BASE+"driveinrussia/"},
-  {id:"kimjongun", art:"art-kimjongun", title:"KJU Puzzle", tag:"Puzzle",
-   desc:"Solve quirky logic puzzles in a fast-paced brain teaser format.",
-   controls:"Mouse", players:"1", path:BASE+"kimjongun/"},
-];
+const GAMES = (window.ASCENTA_GAME_LIBRARY || []).map(game => ({
+  ...game,
+  path: game.path || (BASE + game.id + "/"),
+}));
 
 /* ============================================================
    AMBIENT WARP CANVAS
@@ -1278,9 +1208,31 @@ const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
 
-function getArt(id){
+function fallbackArt(tag){
+  const palette={
+    Racing:['#1d4ed8','#60a5fa'],
+    Driving:['#0f766e','#2dd4bf'],
+    Arcade:['#7c3aed','#c084fc'],
+    Sports:['#15803d','#86efac'],
+    Puzzle:['#b45309','#facc15'],
+    Shooter:['#991b1b','#f87171'],
+    Sandbox:['#4338ca','#a5b4fc'],
+    Action:['#be123c','#fb7185'],
+    Idle:['#0f766e','#99f6e4'],
+    Sim:['#334155','#94a3b8'],
+    Art:['#c026d3','#f0abfc']
+  };
+  const [from,to]=palette[tag]||['#1f2937','#93c5fd'];
+  const glyph=(tag||'?').slice(0,1).toUpperCase();
+  return {
+    bg:`linear-gradient(135deg,${from},${to})`,
+    svg:`<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="60" cy="60" r="34" fill="rgba(255,255,255,0.18)" /><text x="60" y="72" text-anchor="middle" font-size="38" font-family="IBM Plex Mono, monospace" fill="#fff">${glyph}</text></svg>`
+  };
+}
+
+function getArt(id, tag){
   const tpl=lib.querySelector('#'+id);
-  if(!tpl) return {svg:'',bg:'linear-gradient(135deg,#1a1a2e,#16213e)'};
+  if(!tpl) return fallbackArt(tag);
   const bg=tpl.getAttribute('data-bg')||'linear-gradient(135deg,#1a1a2e,#16213e)';
   const svg=tpl.outerHTML.replace(/ id="[^"]+"/,'').replace(/data-bg="[^"]+"/,'');
   return {svg,bg};
@@ -1289,7 +1241,7 @@ function getArt(id){
 function buildHub(){
   grid.innerHTML='';
   GAMES.forEach(g=>{
-    const {svg,bg}=getArt(g.art);
+    const {svg,bg}=getArt(g.art,g.tag);
     const el=document.createElement('div');
     el.className='card';
     el.dataset.id=g.id;
@@ -1381,7 +1333,7 @@ function targetRect(){
 function openDetail(id, srcEl){
   const g=GAMES.find(x=>x.id===id);if(!g)return;
   currentGame=g;
-  const {svg,bg}=getArt(g.art);
+  const {svg,bg}=getArt(g.art,g.tag);
 
   detailTop.style.background=bg;
   detailTop.innerHTML=`${svg}
