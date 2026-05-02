@@ -986,6 +986,7 @@ body{
 
 </template>
 
+<script src="lib/generated-art.js"></script>
 <script src="lib/generated-games.js"></script>
 <script>
 /* ============================================================
@@ -1322,9 +1323,15 @@ function fallbackArt(tag){
   };
 }
 
-function getArt(id, tag){
-  const tpl=lib.querySelector('#'+id);
-  if(!tpl) return fallbackArt(tag);
+function getArt(game){
+  const artId=game && game.art;
+  const tpl=artId ? lib.querySelector('#'+artId) : null;
+  if(!tpl){
+    if(window.ASCENTA_GENERATED_ART && typeof window.ASCENTA_GENERATED_ART.generateGameArt==='function'){
+      return window.ASCENTA_GENERATED_ART.generateGameArt(game || {});
+    }
+    return fallbackArt(game && game.tag);
+  }
   const bg=tpl.getAttribute('data-bg')||'linear-gradient(135deg,#1a1a2e,#16213e)';
   const svg=tpl.outerHTML.replace(/ id="[^"]+"/,'').replace(/data-bg="[^"]+"/,'');
   return {svg,bg};
@@ -1333,7 +1340,7 @@ function getArt(id, tag){
 function buildHub(){
   grid.innerHTML='';
   GAMES.forEach(g=>{
-    const {svg,bg}=getArt(g.art,g.tag);
+    const {svg,bg}=getArt(g);
     const el=document.createElement('div');
     el.className='card';
     el.dataset.id=g.id;
@@ -1425,7 +1432,7 @@ function targetRect(){
 function openDetail(id, srcEl){
   const g=GAMES.find(x=>x.id===id);if(!g)return;
   currentGame=g;
-  const {svg,bg}=getArt(g.art,g.tag);
+  const {svg,bg}=getArt(g);
 
   detailTop.style.background=bg;
   detailTop.innerHTML=`${svg}
