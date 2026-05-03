@@ -1031,6 +1031,17 @@ body{
 <circle cx="60" cy="50" r="6" fill="#000" opacity="0.2"/>
 </svg>
 
+<svg id="art-remotedesktop" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-bg="linear-gradient(135deg,#0f766e,#0369a1)">
+<rect x="18" y="26" width="84" height="54" rx="6" fill="#fff" opacity="0.9"/>
+<rect x="24" y="32" width="72" height="42" rx="3" fill="#0f766e" opacity="0.25"/>
+<rect x="46" y="80" width="28" height="6" rx="2" fill="#fff" opacity="0.7"/>
+<rect x="38" y="86" width="44" height="4" rx="2" fill="#fff" opacity="0.5"/>
+<circle cx="60" cy="53" r="10" fill="#fff" opacity="0.85"/>
+<path d="M55 53 L65 53 M60 48 L60 58" stroke="#0f766e" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M38 42 Q60 35 82 42" stroke="#fff" stroke-width="1.5" opacity="0.5" fill="none" stroke-dasharray="4,3"/>
+<path d="M38 64 Q60 71 82 64" stroke="#fff" stroke-width="1.5" opacity="0.5" fill="none" stroke-dasharray="4,3"/>
+</svg>
+
 </template>
 
 <script src="lib/generated-art.js"></script>
@@ -1627,6 +1638,10 @@ let stageTimerStart=0,stageTimerRaf=0;
 launchBtn.addEventListener('click',launchGame);
 function launchGame(){
   if(!currentGame) return;
+  if(currentGame.external){
+    window.open(currentGame.path,'_blank','noopener,noreferrer');
+    return;
+  }
   stageTitle.textContent=currentGame.title+' · '+currentGame.tag;
   stageFrame.src=currentGame.path;
   stage.classList.add('live');
