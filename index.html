@@ -363,8 +363,18 @@ body{
 }
 
 .search-row{
+  position:sticky;
+  top:18px;
+  z-index:20;
   display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  padding:14px;
   margin-bottom:28px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(10,10,15,0.82);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:0 16px 36px rgba(0,0,0,.28);
 }
 #gameSearch{
   flex:1;min-width:220px;
@@ -395,6 +405,40 @@ body{
   color:var(--accent);
   background:rgba(96,165,250,0.1);
   border-color:rgba(96,165,250,0.35);
+}
+
+#backToTop{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:40;
+  display:flex;align-items:center;gap:8px;
+  padding:11px 14px;
+  border:1px solid rgba(96,165,250,0.32);
+  border-radius:999px;
+  background:rgba(10,10,15,0.84);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  cursor:pointer;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(12px);
+  transition:opacity .2s ease, transform .2s ease, border-color .2s ease, background .2s ease;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 14px 30px rgba(0,0,0,.28);
+}
+#backToTop.show{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
+}
+#backToTop:hover{
+  border-color:rgba(96,165,250,0.56);
+  background:rgba(16,16,24,0.95);
 }
 
 /* card grid */
@@ -646,6 +690,8 @@ body{
   .hub-head{flex-direction:column;align-items:flex-start;gap:10px}
   .hub-head h1{font-size:38px}
   .hub-shell{padding:24px 18px 60px}
+  .search-row{top:12px;padding:12px}
+  #backToTop{right:18px;bottom:18px}
 }
 </style>
 </head>
@@ -737,6 +783,7 @@ body{
 
     <div class="grid" id="grid"></div>
   </div>
+  <button id="backToTop" type="button" aria-label="Back to top">↑ Top</button>
 </div>
 
 <!-- ============================================================
@@ -1361,6 +1408,7 @@ function enterHub(skipAnim){
   }
   sessionStorage.setItem('ascenta_unlocked','1');
   buildHub();
+  syncBackToTopVisibility();
 }
 
 /* ============================================================
@@ -1369,9 +1417,14 @@ function enterHub(skipAnim){
 const grid=document.getElementById('grid');
 const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
+const backToTop=document.getElementById('backToTop');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
+
+function syncBackToTopVisibility(){
+  backToTop.classList.toggle('show', hub.scrollTop > 420);
+}
 
 function getArt(id){
   const tpl=lib.querySelector('#'+id);
@@ -1429,6 +1482,8 @@ chips.addEventListener('click',e=>{
   activeTag=b.dataset.tag;
   applyFilters();
 });
+hub.addEventListener('scroll', syncBackToTopVisibility);
+backToTop.addEventListener('click',()=>hub.scrollTo({top:0,behavior:'smooth'}));
 
 /* clock */
 function tickClock(){
