@@ -1638,10 +1638,6 @@ let stageTimerStart=0,stageTimerRaf=0;
 launchBtn.addEventListener('click',launchGame);
 function launchGame(){
   if(!currentGame) return;
-  if(currentGame.external){
-    window.open(currentGame.path,'_blank','noopener,noreferrer');
-    return;
-  }
   stageTitle.textContent=currentGame.title+' · '+currentGame.tag;
   stageFrame.src=currentGame.path;
   stage.classList.add('live');
