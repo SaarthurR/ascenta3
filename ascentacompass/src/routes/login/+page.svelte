@@ -156,8 +156,8 @@
 										<Input
 											id="pastedUrl"
 											type="url"
-											placeholder="parentvue.cusdk8.org"
-											bind:value={parentvue.cusdk8.org}
+											placeholder="https://parentvue.cusdk8.org/Home_PXP2.aspx"
+											bind:value={pastedUrl}
 											required
 										/>
 										<Button type="submit" disabled={convertedDomain === undefined}>Submit</Button>
@@ -173,7 +173,7 @@
 						placeholder="parentvue.cusdk8.org"
 						autocomplete="on"
 						autocorrect="off"
-						bind:value={parentvue.cusdk8.org}
+						bind:value={domain}
 						required
 					/>
 				</Field.Field>
