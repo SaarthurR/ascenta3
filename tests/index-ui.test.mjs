@@ -14,3 +14,16 @@ test("hub script wires the back-to-top control to the library scroller", () => {
   assert.match(indexHtml, /hub\.scrollTo\(\{top:0,behavior:'smooth'\}\)/);
   assert.match(indexHtml, /hub\.addEventListener\('scroll',\s*syncBackToTopVisibility\)/);
 });
+
+test("hub exposes Grade Compass as a free access destination", () => {
+  assert.match(indexHtml, /id="gradeCompassPanel"/);
+  assert.match(indexHtml, /Access Grade Compass/);
+  assert.match(indexHtml, /GradeCompass is available from the free side of Ascenta/);
+});
+
+test("stage script can launch Grade Compass inside the iframe", () => {
+  assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/gradecompass\.org\/';/);
+  assert.match(indexHtml, /const gradeCompassPanel=document\.getElementById\('gradeCompassPanel'\);/);
+  assert.match(indexHtml, /gradeCompassPanel\.addEventListener\('click',launchGradeCompass\);/);
+  assert.match(indexHtml, /stageFrame\.src=src;/);
+});
