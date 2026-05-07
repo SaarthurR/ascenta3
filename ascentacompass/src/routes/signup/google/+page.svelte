@@ -61,7 +61,7 @@
 				<div class="flex items-center gap-2">
 					<Input
 						type="url"
-						placeholder="https://[your-district]-psv.edupoint.com/Home_PXP2.aspx"
+						placeholder="https://parentvue.cusdk8.org/Home_PXP2.aspx"
 						bind:value={pastedUrl}
 					/>
 					<Button href={convertedUrl} disabled={convertedUrl === undefined} target="_blank">
