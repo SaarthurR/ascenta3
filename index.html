@@ -260,6 +260,53 @@ body{
 #msg.error{color:#f87171}
 #msg.success{color:var(--accent)}
 
+.lock-free{
+  margin-top:18px;
+  padding:18px 18px 16px;
+  border:1px solid rgba(96,165,250,0.2);
+  border-radius:12px;
+  background:rgba(10,10,15,0.72);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  opacity:0;
+  animation:fadeIn .8s 2.25s forwards;
+}
+.lock-free-label{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:#bfdbfe;
+  margin-bottom:8px;
+}
+.lock-free-copy{
+  font-family:var(--sans);
+  font-size:12.5px;
+  line-height:1.55;
+  color:var(--ink-dim);
+  margin-bottom:12px;
+}
+.lock-free-btn{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid rgba(96,165,250,0.28);
+  border-radius:10px;
+  background:rgba(96,165,250,0.08);
+  color:#dbeafe;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:.2s;
+}
+.lock-free-btn:hover{
+  border-color:rgba(96,165,250,0.5);
+  background:rgba(96,165,250,0.14);
+  color:#fff;
+}
+
 .lock-footer{
   margin-top:40px;
   font-family:var(--sans);
@@ -831,6 +878,12 @@ body{
       <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
       <button id="unlockBtn">Authenticate</button>
       <div id="msg"></div>
+    </div>
+
+    <div class="lock-free">
+      <div class="lock-free-label">Free Access</div>
+      <div class="lock-free-copy">Open Grade Compass without an access key and sign in from the embedded view.</div>
+      <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access Grade Compass</button>
     </div>
 
     <div class="lock-footer">
@@ -1481,6 +1534,7 @@ const grid=document.getElementById('grid');
 const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
 const backToTop=document.getElementById('backToTop');
+const gradeCompassEntry=document.getElementById('gradeCompassEntry');
 const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
@@ -1762,6 +1816,7 @@ const stageTimer=document.getElementById('stageTimer');
 let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
+gradeCompassEntry.addEventListener('click',launchGradeCompass);
 gradeCompassPanel.addEventListener('click',launchGradeCompass);
 
 function openStage({title,tag,src,externalLink=''}){

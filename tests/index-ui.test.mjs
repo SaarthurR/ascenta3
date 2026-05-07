@@ -21,8 +21,15 @@ test("hub exposes Grade Compass as a free access destination", () => {
   assert.match(indexHtml, /GradeCompass is available from the free side of Ascenta/);
 });
 
+test("landing screen exposes Grade Compass before authentication", () => {
+  assert.match(indexHtml, /id="gradeCompassEntry"/);
+  assert.match(indexHtml, /Open Grade Compass without an access key/);
+});
+
 test("stage script can launch Grade Compass inside the iframe", () => {
   assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/gradecompass\.org\/';/);
+  assert.match(indexHtml, /const gradeCompassEntry=document\.getElementById\('gradeCompassEntry'\);/);
+  assert.match(indexHtml, /gradeCompassEntry\.addEventListener\('click',launchGradeCompass\);/);
   assert.match(indexHtml, /const gradeCompassPanel=document\.getElementById\('gradeCompassPanel'\);/);
   assert.match(indexHtml, /gradeCompassPanel\.addEventListener\('click',launchGradeCompass\);/);
   assert.match(indexHtml, /stageFrame\.src=src;/);
