@@ -927,15 +927,6 @@ body{
       <p>Curated arcade experiences. Pick a title to preview, then launch when you're ready.</p>
     </div>
 
-    <button class="free-panel" id="gradeCompassPanel" type="button">
-      <div>
-        <div class="free-panel-kicker">Free Access</div>
-        <div class="free-panel-title">Access AscentaCompass</div>
-        <div class="free-panel-desc">AscentaCompass is available from the free side of Ascenta. Open it here, then log in from the hosted app.</div>
-      </div>
-      <span class="free-panel-action">Open now <span aria-hidden="true">→</span></span>
-    </button>
-
     <div class="search-row">
       <input id="gameSearch" type="text" placeholder="Search the library…">
       <div class="chip-row" id="chips">
@@ -1535,7 +1526,6 @@ const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
 const backToTop=document.getElementById('backToTop');
 const gradeCompassEntry=document.getElementById('gradeCompassEntry');
-const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
@@ -1817,7 +1807,6 @@ let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
 gradeCompassEntry.addEventListener('click',launchGradeCompass);
-gradeCompassPanel.addEventListener('click',launchGradeCompass);
 
 function openStage({title,tag,src,externalLink=''}){
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
@@ -1846,8 +1835,7 @@ function launchGame(){
 }
 
 function launchGradeCompass(){
-  const popup=window.open(GRADE_COMPASS_URL,'_blank','noopener');
-  if(!popup) window.location.href=GRADE_COMPASS_URL;
+  openStage({title:'AscentaCompass',tag:'',src:GRADE_COMPASS_URL});
 }
 function closeStage(){
   stage.classList.remove('live');

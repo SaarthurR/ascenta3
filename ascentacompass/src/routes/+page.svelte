@@ -80,9 +80,6 @@
 					</Card.Footer>
 				</Card.Root>
 
-				<Button href={repoLink} target="_blank" variant="outline">
-					<GithubIcon class="h-5 w-5" /> Open Source
-				</Button>
 			</main>
 
 			<div

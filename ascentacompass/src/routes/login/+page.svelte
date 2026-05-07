@@ -26,7 +26,7 @@
 
 	let username: string = $state('');
 	let password: string = $state('');
-	let domain: string = $state('');
+	let domain: string = $state('parentvue.cusdk8.org');
 
 	let loginError: string | undefined = $state();
 
