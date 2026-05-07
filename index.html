@@ -360,6 +360,88 @@ body{
   max-width:380px;line-height:1.6;
 }
 
+.free-panel{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:22px;
+  align-items:center;
+  margin-bottom:28px;
+  padding:22px 24px;
+  border:1px solid rgba(96,165,250,0.22);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at top right, rgba(96,165,250,0.18), transparent 38%),
+    linear-gradient(135deg, rgba(14,18,30,0.94), rgba(10,10,15,0.94));
+  box-shadow:0 18px 38px rgba(0,0,0,.28);
+  text-align:left;
+  cursor:pointer;
+  transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.free-panel:hover{
+  transform:translateY(-2px);
+  border-color:rgba(96,165,250,0.38);
+  box-shadow:0 22px 42px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.03);
+}
+.free-panel:focus-visible{
+  outline:none;
+  border-color:rgba(96,165,250,0.55);
+  box-shadow:0 0 0 3px rgba(96,165,250,0.14), 0 18px 38px rgba(0,0,0,.28);
+}
+.free-panel-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:#bfdbfe;
+}
+.free-panel-kicker::before{
+  content:'';
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#60a5fa;
+  box-shadow:0 0 12px rgba(96,165,250,.45);
+}
+.free-panel-title{
+  font-family:var(--serif);
+  font-size:32px;
+  font-weight:400;
+  letter-spacing:-1px;
+  color:#fafafa;
+  margin-bottom:8px;
+}
+.free-panel-desc{
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.65;
+  color:var(--ink-dim);
+  max-width:720px;
+}
+.free-panel-action{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 15px;
+  border:1px solid rgba(96,165,250,0.28);
+  border-radius:999px;
+  background:rgba(96,165,250,0.08);
+  color:#dbeafe;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.free-panel:hover .free-panel-action{
+  border-color:rgba(96,165,250,0.5);
+  background:rgba(96,165,250,0.14);
+}
+
 .search-row{
   position:sticky;
   top:18px;
@@ -664,6 +746,17 @@ body{
   border-bottom:1px solid var(--line);
   font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.5px;
 }
+#stageTitle{
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.stage-status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
 .stage-bar button{
   background:transparent;border:1px solid var(--line-2);
   color:var(--ink-dim);
@@ -688,8 +781,28 @@ body{
   .hub-head{flex-direction:column;align-items:flex-start;gap:10px}
   .hub-head h1{font-size:38px}
   .hub-shell{padding:24px 18px 60px}
+  .free-panel{grid-template-columns:1fr;gap:18px}
+  .free-panel-title{font-size:28px}
+  .free-panel-action{justify-self:flex-start}
   .search-row{top:12px;padding:12px}
   #backToTop{right:18px;bottom:18px}
+  .stage-bar{
+    height:auto;
+    min-height:42px;
+    flex-wrap:wrap;
+    row-gap:8px;
+    padding:8px 10px;
+  }
+  .stage-bar button{padding:6px 10px}
+  .stage-sep,
+  .stage-status,
+  .stage-bar .grow{display:none}
+  #stageTitle{
+    order:4;
+    flex:1 1 100%;
+    width:100%;
+  }
+  #stageTimer{margin-left:auto}
 }
 </style>
 </head>
@@ -761,6 +874,15 @@ body{
       <p>Curated arcade experiences. Pick a title to preview, then launch when you're ready.</p>
     </div>
 
+    <button class="free-panel" id="gradeCompassPanel" type="button">
+      <div>
+        <div class="free-panel-kicker">Free Access</div>
+        <div class="free-panel-title">Access Grade Compass</div>
+        <div class="free-panel-desc">GradeCompass is available from the free side of Ascenta. Open it here, then log in from the embedded view.</div>
+      </div>
+      <span class="free-panel-action">Open now <span aria-hidden="true">→</span></span>
+    </button>
+
     <div class="search-row">
       <input id="gameSearch" type="text" placeholder="Search the library…">
       <div class="chip-row" id="chips">
@@ -821,9 +943,10 @@ body{
   <div class="stage-bar">
     <button id="stageBack">← Back</button>
     <span style="color:var(--ink-dim)" id="stageTitle">—</span>
-    <span style="color:var(--ink-faintest)">·</span>
-    <span><span class="live-dot"></span> Live</span>
+    <span class="stage-sep" style="color:var(--ink-faintest)">·</span>
+    <span class="stage-status"><span class="live-dot"></span> Live</span>
     <span class="grow"></span>
+    <button id="stageOpen" hidden>Open tab</button>
     <span id="stageTimer">00:00</span>
     <button id="stageFs">⛶ Fullscreen</button>
   </div>
@@ -1358,9 +1481,11 @@ const grid=document.getElementById('grid');
 const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
 const backToTop=document.getElementById('backToTop');
+const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
+const GRADE_COMPASS_URL='https://gradecompass.org/';
 
 function syncBackToTopVisibility(){
   backToTop.classList.toggle('show', hub.scrollTop > 420);
@@ -1630,16 +1755,20 @@ window.addEventListener('resize',()=>{
 const stage=document.getElementById('stage');
 const stageFrame=document.getElementById('stageFrame');
 const stageBack=document.getElementById('stageBack');
+const stageOpen=document.getElementById('stageOpen');
 const stageTitle=document.getElementById('stageTitle');
 const stageFs=document.getElementById('stageFs');
 const stageTimer=document.getElementById('stageTimer');
 let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
-function launchGame(){
-  if(!currentGame) return;
-  stageTitle.textContent=currentGame.title+' · '+currentGame.tag;
-  stageFrame.src=currentGame.path;
+gradeCompassPanel.addEventListener('click',launchGradeCompass);
+
+function openStage({title,tag,src,externalLink=''}){
+  stageTitle.textContent=tag ? `${title} · ${tag}` : title;
+  stageFrame.src=src;
+  stageOpen.hidden=!externalLink;
+  stageOpen.dataset.href=externalLink;
   stage.classList.add('live');
   stageTimerStart=Date.now();
   cancelAnimationFrame(stageTimerRaf);
@@ -1651,12 +1780,36 @@ function launchGame(){
   };
   updT();
 }
+
+function launchGame(){
+  if(!currentGame) return;
+  openStage({
+    title:currentGame.title,
+    tag:currentGame.tag,
+    src:currentGame.path
+  });
+}
+
+function launchGradeCompass(){
+  openStage({
+    title:'Grade Compass',
+    tag:'Free access',
+    src:GRADE_COMPASS_URL,
+    externalLink:GRADE_COMPASS_URL
+  });
+}
 function closeStage(){
   stage.classList.remove('live');
   stageFrame.src='about:blank';
+  stageOpen.hidden=true;
+  stageOpen.dataset.href='';
   cancelAnimationFrame(stageTimerRaf);
 }
 stageBack.addEventListener('click',closeStage);
+stageOpen.addEventListener('click',()=>{
+  const href=stageOpen.dataset.href;
+  if(href) window.open(href,'_blank','noopener');
+});
 stageFs.addEventListener('click',()=>{
   if(!document.fullscreenElement){
     (stage.requestFullscreen||stage.webkitRequestFullscreen||(()=>{})).call(stage);
