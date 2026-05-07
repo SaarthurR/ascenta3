@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { LocalStorageKey } from '$lib';
 	import { acc, loadStudentAccount } from '$lib/account.svelte';
-	import { brand, repoLink } from '$lib/brand';
+	import { brand } from '$lib/brand';
 	import Disclaimer from '$lib/components/Disclaimer.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -11,7 +11,6 @@
 	import CalculatorIcon from '@lucide/svelte/icons/calculator';
 	import ChartLineIcon from '@lucide/svelte/icons/chart-line';
 	import FolderLockIcon from '@lucide/svelte/icons/folder-lock';
-	import GithubIcon from '@lucide/svelte/icons/github';
 
 	if (browser && localStorage.getItem(LocalStorageKey.token) !== null) {
 		if (!acc.studentAccount) loadStudentAccount();
