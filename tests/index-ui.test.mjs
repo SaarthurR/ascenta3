@@ -23,7 +23,7 @@ test("hub exposes AscentaCompass as a free access destination", () => {
 
 test("landing screen exposes AscentaCompass before authentication", () => {
   assert.match(indexHtml, /id="gradeCompassEntry"/);
-  assert.match(indexHtml, /Open AscentaCompass without an access key/);
+  assert.match(indexHtml, /Access AscentaCompass to track grades\./);
 });
 
 test("grade compass uses the hosted ascenta compass url and opens outside the iframe", () => {
