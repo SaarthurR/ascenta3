@@ -156,8 +156,8 @@
 										<Input
 											id="pastedUrl"
 											type="url"
-											placeholder="https://[your-district]-psv.edupoint.com/Home_PXP2.aspx"
-											bind:value={pastedUrl}
+											placeholder="parentvue.cusdk8.org"
+											bind:value={parentvue.cusdk8.org}
 											required
 										/>
 										<Button type="submit" disabled={convertedDomain === undefined}>Submit</Button>
@@ -170,7 +170,7 @@
 					<Input
 						type="text"
 						id="domain"
-						placeholder="[your-district]-psv.edupoint.com"
+						placeholder="parentvue.cusdk8.org"
 						autocomplete="on"
 						autocorrect="off"
 						bind:value={domain}
