@@ -114,7 +114,7 @@
 						id="username"
 						type="text"
 						bind:value={username}
-						placeholder="student@school.net"
+						="student@school.net"
 						autocomplete="username"
 						required
 					/>
@@ -173,7 +173,7 @@
 						placeholder="parentvue.cusdk8.org"
 						autocomplete="on"
 						autocorrect="off"
-						bind:value={domain}
+						bind:value={parentvue.cusdk8.org}
 						required
 					/>
 				</Field.Field>
