@@ -5,3 +5,4 @@
 node_modules
 .cache
 ugs-singlefiles-1.0.6.tgz
+.claude/
