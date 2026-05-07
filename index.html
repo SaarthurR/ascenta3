@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
+@property --a-tx{syntax:'<length>';inherits:false;initial-value:0px}
+@property --a-ty{syntax:'<length>';inherits:false;initial-value:0px}
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0a0f;
@@ -152,10 +154,10 @@ body{
 /* PHASE 2/3: the leading A flies forward; transform-origin sits in its
    counter so the camera enters through the hole. */
 @keyframes aFly{
-  0%   {transform:translateX(0) scale(1);   filter:blur(0);    animation-timing-function:cubic-bezier(.4,0,.5,1)}
-  38%  {transform:translateX(4.5ch) scale(2.5); filter:blur(0); animation-timing-function:cubic-bezier(.9,0,1,.1)}
-  62%  {transform:translateX(4.5ch) scale(50);  filter:blur(3px); animation-timing-function:ease-out}
-  100% {transform:translateX(4.5ch) scale(80);  filter:blur(10px)}
+  0%   {transform:translateX(0) translateY(0) scale(1);                              filter:blur(0);   animation-timing-function:cubic-bezier(.35,0,.5,1)}
+  40%  {transform:translateX(var(--a-tx)) translateY(var(--a-ty)) scale(2);          filter:blur(0);   animation-timing-function:cubic-bezier(.9,0,1,.05)}
+  65%  {transform:translateX(var(--a-tx)) translateY(var(--a-ty)) scale(55);         filter:blur(3px); animation-timing-function:ease-out}
+  100% {transform:translateX(var(--a-tx)) translateY(var(--a-ty)) scale(80);         filter:blur(10px)}
 }
 
 .logo-section{margin-bottom:48px}
@@ -1465,12 +1467,22 @@ function beginWarp(){
   //           appears to fly through that hole.
   // PHASE 3 — by the time the A engulfs the screen, white seals the gaps and
   //           we cross-fade the hub in behind the veil.
-  mode='warp';
-  warpStart=performance.now();
+  // compute exact hole→center offsets before animation starts
+  const aEl=lock.querySelector('.ch-a-target');
+  if(aEl){
+    const r=aEl.getBoundingClientRect();
+    aEl.style.setProperty('--a-tx',(window.innerWidth/2-(r.left+r.width*0.28))+'px');
+    aEl.style.setProperty('--a-ty',(window.innerHeight/2-(r.top+r.height*0.56))+'px');
+  }
+
   stars=[];
+  mode='centering'; // no stars while A slides to center
 
   lock.classList.add('flying');
   lock.style.pointerEvents='none';
+
+  // stars ignite only after A has fully centered (aFly delay 700ms + phase1 40% of 2400ms)
+  setTimeout(()=>{stars=[];mode='warp';warpStart=performance.now();},1660);
 
   // Star streaks should start subtle and ramp once letters begin compressing.
   // (the warp tick reads `mode==='warp'` and ramps speed via warpStart.)
