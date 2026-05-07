@@ -118,7 +118,7 @@ body{
   position:relative;
   transform-origin:28% 56%;
   animation:chTargetGlow 700ms ease forwards,
-            aFly 2400ms 700ms cubic-bezier(.5,0,.85,1) forwards;
+            aFly 2400ms 700ms linear forwards;
   will-change:transform,filter,color;
 }
 
@@ -152,10 +152,10 @@ body{
 /* PHASE 2/3: the leading A flies forward; transform-origin sits in its
    counter so the camera enters through the hole. */
 @keyframes aFly{
-  0%   {transform:scale(1);filter:blur(0)}
-  20%  {transform:scale(2.4);filter:blur(0)}
-  55%  {transform:scale(18);filter:blur(1.5px)}
-  100% {transform:scale(80);filter:blur(10px)}
+  0%   {transform:translateX(0) scale(1);   filter:blur(0);    animation-timing-function:cubic-bezier(.4,0,.5,1)}
+  38%  {transform:translateX(4.5ch) scale(2.5); filter:blur(0); animation-timing-function:cubic-bezier(.9,0,1,.1)}
+  62%  {transform:translateX(4.5ch) scale(50);  filter:blur(3px); animation-timing-function:ease-out}
+  100% {transform:translateX(4.5ch) scale(80);  filter:blur(10px)}
 }
 
 .logo-section{margin-bottom:48px}
