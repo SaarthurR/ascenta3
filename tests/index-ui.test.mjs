@@ -15,22 +15,22 @@ test("hub script wires the back-to-top control to the library scroller", () => {
   assert.match(indexHtml, /hub\.addEventListener\('scroll',\s*syncBackToTopVisibility\)/);
 });
 
-test("hub exposes Grade Compass as a free access destination", () => {
+test("hub exposes AscentaCompass as a free access destination", () => {
   assert.match(indexHtml, /id="gradeCompassPanel"/);
-  assert.match(indexHtml, /Access Grade Compass/);
-  assert.match(indexHtml, /GradeCompass is available from the free side of Ascenta/);
+  assert.match(indexHtml, /Access AscentaCompass/);
+  assert.match(indexHtml, /AscentaCompass is available from the free side of Ascenta/);
 });
 
-test("landing screen exposes Grade Compass before authentication", () => {
+test("landing screen exposes AscentaCompass before authentication", () => {
   assert.match(indexHtml, /id="gradeCompassEntry"/);
-  assert.match(indexHtml, /Open Grade Compass without an access key/);
+  assert.match(indexHtml, /Open AscentaCompass without an access key/);
 });
 
-test("stage script can launch Grade Compass inside the iframe", () => {
-  assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/gradecompass\.org\/';/);
+test("grade compass uses the hosted ascenta compass url and opens outside the iframe", () => {
+  assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/ascentacompass\.vercel\.app\/';/);
   assert.match(indexHtml, /const gradeCompassEntry=document\.getElementById\('gradeCompassEntry'\);/);
   assert.match(indexHtml, /gradeCompassEntry\.addEventListener\('click',launchGradeCompass\);/);
   assert.match(indexHtml, /const gradeCompassPanel=document\.getElementById\('gradeCompassPanel'\);/);
   assert.match(indexHtml, /gradeCompassPanel\.addEventListener\('click',launchGradeCompass\);/);
-  assert.match(indexHtml, /stageFrame\.src=src;/);
+  assert.match(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
 });

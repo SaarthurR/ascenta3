@@ -882,8 +882,8 @@ body{
 
     <div class="lock-free">
       <div class="lock-free-label">Free Access</div>
-      <div class="lock-free-copy">Open Grade Compass without an access key and sign in from the embedded view.</div>
-      <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access Grade Compass</button>
+      <div class="lock-free-copy">Open AscentaCompass without an access key and sign in from the hosted view.</div>
+      <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access AscentaCompass</button>
     </div>
 
     <div class="lock-footer">
@@ -930,8 +930,8 @@ body{
     <button class="free-panel" id="gradeCompassPanel" type="button">
       <div>
         <div class="free-panel-kicker">Free Access</div>
-        <div class="free-panel-title">Access Grade Compass</div>
-        <div class="free-panel-desc">GradeCompass is available from the free side of Ascenta. Open it here, then log in from the embedded view.</div>
+        <div class="free-panel-title">Access AscentaCompass</div>
+        <div class="free-panel-desc">AscentaCompass is available from the free side of Ascenta. Open it here, then log in from the hosted app.</div>
       </div>
       <span class="free-panel-action">Open now <span aria-hidden="true">→</span></span>
     </button>
@@ -1539,7 +1539,7 @@ const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
-const GRADE_COMPASS_URL='https://gradecompass.org/';
+const GRADE_COMPASS_URL='https://ascentacompass.vercel.app/';
 
 function syncBackToTopVisibility(){
   backToTop.classList.toggle('show', hub.scrollTop > 420);
@@ -1846,12 +1846,8 @@ function launchGame(){
 }
 
 function launchGradeCompass(){
-  openStage({
-    title:'Grade Compass',
-    tag:'Free access',
-    src:GRADE_COMPASS_URL,
-    externalLink:GRADE_COMPASS_URL
-  });
+  const popup=window.open(GRADE_COMPASS_URL,'_blank','noopener');
+  if(!popup) window.location.href=GRADE_COMPASS_URL;
 }
 function closeStage(){
   stage.classList.remove('live');
