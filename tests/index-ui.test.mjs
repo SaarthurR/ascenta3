@@ -15,15 +15,20 @@ test("hub script wires the back-to-top control to the library scroller", () => {
   assert.match(indexHtml, /hub\.addEventListener\('scroll',\s*syncBackToTopVisibility\)/);
 });
 
-test("hub exposes AscentaCompass as a free access destination", () => {
-  assert.match(indexHtml, /id="gradeCompassPanel"/);
-  assert.match(indexHtml, /Access AscentaCompass/);
-  assert.match(indexHtml, /AscentaCompass is available from the free side of Ascenta/);
+test("hub no longer exposes a separate AscentaCompass free-access panel", () => {
+  assert.doesNotMatch(indexHtml, /id="gradeCompassPanel"/);
+  assert.doesNotMatch(indexHtml, /AscentaCompass is available from the free side of Ascenta/);
 });
 
 test("landing screen exposes AscentaCompass before authentication", () => {
   assert.match(indexHtml, /id="gradeCompassEntry"/);
   assert.match(indexHtml, /Access AscentaCompass to track grades\./);
+  assert.match(indexHtml, /id="terminalTabUnlock"/);
+  assert.match(indexHtml, /id="terminalTabCompass"/);
+  assert.match(indexHtml, /data-panel="unlock"/);
+  assert.match(indexHtml, /data-panel="compass"/);
+  assert.match(indexHtml, /const terminalTabs=\[\.\.\.document\.querySelectorAll\('\.access-tab'\)\];/);
+  assert.match(indexHtml, /function setAccessPanel\(panel\)/);
 });
 
 test("landing screen advertises the new Omegle addition before authentication", () => {
@@ -36,16 +41,16 @@ test("grade compass uses the hosted ascenta compass url and opens outside the if
   assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/ascentacompass\.vercel\.app\/';/);
   assert.match(indexHtml, /const gradeCompassEntry=document\.getElementById\('gradeCompassEntry'\);/);
   assert.match(indexHtml, /gradeCompassEntry\.addEventListener\('click',launchGradeCompass\);/);
-  assert.match(indexHtml, /const gradeCompassPanel=document\.getElementById\('gradeCompassPanel'\);/);
-  assert.match(indexHtml, /gradeCompassPanel\.addEventListener\('click',launchGradeCompass\);/);
   assert.match(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
 });
 
-test("hub injects Umingle as the first featured game card and launches it in the iframe stage", () => {
+test("hub injects Umingle as the first featured game card and opens it outside the iframe", () => {
   assert.match(indexHtml, /const FEATURED_GAME=\{/);
   assert.match(indexHtml, /title:'Umingle'/);
   assert.match(indexHtml, /desc:'New! Omegle is back in the hub — jump in once you have a code\.'/);
   assert.match(indexHtml, /path:'https:\/\/umingle\.com\/'/);
+  assert.match(indexHtml, /launchMode:'external'/);
   assert.match(indexHtml, /const HUB_GAMES=\[FEATURED_GAME,\s*\.\.\.GAMES\];/);
   assert.match(indexHtml, /HUB_GAMES\.forEach\(g=>\{/);
+  assert.match(indexHtml, /window\.open\(currentGame\.externalLink \|\| currentGame\.path,'_blank','noopener'\)/);
 });

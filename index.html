@@ -186,12 +186,49 @@ body{
   background:rgba(15,15,20,0.78);
   border:1px solid var(--line);
   border-radius:12px;
-  padding:32px 28px;
+  padding:14px;
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   box-shadow:0 8px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,0.03);
   opacity:0;animation:fadeIn .8s 2.1s forwards;
 }
+.access-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--line);
+}
+.access-tab{
+  flex:1;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:rgba(12,12,18,0.72);
+  color:var(--ink-faint);
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:.2s;
+}
+.access-tab:hover{
+  color:var(--ink);
+  border-color:var(--line);
+}
+.access-tab.active{
+  color:#eef6ff;
+  border-color:rgba(96,165,250,0.34);
+  background:rgba(96,165,250,0.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.access-panel{
+  display:none;
+  padding:14px 14px 10px;
+}
+.access-panel.active{display:block}
 .access-header{
   display:flex;align-items:center;gap:12px;
   margin-bottom:24px;padding-bottom:18px;
@@ -265,6 +302,15 @@ body{
 #msg.error{color:#f87171}
 #msg.success{color:var(--accent)}
 
+.access-note{
+  font-family:var(--sans);
+  font-size:12.5px;
+  line-height:1.65;
+  color:var(--ink-dim);
+  margin-bottom:14px;
+  text-align:left;
+}
+
 .lock-announcement{
   margin-top:18px;
   padding:16px 18px;
@@ -304,32 +350,6 @@ body{
   color:var(--ink-dim);
 }
 
-.lock-free{
-  margin-top:18px;
-  padding:18px 18px 16px;
-  border:1px solid rgba(96,165,250,0.2);
-  border-radius:12px;
-  background:rgba(10,10,15,0.72);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-  opacity:0;
-  animation:fadeIn .8s 2.25s forwards;
-}
-.lock-free-label{
-  font-family:var(--mono);
-  font-size:10px;
-  letter-spacing:1.6px;
-  text-transform:uppercase;
-  color:#bfdbfe;
-  margin-bottom:8px;
-}
-.lock-free-copy{
-  font-family:var(--sans);
-  font-size:12.5px;
-  line-height:1.55;
-  color:var(--ink-dim);
-  margin-bottom:12px;
-}
 .lock-free-btn{
   width:100%;
   padding:12px 14px;
@@ -913,26 +933,38 @@ body{
     </div>
 
     <div class="access-box">
-      <div class="access-header">
-        <div class="status-dot"></div>
-        <div class="access-title">Access Terminal</div>
-        <div class="access-id">NODE&nbsp;//&nbsp;03A</div>
+      <div class="access-tabs" role="tablist" aria-label="Access tabs">
+        <button class="access-tab active" id="terminalTabUnlock" type="button" data-panel="unlock" aria-selected="true">Access Terminal</button>
+        <button class="access-tab" id="terminalTabCompass" type="button" data-panel="compass" aria-selected="false">AscentaCompass</button>
       </div>
 
-      <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
-      <button id="unlockBtn">Authenticate</button>
-      <div id="msg"></div>
+      <div class="access-panel active" data-panel="unlock">
+        <div class="access-header">
+          <div class="status-dot"></div>
+          <div class="access-title">Access Terminal</div>
+          <div class="access-id">NODE&nbsp;//&nbsp;03A</div>
+        </div>
+
+        <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
+        <button id="unlockBtn">Authenticate</button>
+        <div id="msg"></div>
+      </div>
+
+      <div class="access-panel" data-panel="compass">
+        <div class="access-header">
+          <div class="status-dot"></div>
+          <div class="access-title">Free Access</div>
+          <div class="access-id">APP&nbsp;//&nbsp;AC1</div>
+        </div>
+
+        <div class="access-note">Access AscentaCompass to track grades.</div>
+        <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access AscentaCompass</button>
+      </div>
     </div>
 
     <div class="lock-announcement">
       <div class="lock-announcement-label">New Drop</div>
       <div class="lock-announcement-copy">New! Omegle added. Get a code now to use it.</div>
-    </div>
-
-    <div class="lock-free">
-      <div class="lock-free-label">Free Access</div>
-      <div class="lock-free-copy">Access AscentaCompass to track grades.</div>
-      <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access AscentaCompass</button>
     </div>
 
     <div class="lock-footer">
@@ -975,15 +1007,6 @@ body{
       </div>
       <p>Curated arcade experiences. Pick a title to preview, then launch when you're ready.</p>
     </div>
-
-    <button class="free-panel" id="gradeCompassPanel" type="button">
-      <div>
-        <div class="free-panel-kicker">Free Access</div>
-        <div class="free-panel-title">Access AscentaCompass</div>
-        <div class="free-panel-desc">AscentaCompass is available from the free side of Ascenta.</div>
-      </div>
-      <span class="free-panel-action">Open grade tools</span>
-    </button>
 
     <div class="search-row">
       <input id="gameSearch" type="text" placeholder="Search the library…">
@@ -1298,6 +1321,7 @@ const FEATURED_GAME={
   long:'Use your code and jump straight into Umingle from the top of the hub. If their iframe rules get in the way, the open-tab escape hatch is there too.',
   controls:'Keyboard / Mouse',
   players:'1+',
+  launchMode:'external',
   path:'https://umingle.com/',
   externalLink:'https://umingle.com/'
 };
@@ -1463,9 +1487,26 @@ const hub=document.getElementById('hub');
 const msg=document.getElementById('msg');
 const input=document.getElementById('keyInput');
 const btn=document.getElementById('unlockBtn');
+const terminalTabs=[...document.querySelectorAll('.access-tab')];
+const accessPanels=[...document.querySelectorAll('.access-panel')];
+
+function setAccessPanel(panel){
+  terminalTabs.forEach(tab=>{
+    const active=tab.dataset.panel===panel;
+    tab.classList.toggle('active',active);
+    tab.setAttribute('aria-selected',active ? 'true' : 'false');
+  });
+  accessPanels.forEach(section=>{
+    section.classList.toggle('active',section.dataset.panel===panel);
+  });
+  if(panel==='unlock') input.focus({preventScroll:true});
+}
 
 btn.addEventListener('click',tryUnlock);
 input.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+terminalTabs.forEach(tab=>{
+  tab.addEventListener('click',()=>setAccessPanel(tab.dataset.panel));
+});
 
 // auto-skip if already unlocked this session
 if(sessionStorage.getItem('ascenta_unlocked')==='1'){
@@ -1615,7 +1656,6 @@ const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
 const backToTop=document.getElementById('backToTop');
 const gradeCompassEntry=document.getElementById('gradeCompassEntry');
-const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
@@ -1897,7 +1937,6 @@ let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
 gradeCompassEntry.addEventListener('click',launchGradeCompass);
-gradeCompassPanel.addEventListener('click',launchGradeCompass);
 
 function openStage({title,tag,src,externalLink=''}){
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
@@ -1918,6 +1957,11 @@ function openStage({title,tag,src,externalLink=''}){
 
 function launchGame(){
   if(!currentGame) return;
+  if(currentGame.launchMode==='external'){
+    window.open(currentGame.externalLink || currentGame.path,'_blank','noopener');
+    closeDetail();
+    return;
+  }
   openStage({
     title:currentGame.title,
     tag:currentGame.tag,
