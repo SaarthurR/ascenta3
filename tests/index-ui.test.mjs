@@ -26,6 +26,12 @@ test("landing screen exposes AscentaCompass before authentication", () => {
   assert.match(indexHtml, /Access AscentaCompass to track grades\./);
 });
 
+test("landing screen advertises the new Omegle addition before authentication", () => {
+  assert.match(indexHtml, /New! Omegle added\./);
+  assert.match(indexHtml, /Get a code now to use it\./);
+  assert.match(indexHtml, /#lock\.flying \.lock-announcement[\s\S]*animation:auxFade 500ms ease forwards;/);
+});
+
 test("grade compass uses the hosted ascenta compass url and opens outside the iframe", () => {
   assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/ascentacompass\.vercel\.app\/';/);
   assert.match(indexHtml, /const gradeCompassEntry=document\.getElementById\('gradeCompassEntry'\);/);
@@ -33,4 +39,13 @@ test("grade compass uses the hosted ascenta compass url and opens outside the if
   assert.match(indexHtml, /const gradeCompassPanel=document\.getElementById\('gradeCompassPanel'\);/);
   assert.match(indexHtml, /gradeCompassPanel\.addEventListener\('click',launchGradeCompass\);/);
   assert.match(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
+});
+
+test("hub injects Umingle as the first featured game card and launches it in the iframe stage", () => {
+  assert.match(indexHtml, /const FEATURED_GAME=\{/);
+  assert.match(indexHtml, /title:'Umingle'/);
+  assert.match(indexHtml, /desc:'New! Omegle is back in the hub — jump in once you have a code\.'/);
+  assert.match(indexHtml, /path:'https:\/\/umingle\.com\/'/);
+  assert.match(indexHtml, /const HUB_GAMES=\[FEATURED_GAME,\s*\.\.\.GAMES\];/);
+  assert.match(indexHtml, /HUB_GAMES\.forEach\(g=>\{/);
 });

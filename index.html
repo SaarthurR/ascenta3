@@ -89,6 +89,7 @@ body{
    3. camera flies into the A's counter (hole) until white takes over          */
 #lock.flying .access-box,
 #lock.flying .logo-subtitle,
+#lock.flying .lock-announcement,
 #lock.flying .lock-free,
 #lock.flying .lock-footer{
   animation:auxFade 500ms ease forwards;
@@ -263,6 +264,45 @@ body{
 }
 #msg.error{color:#f87171}
 #msg.success{color:var(--accent)}
+
+.lock-announcement{
+  margin-top:18px;
+  padding:16px 18px;
+  border:1px solid rgba(96,165,250,0.24);
+  border-radius:12px;
+  background:
+    radial-gradient(circle at top right, rgba(96,165,250,0.16), transparent 40%),
+    rgba(10,10,15,0.76);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  opacity:0;
+  animation:fadeIn .8s 2.18s forwards;
+}
+.lock-announcement-label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:#bfdbfe;
+}
+.lock-announcement-label::before{
+  content:'';
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#60a5fa;
+  box-shadow:0 0 12px rgba(96,165,250,.45);
+}
+.lock-announcement-copy{
+  font-family:var(--sans);
+  font-size:12.5px;
+  line-height:1.6;
+  color:var(--ink-dim);
+}
 
 .lock-free{
   margin-top:18px;
@@ -884,6 +924,11 @@ body{
       <div id="msg"></div>
     </div>
 
+    <div class="lock-announcement">
+      <div class="lock-announcement-label">New Drop</div>
+      <div class="lock-announcement-copy">New! Omegle added. Get a code now to use it.</div>
+    </div>
+
     <div class="lock-free">
       <div class="lock-free-label">Free Access</div>
       <div class="lock-free-copy">Access AscentaCompass to track grades.</div>
@@ -930,6 +975,15 @@ body{
       </div>
       <p>Curated arcade experiences. Pick a title to preview, then launch when you're ready.</p>
     </div>
+
+    <button class="free-panel" id="gradeCompassPanel" type="button">
+      <div>
+        <div class="free-panel-kicker">Free Access</div>
+        <div class="free-panel-title">Access AscentaCompass</div>
+        <div class="free-panel-desc">AscentaCompass is available from the free side of Ascenta.</div>
+      </div>
+      <span class="free-panel-action">Open grade tools</span>
+    </button>
 
     <div class="search-row">
       <input id="gameSearch" type="text" placeholder="Search the library…">
@@ -1005,6 +1059,14 @@ body{
      SVG ART (referenced by JS)
      ============================================================ -->
 <template id="artLib">
+
+<svg id="art-umingle" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-bg="linear-gradient(135deg,#2563eb,#7c3aed)">
+<path d="M28 28 H74 C85.046 28 94 36.954 94 48 V58 C94 69.046 85.046 78 74 78 H62 L44 92 V78 H28 C16.954 78 8 69.046 8 58 V48 C8 36.954 16.954 28 28 28 Z" fill="#fff" opacity="0.92"/>
+<path d="M70 42 H92 C102.493 42 111 50.507 111 61 V68 C111 78.493 102.493 87 92 87 H85 V99 L72 87 H70" stroke="#dbeafe" stroke-width="7" stroke-linejoin="round" opacity="0.82"/>
+<circle cx="34" cy="53" r="4" fill="#1d4ed8"/>
+<circle cx="51" cy="53" r="4" fill="#1d4ed8"/>
+<circle cx="68" cy="53" r="4" fill="#1d4ed8"/>
+</svg>
 
 <svg id="art-polytrack" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" data-bg="linear-gradient(135deg,#dc2626,#991b1b)">
 <path d="M30 60 L45 45 L75 45 L90 60 L75 75 L45 75 Z" fill="#fff" opacity="0.9"/>
@@ -1227,6 +1289,19 @@ const GAMES = (window.ASCENTA_GAME_LIBRARY || []).map((game, index) => ({
   _catalogIndex:index,
   path: game.path || (BASE + game.id + "/"),
 }));
+const FEATURED_GAME={
+  id:'umingle',
+  art:'art-umingle',
+  title:'Umingle',
+  tag:'Social',
+  desc:'New! Omegle is back in the hub — jump in once you have a code.',
+  long:'Use your code and jump straight into Umingle from the top of the hub. If their iframe rules get in the way, the open-tab escape hatch is there too.',
+  controls:'Keyboard / Mouse',
+  players:'1+',
+  path:'https://umingle.com/',
+  externalLink:'https://umingle.com/'
+};
+const HUB_GAMES=[FEATURED_GAME,...GAMES];
 
 /* ============================================================
    AMBIENT WARP CANVAS
@@ -1540,6 +1615,7 @@ const search=document.getElementById('gameSearch');
 const chips=document.getElementById('chips');
 const backToTop=document.getElementById('backToTop');
 const gradeCompassEntry=document.getElementById('gradeCompassEntry');
+const gradeCompassPanel=document.getElementById('gradeCompassPanel');
 const lib=document.getElementById('artLib').content;
 let activeTag='all';
 let activeQuery='';
@@ -1587,7 +1663,7 @@ function getArt(game){
 
 function buildHub(){
   grid.innerHTML='';
-  GAMES.forEach(g=>{
+  HUB_GAMES.forEach(g=>{
     const {svg,bg}=getArt(g);
     const el=document.createElement('div');
     el.className='card';
@@ -1680,7 +1756,7 @@ function targetRect(){
 }
 
 function openDetail(id, srcEl){
-  const g=GAMES.find(x=>x.id===id);if(!g)return;
+  const g=HUB_GAMES.find(x=>x.id===id);if(!g)return;
   currentGame=g;
   const {svg,bg}=getArt(g);
 
@@ -1821,6 +1897,7 @@ let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
 gradeCompassEntry.addEventListener('click',launchGradeCompass);
+gradeCompassPanel.addEventListener('click',launchGradeCompass);
 
 function openStage({title,tag,src,externalLink=''}){
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
@@ -1844,12 +1921,13 @@ function launchGame(){
   openStage({
     title:currentGame.title,
     tag:currentGame.tag,
-    src:currentGame.path
+    src:currentGame.path,
+    externalLink:currentGame.externalLink || ''
   });
 }
 
 function launchGradeCompass(){
-  openStage({title:'AscentaCompass',tag:'',src:GRADE_COMPASS_URL});
+  window.open(GRADE_COMPASS_URL,'_blank','noopener');
 }
 function closeStage(){
   stage.classList.remove('live');
