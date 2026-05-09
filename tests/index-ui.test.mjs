@@ -37,20 +37,24 @@ test("landing screen advertises the new Omegle addition before authentication", 
   assert.match(indexHtml, /#lock\.flying \.lock-announcement[\s\S]*animation:auxFade 500ms ease forwards;/);
 });
 
-test("grade compass uses the hosted ascenta compass url and opens outside the iframe", () => {
+test("grade compass uses the hosted ascenta compass url inside the iframe stage", () => {
   assert.match(indexHtml, /const GRADE_COMPASS_URL='https:\/\/ascentacompass\.vercel\.app\/';/);
   assert.match(indexHtml, /const gradeCompassEntry=document\.getElementById\('gradeCompassEntry'\);/);
   assert.match(indexHtml, /gradeCompassEntry\.addEventListener\('click',launchGradeCompass\);/);
-  assert.match(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
+  assert.match(indexHtml, /openStage\(\{\s*title:'AscentaCompass',/);
+  assert.match(indexHtml, /src:GRADE_COMPASS_URL,/);
+  assert.doesNotMatch(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
 });
 
-test("hub injects Umingle as the first featured game card and opens it outside the iframe", () => {
+test("hub injects Umingle as the first featured game card and launches it inside the iframe stage", () => {
   assert.match(indexHtml, /const FEATURED_GAME=\{/);
   assert.match(indexHtml, /title:'Umingle'/);
   assert.match(indexHtml, /desc:'New! Omegle is back in the hub — jump in once you have a code\.'/);
   assert.match(indexHtml, /path:'https:\/\/umingle\.com\/'/);
-  assert.match(indexHtml, /launchMode:'external'/);
+  assert.match(indexHtml, /externalLink:'https:\/\/umingle\.com\/'/);
   assert.match(indexHtml, /const HUB_GAMES=\[FEATURED_GAME,\s*\.\.\.GAMES\];/);
   assert.match(indexHtml, /HUB_GAMES\.forEach\(g=>\{/);
-  assert.match(indexHtml, /window\.open\(currentGame\.externalLink \|\| currentGame\.path,'_blank','noopener'\)/);
+  assert.match(indexHtml, /openStage\(\{\s*title:currentGame\.title,/);
+  assert.match(indexHtml, /src:currentGame\.path,/);
+  assert.doesNotMatch(indexHtml, /window\.open\(currentGame\.externalLink \|\| currentGame\.path,'_blank','noopener'\)/);
 });
