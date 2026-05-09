@@ -1321,7 +1321,6 @@ const FEATURED_GAME={
   long:'Use your code and jump straight into Umingle from the top of the hub. If their iframe rules get in the way, the open-tab escape hatch is there too.',
   controls:'Keyboard / Mouse',
   players:'1+',
-  launchMode:'external',
   path:'https://umingle.com/',
   externalLink:'https://umingle.com/'
 };
@@ -1957,11 +1956,6 @@ function openStage({title,tag,src,externalLink=''}){
 
 function launchGame(){
   if(!currentGame) return;
-  if(currentGame.launchMode==='external'){
-    window.open(currentGame.externalLink || currentGame.path,'_blank','noopener');
-    closeDetail();
-    return;
-  }
   openStage({
     title:currentGame.title,
     tag:currentGame.tag,
@@ -1971,7 +1965,12 @@ function launchGame(){
 }
 
 function launchGradeCompass(){
-  window.open(GRADE_COMPASS_URL,'_blank','noopener');
+  openStage({
+    title:'AscentaCompass',
+    tag:'Student tools',
+    src:GRADE_COMPASS_URL,
+    externalLink:GRADE_COMPASS_URL
+  });
 }
 function closeStage(){
   stage.classList.remove('live');
