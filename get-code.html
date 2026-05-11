@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Get Access · Ascenta 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --bg-2:#12121a;
+  --ink:#e4e4e7;
+  --ink-dim:#a1a1aa;
+  --ink-faint:#71717a;
+  --ink-faintest:#52525b;
+  --line:rgba(120,120,140,0.18);
+  --line-2:rgba(120,120,140,0.28);
+  --accent:#60a5fa;
+  --accent-soft:rgba(96,165,250,0.15);
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+body{
+  background:linear-gradient(135deg,#0a0a0f 0%,#12121a 50%,#0a0a0f 100%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:32px 16px 64px;
+}
+
+/* back link */
+.back{
+  align-self:flex-start;
+  font-size:13px;font-family:var(--mono);
+  color:var(--ink-faint);text-decoration:none;
+  letter-spacing:.5px;
+  transition:color .2s;
+  margin-bottom:40px;
+}
+.back:hover{color:var(--ink)}
+
+/* page heading */
+.heading{
+  font-family:var(--mono);
+  font-size:22px;font-weight:600;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--ink);
+  margin-bottom:8px;
+  text-align:center;
+}
+.sub{
+  font-size:13px;color:var(--ink-faint);
+  text-align:center;margin-bottom:32px;
+}
+
+/* card */
+.card{
+  width:min(420px,100%);
+  background:rgba(15,15,20,0.78);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:28px 24px;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  box-shadow:0 8px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,0.03);
+  display:flex;flex-direction:column;gap:24px;
+}
+
+/* price section */
+.price-row{
+  display:flex;align-items:baseline;gap:8px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--line);
+}
+.price-amount{
+  font-family:var(--mono);font-size:36px;font-weight:600;
+  color:var(--ink);
+}
+.price-label{
+  font-size:13px;color:var(--ink-faint);
+}
+
+/* features */
+.features{list-style:none;display:flex;flex-direction:column;gap:10px}
+.features li{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;color:var(--ink-dim);
+}
+.check{
+  width:16px;height:16px;border-radius:50%;
+  background:var(--accent-soft);
+  border:1px solid rgba(96,165,250,0.3);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.check::after{
+  content:'✓';font-size:10px;color:var(--accent);
+}
+
+/* pickup note */
+.note{
+  font-size:12.5px;line-height:1.7;
+  color:var(--ink-faint);
+  background:rgba(96,165,250,0.05);
+  border:1px solid rgba(96,165,250,0.12);
+  border-radius:8px;
+  padding:14px 16px;
+}
+
+/* form */
+.form-section{display:flex;flex-direction:column;gap:12px}
+.form-label{
+  font-family:var(--mono);font-size:11px;
+  letter-spacing:.8px;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:4px;
+  display:block;
+}
+input[type=text],input[type=email]{
+  width:100%;
+  padding:13px 16px;
+  background:rgba(10,10,15,0.7);
+  border:1px solid var(--line-2);
+  border-radius:8px;
+  color:var(--ink);
+  font-size:14px;font-family:var(--sans);
+  outline:none;
+  transition:all .25s;
+}
+input[type=text]::placeholder,input[type=email]::placeholder{color:var(--ink-faintest)}
+input[type=text]:focus,input[type=email]:focus{
+  border-color:rgba(96,165,250,0.5);
+  background:rgba(10,10,15,0.92);
+  box-shadow:0 0 0 3px rgba(96,165,250,0.1);
+}
+#submitBtn{
+  width:100%;margin-top:4px;
+  padding:14px;
+  background:rgba(96,165,250,0.1);
+  color:var(--accent);
+  border:1px solid rgba(96,165,250,0.3);
+  border-radius:8px;
+  font-size:13px;font-weight:600;
+  letter-spacing:1.2px;text-transform:uppercase;
+  font-family:var(--sans);
+  cursor:pointer;
+  transition:all .25s;
+}
+#submitBtn:hover{border-color:rgba(96,165,250,0.55);background:rgba(96,165,250,0.18);color:#93c5fd}
+#submitBtn:active{transform:scale(.985)}
+#submitBtn:disabled{opacity:.45;cursor:not-allowed}
+
+/* status messages */
+#formMsg{
+  font-family:var(--mono);font-size:13px;
+  color:var(--ink-faint);min-height:18px;
+  letter-spacing:.3px;
+}
+#formMsg.error{color:#f87171}
+
+/* confirmation */
+#confirmation{
+  display:none;
+  text-align:center;
+  padding:16px 0 4px;
+}
+#confirmation .conf-icon{
+  font-size:28px;margin-bottom:12px;
+}
+#confirmation .conf-title{
+  font-family:var(--mono);font-size:14px;font-weight:600;
+  color:var(--accent);letter-spacing:.8px;
+  margin-bottom:10px;
+}
+#confirmation .conf-body{
+  font-size:13px;color:var(--ink-dim);line-height:1.7;
+}
+#confirmation .conf-email{color:var(--accent)}
+
+/* contact footer */
+.contact-line{
+  text-align:center;
+  font-size:12px;color:var(--ink-faintest);
+  padding-top:4px;
+}
+.contact-line a{color:var(--ink-faint);text-decoration:none}
+.contact-line a:hover{color:var(--ink);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<a href="/" class="back">← Back</a>
+
+<div class="heading">Get Access</div>
+<div class="sub">One-time purchase · In-person payment</div>
+
+<div class="card">
+
+  <!-- pricing -->
+  <div class="price-row">
+    <span class="price-amount">$5</span>
+    <span class="price-label">one-time</span>
+  </div>
+
+  <!-- features -->
+  <ul class="features">
+    <li><span class="check"></span>Full access to all Ascenta 3 games</li>
+    <li><span class="check"></span>Umingle (Omegle-style chat)</li>
+    <li><span class="check"></span>All future drops included</li>
+    <li><span class="check"></span>Permanent key — no renewal</li>
+  </ul>
+
+  <!-- pickup note -->
+  <div class="note">
+    Payment is handled in person — online transactions are monitored at school.
+    Drop your name and email below and we'll reach out with meet-up details.
+    Once you pay, your access code gets sent straight to your inbox.
+  </div>
+
+  <!-- form -->
+  <div class="form-section" id="formSection">
+    <div>
+      <label class="form-label" for="nameInput">Your name</label>
+      <input type="text" id="nameInput" placeholder="First and last name" autocomplete="name" required>
+    </div>
+    <div>
+      <label class="form-label" for="emailInput">Email address</label>
+      <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" required>
+    </div>
+    <div id="formMsg"></div>
+    <button id="submitBtn" type="button">Request Access</button>
+  </div>
+
+  <!-- shown after successful submit -->
+  <div id="confirmation">
+    <div class="conf-icon">✓</div>
+    <div class="conf-title">Request sent</div>
+    <div class="conf-body">
+      Check your inbox — we'll email you from
+      <span class="conf-email">ascenta3support@gmail.com</span>
+      shortly with meet-up details and next steps.
+    </div>
+  </div>
+
+  <!-- contact -->
+  <div class="contact-line">
+    Questions? <a href="mailto:ascenta3support@gmail.com">ascenta3support@gmail.com</a>
+  </div>
+
+</div>
+
+<!--
+  ══════════════════════════════════════════════════════
+  SETUP INSTRUCTIONS (one-time, ~3 minutes)
+  ══════════════════════════════════════════════════════
+
+  1. Go to sheets.google.com → create a new spreadsheet.
+     Copy the Sheet ID from the URL:
+       https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit
+
+  2. In the sheet, click Extensions → Apps Script.
+     Delete any existing code, then paste:
+
+       function doPost(e) {
+         const d = JSON.parse(e.postData.contents);
+         SpreadsheetApp.openById('YOUR_SHEET_ID')
+           .getSheets()[0]
+           .appendRow([new Date(), d.name, d.email]);
+         return ContentService.createTextOutput('ok')
+           .setMimeType(ContentService.MimeType.TEXT);
+       }
+
+     Replace YOUR_SHEET_ID with the ID you copied. Save.
+
+  3. Click Deploy → New deployment.
+     Type: Web app
+     Execute as: Me
+     Who has access: Anyone
+     Click Deploy → copy the deployment URL.
+
+  4. Paste that URL below, replacing YOUR_SCRIPT_URL.
+  ══════════════════════════════════════════════════════
+-->
+
+<script>
+const SCRIPT_URL = 'YOUR_SCRIPT_URL'; // ← replace after deploying Apps Script
+
+const nameInput  = document.getElementById('nameInput');
+const emailInput = document.getElementById('emailInput');
+const submitBtn  = document.getElementById('submitBtn');
+const formMsg    = document.getElementById('formMsg');
+const formSection= document.getElementById('formSection');
+const confirmation=document.getElementById('confirmation');
+
+submitBtn.addEventListener('click', async () => {
+  const name  = nameInput.value.trim();
+  const email = emailInput.value.trim();
+
+  if (!name)  { showMsg('Please enter your name.', true); return; }
+  if (!email || !email.includes('@')) { showMsg('Please enter a valid email.', true); return; }
+  if (SCRIPT_URL === 'YOUR_SCRIPT_URL') {
+    // dev placeholder — show success UI without actually posting
+    showSuccess(); return;
+  }
+
+  submitBtn.disabled = true;
+  showMsg('Sending…', false);
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ name, email }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    showSuccess();
+  } catch {
+    submitBtn.disabled = false;
+    showMsg('Something went wrong — try emailing us directly.', true);
+  }
+});
+
+function showMsg(text, isError) {
+  formMsg.textContent = text;
+  formMsg.className = isError ? 'error' : '';
+}
+
+function showSuccess() {
+  formSection.style.display = 'none';
+  confirmation.style.display = 'block';
+}
+</script>
+</body>
+</html>
