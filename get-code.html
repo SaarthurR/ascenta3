@@ -189,6 +189,20 @@ input[type=text]:focus,input[type=email]:focus{
 }
 .contact-line a{color:var(--ink-faint);text-decoration:none}
 .contact-line a:hover{color:var(--ink);text-decoration:underline}
+
+.site-footer{
+  margin-top:32px;
+  display:flex;align-items:center;justify-content:center;
+  flex-wrap:wrap;gap:6px 14px;
+  font-family:var(--mono);font-size:11px;
+  color:var(--ink-faintest);letter-spacing:.3px;
+}
+.site-footer a{
+  color:var(--ink-faint);text-decoration:none;
+  transition:color .2s;
+}
+.site-footer a:hover{color:var(--accent)}
+.site-footer-sep{opacity:.5}
 </style>
 </head>
 <body>
@@ -219,6 +233,9 @@ input[type=text]:focus,input[type=email]:focus{
     Payment is handled in person — online transactions are monitored at school.
     Drop your name and email below and we'll reach out with meet-up details.
     Once you pay, your access code gets sent straight to your inbox.
+    <br><br>
+    <strong style="color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;">Note:</strong>
+    Only real names and valid personal emails will be considered — fake or placeholder entries will be disregarded.
   </div>
 
   <!-- form -->
@@ -251,6 +268,14 @@ input[type=text]:focus,input[type=email]:focus{
     Questions? <a href="mailto:ascenta3support@gmail.com">ascenta3support@gmail.com</a>
   </div>
 
+</div>
+
+<div class="site-footer">
+  <span>© 2026 KAS Systems</span>
+  <span class="site-footer-sep">·</span>
+  <a href="/tos.html">Terms of Service</a>
+  <span class="site-footer-sep">·</span>
+  <a href="/privacy.html">Privacy Policy</a>
 </div>
 
 <!--
