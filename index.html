@@ -271,6 +271,12 @@ body{
   transition:all .25s;
 }
 #keyInput::placeholder{color:var(--ink-faintest);font-family:var(--sans);letter-spacing:0}
+#keyInput:-webkit-autofill,
+#keyInput:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px rgba(10,10,15,0.92) inset;
+  -webkit-text-fill-color:var(--ink);
+  caret-color:var(--ink);
+}
 #keyInput:focus{
   border-color:rgba(96,165,250,0.5);
   background:rgba(10,10,15,0.92);
