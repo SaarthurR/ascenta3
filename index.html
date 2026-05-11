@@ -302,6 +302,14 @@ body{
 #msg.error{color:#f87171}
 #msg.success{color:var(--accent)}
 
+#needCodeRow{text-align:center;margin-top:12px}
+#needCodeLink{
+  font-family:var(--sans);font-size:12px;
+  color:var(--ink-faintest);text-decoration:none;
+  transition:color .2s;
+}
+#needCodeLink:hover{color:var(--ink-dim);text-decoration:underline}
+
 .access-note{
   font-family:var(--sans);
   font-size:12.5px;
@@ -947,6 +955,7 @@ body{
 
         <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
         <button id="unlockBtn">Authenticate</button>
+        <div id="needCodeRow"><a href="/get-code.html" id="needCodeLink">Need a code?</a></div>
         <div id="msg"></div>
       </div>
 
