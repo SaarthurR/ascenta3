@@ -129,7 +129,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .ci-name{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ci-preview{font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .ci-preview.unread{color:var(--ink2);font-weight:600}
+.ci.has-unread{background:rgba(96,165,250,0.07)}
+.ci.has-unread:hover,.ci.has-unread:active{background:rgba(96,165,250,0.13)}
 .ci-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.ci-udot{width:8px;height:8px;border-radius:50%;background:var(--A);box-shadow:0 0 6px rgba(96,165,250,0.7)}
 .ci-time{font-size:10px;color:var(--ink4)}
 .ci-badge{min-width:18px;height:18px;border-radius:9px;background:var(--A);color:#000;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
 .c-empty{padding:28px 12px;text-align:center;font-size:12px;color:var(--ink4);line-height:1.9}
@@ -238,6 +241,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 
 .spin{display:inline-block;width:20px;height:20px;border:2.5px solid var(--line);border-top-color:var(--A);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── RENAME POPOVER ── */
+.tb-chip{cursor:pointer;transition:var(--ease)}
+.tb-chip:hover{background:rgba(96,165,250,0.2);box-shadow:0 0 0 1.5px rgba(96,165,250,0.35)}
+#renamePop{position:fixed;top:60px;right:14px;background:var(--sf);border:1px solid var(--line2);border-radius:14px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;z-index:300;width:220px}
+#renamePop.open{display:block}
+#renamePop .rp-lbl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
+#renameInput{width:100%;padding:9px 12px;background:var(--bg);border:1.5px solid var(--line2);border-radius:8px;color:var(--ink);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:10px;transition:var(--ease);-webkit-appearance:none}
+#renameInput:focus{border-color:var(--A);box-shadow:0 0 0 3px var(--As)}
+#renamePop .rp-row{display:flex;gap:6px}
+#renamePop .rp-btn{flex:1;padding:8px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;transition:var(--ease);touch-action:manipulation}
+.rp-save{background:var(--As);border:1.5px solid rgba(96,165,250,0.3);color:var(--A)}
+.rp-save:hover{background:rgba(96,165,250,0.22);color:var(--A2)}
+.rp-cancel{background:transparent;border:1.5px solid var(--line);color:var(--ink3)}
+.rp-cancel:hover{background:var(--bg2)}
+.rp-err{font-size:10px;color:var(--R);min-height:14px;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -268,10 +287,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
     </button>
     <span class="tb-brand">Ascen<em>Chat</em></span>
     <span class="tb-grow"></span>
-    <div class="tb-chip tb-notify">
+    <div class="tb-chip tb-notify" onclick="openRename()" title="Click to change name">
       <div class="tb-av" id="myAv">?</div>
       <span id="myNameDisp">—</span>
       <div class="tb-nbadge" id="globalBadge"></div>
+    </div>
+  </div>
+  <div id="renamePop">
+    <div class="rp-lbl">Change display name</div>
+    <input id="renameInput" type="text" maxlength="24" placeholder="New name…" autocomplete="off" autocorrect="off" autocapitalize="off">
+    <div class="rp-err" id="rpErr"></div>
+    <div class="rp-row">
+      <button class="rp-btn rp-cancel" onclick="closeRename()">Cancel</button>
+      <button class="rp-btn rp-save" onclick="confirmRename()">Save</button>
     </div>
   </div>
 
@@ -367,6 +395,8 @@ let tab='dm';
 let sbOpen=false;
 
 let unread={};
+let lastMsg={};     // {cid:{text,mine,ts}} — last known message per conversation
+let lastActivity={}; // {cid:ms} — for sorting (most recent to top)
 let seenSet=new Set(JSON.parse(sessionStorage.getItem('ac_seen')||'[]'));
 function saveSeen(){try{sessionStorage.setItem('ac_seen',JSON.stringify([...seenSet].slice(-400)));}catch(e){}}
 
@@ -484,24 +514,37 @@ function renderList(){
   if(tab==='dm'){
     let users=q?allUsers.filter(u=>(u.name||'').toLowerCase().includes(q)):allUsers;
     if(!users.length){list.innerHTML=`<div class="c-empty">${q?'No users found.':'No one else here yet.<br>Share the link! 🔗'}</div>`;return}
+    // sort: unread first by lastActivity desc, then by lastActivity desc (recent msgs), then alpha
+    users=[...users].sort((a,b)=>{
+      const ca=dmId(myUid,a.uid), cb=dmId(myUid,b.uid);
+      const ua=!!unread[ca], ub=!!unread[cb];
+      if(ua!==ub)return ua?-1:1;
+      const ta=lastActivity[ca]||0, tb=lastActivity[cb]||0;
+      if(ta!==tb)return tb-ta;
+      return (a.name||'').localeCompare(b.name||'');
+    });
     list.innerHTML='';
     users.forEach(u=>{
       const cid=dmId(myUid,u.uid);
       const isAct=activeId===cid&&activeType==='dm';
       const online=u.lastSeen&&(Date.now()-u.lastSeen.toDate().getTime()<90000);
       const ur=unread[cid]||null;
-      const preview=ur?ur.preview:null;
+      const lm=lastMsg[cid]||null;
+      let previewText, previewUnread=false;
+      if(ur){previewText=ur.preview;previewUnread=true;}
+      else if(lm){previewText=lm.mine?'You: '+lm.text:lm.text;}
+      else{previewText='Tap to message';}
       const el=document.createElement('div');
-      el.className='ci'+(isAct?' on':'');
+      el.className='ci'+(isAct?' on':ur?' has-unread':'');
       el.innerHTML=`
         <div class="ci-av">${ini(u.name)}${online?'<div class="ci-dot"></div>':''}</div>
         <div class="ci-info">
           <div class="ci-name">${esc(u.name)}</div>
-          <div class="ci-preview${ur?' unread':''}">${preview?esc(preview.slice(0,36)):'Tap to message'}</div>
+          <div class="ci-preview${previewUnread?' unread':''}">${esc(previewText.slice(0,40))}</div>
         </div>
         <div class="ci-meta">
-          <div class="ci-time">${ago(u.lastSeen)}</div>
-          ${ur?`<div class="ci-badge">${ur.count>9?'9+':ur.count}</div>`:''}
+          <div class="ci-time">${ur?'now':ago(u.lastSeen)}</div>
+          ${ur?`<div class="ci-udot"></div>`:''}
         </div>`;
       el.onclick=()=>{openDM(u.uid,u.name);};
       list.appendChild(el);
@@ -516,18 +559,23 @@ function renderList(){
     groups.forEach(g=>{
       const isAct=activeId===g.id&&activeType==='group';
       const ur=unread[g.id]||null;
-      const preview=ur?ur.preview:g.lastMsg||null;
+      const lm=lastMsg[g.id]||null;
+      let previewText, previewUnread=false;
+      if(ur){previewText=ur.preview;previewUnread=true;}
+      else if(lm){previewText=lm.mine?'You: '+lm.text:lm.text;}
+      else if(g.lastMsg){previewText=g.lastMsg;}
+      else{previewText=g.members?g.members.length+' members':'Group chat';}
       const el=document.createElement('div');
-      el.className='ci'+(isAct?' on':'');
+      el.className='ci'+(isAct?' on':ur?' has-unread':'');
       el.innerHTML=`
         <div class="ci-av">👥</div>
         <div class="ci-info">
           <div class="ci-name">${esc(g.name||'Unnamed group')}</div>
-          <div class="ci-preview${ur?' unread':''}">${preview?esc(preview.slice(0,36)):(g.members?g.members.length+' members':'Group chat')}</div>
+          <div class="ci-preview${previewUnread?' unread':''}">${esc(previewText.slice(0,40))}</div>
         </div>
         <div class="ci-meta">
-          <div class="ci-time">${ago(g.updatedAt)}</div>
-          ${ur?`<div class="ci-badge">${ur.count>9?'9+':ur.count}</div>`:''}
+          <div class="ci-time">${ur?'now':ago(g.updatedAt)}</div>
+          ${ur?`<div class="ci-udot"></div>`:''}
         </div>`;
       el.onclick=()=>openGroup(g.id,g.name,g.members||[]);
       list.appendChild(el);
@@ -597,7 +645,17 @@ function mountChat(av,name,sub){
       }
     });
     firstLoad=false;
-    renderMsgs(snap.docs.map(d=>({id:d.id,...d.data()})));
+    const allMsgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // track last known message for preview
+    const nonSys=allMsgs.filter(m=>!m.system);
+    if(nonSys.length){
+      const lm=nonSys[nonSys.length-1];
+      const mine=lm.from===myUid;
+      const cid2=activeId;
+      lastMsg[cid2]={text:lm.text||'',mine,ts:lm.timestamp&&lm.timestamp.toDate?lm.timestamp.toDate().getTime():Date.now()};
+      if(!lastActivity[cid2])lastActivity[cid2]=lastMsg[cid2].ts;
+    }
+    renderMsgs(allMsgs);
   }, err=>{ console.error('Msgs error:', err); $('msgs').innerHTML='<div class="c-empty">Error loading messages.</div>'; });
 }
 
@@ -695,6 +753,9 @@ async function sendMsg(){
       await db.collection('groups').doc(activeId).collection('messages').add(payload);
       await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:text});
     }
+    lastMsg[activeId]={text,mine:true,ts:Date.now()};
+    lastActivity[activeId]=Date.now();
+    renderList();
   }catch(e){console.error('Send error:',e)}
 }
 
@@ -751,6 +812,8 @@ function bumpUnread(cid,fromName,text,groupName){
   unread[cid].count++;
   unread[cid].preview=(groupName?fromName+': ':'')+text;
   unread[cid].fromName=fromName;
+  lastMsg[cid]={text:(groupName?fromName+': ':'')+text,mine:false,ts:Date.now()};
+  lastActivity[cid]=Date.now();
   renderList();
 }
 
@@ -845,6 +908,40 @@ async function createGroup(){
 }
 
 $('grpOv').addEventListener('click',e=>{if(e.target===$('grpOv'))closeGM()});
+
+// ─── Rename ───
+function openRename(){
+  $('renameInput').value=myName||'';
+  $('rpErr').textContent='';
+  $('renamePop').classList.add('open');
+  setTimeout(()=>{$('renameInput').focus();$('renameInput').select()},50);
+}
+function closeRename(){$('renamePop').classList.remove('open')}
+$('renameInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();confirmRename()}
+  if(e.key==='Escape'){closeRename()}
+});
+document.addEventListener('click',e=>{
+  if($('renamePop').classList.contains('open')&&!e.target.closest('#renamePop')&&!e.target.closest('.tb-chip'))closeRename();
+});
+async function confirmRename(){
+  const name=$('renameInput').value.trim();
+  if(!name){$('rpErr').textContent='Enter a name.';return}
+  if(name.length<2){$('rpErr').textContent='At least 2 characters.';return}
+  if(!/^[a-zA-Z0-9_.\- ]+$/.test(name)){$('rpErr').textContent='Letters, numbers, _ . - only.';return}
+  if(name===myName){closeRename();return}
+  $('rpErr').textContent='Checking…';
+  try{
+    const snap=await db.collection('users').where('name','==',name).get();
+    if(snap.docs.some(d=>d.id!==myUid)){$('rpErr').textContent='Name taken, try another.';return}
+    await db.collection('users').doc(myUid).update({name});
+    myName=name;
+    $('myNameDisp').textContent=name;
+    $('myAv').textContent=ini(name);
+    if($('remMe').checked)saveS();
+    closeRename();
+  }catch(e){$('rpErr').textContent='Error, try again.';console.error(e)}
+}
 </script>
 </body>
 </html>
