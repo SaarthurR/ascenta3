@@ -68,7 +68,8 @@ body{
    ============================================================ */
 #lock{
   position:fixed;inset:0;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:flex-start;justify-content:center;
+  overflow-y:auto;
   z-index:50;
   background:transparent;
   transition:opacity .5s ease;
@@ -79,7 +80,8 @@ body{
   position:relative;z-index:51;
   text-align:center;
   width:min(440px,90vw);
-  padding:40px;
+  padding:28px 40px 36px;
+  margin:auto;
   transform-origin:50% 50%;
   will-change:transform,filter,opacity;
 }
@@ -391,7 +393,7 @@ body{
 }
 
 .lock-footer{
-  margin-top:40px;
+  margin-top:20px;
   font-family:var(--sans);
   font-size:11px;color:var(--ink-faintest);letter-spacing:.3px;
   opacity:0;animation:fadeIn .8s 2.4s forwards;
@@ -1994,7 +1996,9 @@ let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
 gradeCompassEntry.addEventListener('click',launchGradeCompass);
-document.getElementById('chatEntry').addEventListener('click',()=>{ window.location.href='/chat/'; });
+document.getElementById('chatEntry').addEventListener('click',()=>{
+  openStage({title:'AscentChat',tag:'Free · Schoolwide',src:'/chat/',externalLink:'/chat/'});
+});
 
 function openStage({title,tag,src,externalLink=''}){
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
