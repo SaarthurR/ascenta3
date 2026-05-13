@@ -228,6 +228,20 @@ body{
   background:rgba(96,165,250,0.12);
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
 }
+#terminalTabChat{
+  border-color:rgba(96,165,250,0.28);
+  color:var(--accent);
+  box-shadow:0 0 10px rgba(96,165,250,0.18),0 0 24px rgba(96,165,250,0.1);
+  animation:chatGlow 2.4s ease-in-out infinite;
+}
+#terminalTabChat.active{
+  animation:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 0 14px rgba(96,165,250,0.3);
+}
+@keyframes chatGlow{
+  0%,100%{box-shadow:0 0 8px rgba(96,165,250,0.15),0 0 20px rgba(96,165,250,0.08)}
+  50%{box-shadow:0 0 14px rgba(96,165,250,0.35),0 0 32px rgba(96,165,250,0.18)}
+}
 .access-panel{
   display:none;
   padding:14px 14px 10px;
