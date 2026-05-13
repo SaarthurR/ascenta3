@@ -194,22 +194,24 @@ body{
 }
 .access-tabs{
   display:flex;
-  gap:8px;
+  gap:6px;
+  justify-content:center;
+  flex-wrap:wrap;
   margin-bottom:14px;
   padding-bottom:14px;
   border-bottom:1px solid var(--line);
 }
 .access-tab{
-  flex:1;
-  min-width:0;
-  padding:10px 12px;
+  flex:0 0 auto;
+  white-space:nowrap;
+  padding:8px 14px;
   border:1px solid transparent;
   border-radius:10px;
   background:rgba(12,12,18,0.72);
   color:var(--ink-faint);
   font-family:var(--mono);
-  font-size:11px;
-  letter-spacing:.9px;
+  font-size:10px;
+  letter-spacing:.4px;
   text-transform:uppercase;
   cursor:pointer;
   transition:.2s;
