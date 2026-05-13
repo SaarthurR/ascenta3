@@ -970,6 +970,7 @@ body{
       <div class="access-tabs" role="tablist" aria-label="Access tabs">
         <button class="access-tab active" id="terminalTabUnlock" type="button" data-panel="unlock" aria-selected="true">Access Terminal</button>
         <button class="access-tab" id="terminalTabCompass" type="button" data-panel="compass" aria-selected="false">AscentaCompass</button>
+        <button class="access-tab" id="terminalTabChat" type="button" data-panel="chat" aria-selected="false">AscentChat</button>
       </div>
 
       <div class="access-panel active" data-panel="unlock">
@@ -995,11 +996,21 @@ body{
         <div class="access-note">Access AscentaCompass to track grades.</div>
         <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access AscentaCompass</button>
       </div>
+
+      <div class="access-panel" data-panel="chat">
+        <div class="access-header">
+          <div class="status-dot"></div>
+          <div class="access-title">Free Access</div>
+          <div class="access-id">CHAT&nbsp;//&nbsp;FREE</div>
+        </div>
+        <div class="access-note">Schoolwide chat — DMs &amp; group chats. No code needed.</div>
+        <button class="lock-free-btn" id="chatEntry" type="button">Open AscentChat</button>
+      </div>
     </div>
 
     <div class="lock-announcement">
       <div class="lock-announcement-label">New Drop</div>
-      <div class="lock-announcement-copy">New! Omegle added. Get a code now to use it.</div>
+      <div class="lock-announcement-copy">Free schoolwide chatting is here — no code needed.</div>
     </div>
 
     <div class="lock-footer">
@@ -1362,7 +1373,7 @@ const FEATURED_GAME={
   art:'art-umingle',
   title:'Emerald Chat',
   tag:'Social',
-  desc:'New! Omegle is back in the hub — jump in once you have a code.',
+  desc:'Free schoolwide chat is live — message anyone at school, no code needed.',
   long:'Use your code and jump straight into Emerald Chat from the top of the hub. If their iframe rules get in the way, the open-tab escape hatch is there too.',
   controls:'Keyboard / Mouse',
   players:'1+',
@@ -1981,6 +1992,7 @@ let stageTimerStart=0,stageTimerRaf=0;
 
 launchBtn.addEventListener('click',launchGame);
 gradeCompassEntry.addEventListener('click',launchGradeCompass);
+document.getElementById('chatEntry').addEventListener('click',()=>{ window.location.href='/chat/'; });
 
 function openStage({title,tag,src,externalLink=''}){
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
