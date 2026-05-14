@@ -1835,18 +1835,8 @@ function getArt(game){
   return {svg,bg};
 }
 
-async function buildHub(){
+function buildHub(){
   grid.innerHTML='';
-  try{
-    const r=await fetch('/api/admin/config');
-    if(r.ok){
-      const c=await r.json();
-      if(c.gamesDisabled){
-        grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:4rem 1rem;color:#888;font-family:monospace;font-size:.95rem;letter-spacing:.05em;">GAMES UNAVAILABLE — Check back later</div>';
-        return;
-      }
-    }
-  }catch(e){}
   HUB_GAMES.forEach(g=>{
     const {svg,bg}=getArt(g);
     const el=document.createElement('div');
@@ -1872,6 +1862,10 @@ async function buildHub(){
     grid.appendChild(el);
   });
   applyFilters();
+  // check games-disabled after cards are shown (non-blocking)
+  fetch('/api/admin/config').then(r=>r.ok?r.json():null).then(c=>{
+    if(c?.gamesDisabled) grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:4rem 1rem;color:#888;font-family:monospace;font-size:.95rem;letter-spacing:.05em;">GAMES UNAVAILABLE — Check back later</div>';
+  }).catch(()=>{});
 }
 
 function applyFilters(){
