@@ -26,8 +26,8 @@ function shouldUseSecureCookies(req) {
   return normalizedProto === "https" || process.env.NODE_ENV === "production";
 }
 
-async function grantSession(res, req) {
-  const sessionValue = await createSessionValue(SESSION_SECRET);
+async function grantSession(res, req, extra = {}) {
+  const sessionValue = await createSessionValue(SESSION_SECRET, extra);
   res.setHeader("Set-Cookie", buildSessionCookie(sessionValue, {
     secure: shouldUseSecureCookies(req),
   }));
@@ -81,8 +81,13 @@ export default async function handler(req, res) {
 
     const adminDoc = await getDocument("admin_keys", key);
     if (adminDoc) {
-      await grantSession(res, req);
-      return res.status(200).json({ status: "granted" });
+      await grantSession(res, req, { isAdmin: true });
+      return res.status(200).json({ status: "admin" });
+    }
+
+    const configDoc = await getDocument("config", "global");
+    if (configDoc?.siteDisabled) {
+      return res.status(200).json({ status: "disabled" });
     }
 
     const keyDoc = await getDocument("keys", key);

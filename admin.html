@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASCENTA ADMIN // CONTROL PANEL</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --card:      #111111;
+      --card2:     #141414;
+      --border:    #222222;
+      --border2:   #2a2a2a;
+      --green:     #00ff88;
+      --green-dim: #00cc6a;
+      --cyan:      #00e5ff;
+      --red:       #ff4444;
+      --red-dim:   #cc2222;
+      --yellow:    #ffcc00;
+      --muted:     #555555;
+      --text:      #cccccc;
+      --text-dim:  #888888;
+      --font:      'Courier New', Courier, monospace;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+    body { min-height: 100vh; padding: 0; }
+
+    /* ─── LAYOUT ─── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ─── HEADER ─── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-title h1 {
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: var(--green);
+      text-shadow: 0 0 12px rgba(0,255,136,0.4);
+    }
+    .header-title h2 {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .header-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .back-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 1px;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .back-link:hover { color: var(--green); border-color: var(--green); }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .badge {
+      font-size: 11px;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border: 1px solid;
+      text-transform: uppercase;
+    }
+    .badge.green  { color: var(--green); border-color: var(--green); background: rgba(0,255,136,0.07); }
+    .badge.red    { color: var(--red);   border-color: var(--red);   background: rgba(255,68,68,0.07); }
+    .badge.muted  { color: var(--muted); border-color: var(--muted); }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .section-header {
+      background: var(--card2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .section-body { padding: 18px; }
+
+    /* ─── GRID ─── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+
+    /* ─── CONTROLS ─── */
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .control-row:last-child { border-bottom: none; }
+    .control-label { color: var(--text); font-size: 13px; flex: 1; min-width: 160px; }
+    .control-label small { display: block; color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+
+    /* ─── TOGGLE SWITCH ─── */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle-status { font-size: 11px; letter-spacing: 1px; min-width: 50px; text-align: right; }
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #1a1a1a;
+      border: 1px solid var(--muted);
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 14px; height: 14px;
+      background: var(--muted);
+      transition: transform 0.25s, background 0.25s;
+    }
+    .toggle input:checked + .toggle-track {
+      background: rgba(0,255,136,0.12);
+      border-color: var(--green);
+    }
+    .toggle input:checked + .toggle-track::after {
+      transform: translateX(22px);
+      background: var(--green);
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      font-family: var(--font);
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border: 1px solid;
+      cursor: pointer;
+      background: transparent;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-default {
+      color: var(--text-dim);
+      border-color: var(--border2);
+    }
+    .btn-default:hover:not(:disabled) {
+      color: var(--text);
+      border-color: var(--text-dim);
+    }
+    .btn-primary {
+      color: var(--green);
+      border-color: var(--green);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--green);
+      color: #000;
+      box-shadow: 0 0 10px rgba(0,255,136,0.3);
+    }
+    .btn-danger {
+      color: var(--red);
+      border-color: var(--red);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255,68,68,0.3);
+    }
+    .btn-sm { padding: 3px 8px; font-size: 11px; }
+    .btn-xs { padding: 2px 6px; font-size: 10px; letter-spacing: 0.5px; }
+
+    /* ─── INPUTS ─── */
+    input[type="text"], textarea, select {
+      font-family: var(--font);
+      font-size: 13px;
+      background: #0d0d0d;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 7px 10px;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus,
+    textarea:focus { border-color: var(--green); }
+    textarea { resize: vertical; min-height: 80px; }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .input-row input[type="text"] { flex: 1; min-width: 140px; }
+
+    /* ─── FEEDBACK ─── */
+    .feedback {
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    .feedback.ok  { color: var(--green); }
+    .feedback.err { color: var(--red); }
+
+    /* ─── TABLE ─── */
+    .user-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .user-table thead th {
+      text-align: left;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border2);
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 11px;
+      background: var(--card2);
+    }
+    .user-table tbody tr { border-bottom: 1px solid var(--border); }
+    .user-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .user-table tbody tr:hover { background: rgba(0,255,136,0.04); }
+    .user-table td { padding: 8px 10px; vertical-align: middle; }
+    .user-table .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ─── KEY LIST ─── */
+    .key-list { list-style: none; }
+    .key-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .key-item:last-child { border-bottom: none; }
+    .key-val {
+      font-size: 12px;
+      color: var(--cyan);
+      word-break: break-all;
+      flex: 1;
+    }
+    .key-val.used { color: var(--muted); text-decoration: line-through; }
+    .empty-state {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 12px 0;
+      letter-spacing: 1px;
+    }
+
+    /* ─── WARNING BOX ─── */
+    .warn-box {
+      border: 1px solid var(--yellow);
+      background: rgba(255,204,0,0.05);
+      color: var(--yellow);
+      font-size: 11px;
+      padding: 8px 12px;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    /* ─── STATUS CHIP ─── */
+    .chip {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid;
+      letter-spacing: 0.5px;
+    }
+    .chip.banned { color: var(--red); border-color: var(--red); }
+    .chip.active { color: var(--green); border-color: var(--green); }
+
+    /* ─── LOADING ─── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .loader-text {
+      color: var(--green);
+      letter-spacing: 4px;
+      font-size: 14px;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ─── REFRESH BTN ─── */
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ─── MISC ─── */
+    .mt8  { margin-top: 8px; }
+    .mt12 { margin-top: 12px; }
+    .mb8  { margin-bottom: 8px; }
+    .full { width: 100%; }
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .section-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading-screen">
+  <div class="loader-text">// AUTHENTICATING...</div>
+</div>
+
+<!-- Main page (hidden until auth passes) -->
+<div class="page" id="main-page" style="display:none">
+
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div class="header-top">
+      <div class="header-title">
+        <h1>ASCENTA ADMIN</h1>
+        <h2>// CONTROL PANEL</h2>
+      </div>
+      <div class="header-meta">
+        <a href="/" class="back-link">&#8592; Back to Site</a>
+        <div class="badges">
+          <span id="badge-site" class="badge muted">SITE ...</span>
+          <span id="badge-games" class="badge muted">GAMES ...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── SITE CONTROL ─── -->
+  <div class="section">
+    <div class="section-header">// SITE CONTROL</div>
+    <div class="section-body">
+      <!-- Maintenance toggle -->
+      <div class="control-row">
+        <div class="control-label">
+          Maintenance Mode
+          <small>Disable access for non-admins</small>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-status" id="maint-status">OFF</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-maintenance" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Games toggle -->
+      <div class="control-row">
+        <div class="control-label">
+          Games Enabled
+          <small>Allow students to play games</small>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-status" id="games-status">ON</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-games" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Maintenance message -->
+      <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div class="control-label">
+          Maintenance Message
+          <small>Shown to users when site is disabled</small>
+        </div>
+        <div class="input-row full">
+          <input type="text" id="maint-message" placeholder="Enter maintenance message..." />
+          <button class="btn btn-primary" id="btn-save-message">Save</button>
+        </div>
+        <div class="feedback" id="fb-message"></div>
+      </div>
+
+      <!-- Clear sessions -->
+      <div class="control-row">
+        <div class="control-label">
+          Clear All Sessions
+          <small>Force logout every active user</small>
+        </div>
+        <button class="btn btn-danger" id="btn-clear-sessions">Clear All Sessions</button>
+      </div>
+      <div class="feedback" id="fb-sessions"></div>
+    </div>
+  </div>
+
+  <!-- ─── BROADCAST ─── -->
+  <div class="section">
+    <div class="section-header">// BROADCAST</div>
+    <div class="section-body">
+      <div class="section-label">Message to all online users</div>
+      <textarea id="broadcast-msg" placeholder="Type your broadcast message..."></textarea>
+      <div class="mt8">
+        <button class="btn btn-primary" id="btn-broadcast">Send Broadcast</button>
+      </div>
+      <div class="feedback" id="fb-broadcast"></div>
+    </div>
+  </div>
+
+  <!-- ─── USER MANAGEMENT ─── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-header-row">
+        <span>// USER MANAGEMENT</span>
+        <button class="btn btn-default btn-sm" id="btn-refresh-users">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="section-body" id="users-body">
+      <p class="empty-state">Loading users...</p>
+    </div>
+  </div>
+
+  <!-- ─── KEY MANAGEMENT ─── -->
+  <div class="section">
+    <div class="section-header">// KEY MANAGEMENT</div>
+    <div class="section-body">
+      <div class="grid2">
+        <!-- Active keys -->
+        <div>
+          <div class="section-label">Active Keys</div>
+          <ul class="key-list" id="keys-active">
+            <li class="empty-state">Loading...</li>
+          </ul>
+        </div>
+        <!-- Used keys -->
+        <div>
+          <div class="section-label">Used Keys</div>
+          <ul class="key-list" id="keys-used">
+            <li class="empty-state">Loading...</li>
+          </ul>
+        </div>
+      </div>
+      <hr class="sep" />
+      <div class="section-label">Add Key</div>
+      <div class="input-row">
+        <input type="text" id="new-key-input" placeholder="Enter new key..." />
+        <button class="btn btn-primary" id="btn-add-key">Add Key</button>
+      </div>
+      <div class="feedback" id="fb-keys"></div>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN KEYS ─── -->
+  <div class="section">
+    <div class="section-header">// ADMIN KEYS</div>
+    <div class="section-body">
+      <div class="warn-box">
+        &#9888; Warning: Removing your own admin key will lock you out of this panel.
+      </div>
+      <div class="section-label">Admin Keys</div>
+      <ul class="key-list" id="admin-keys-list">
+        <li class="empty-state">Loading...</li>
+      </ul>
+      <hr class="sep" />
+      <div class="section-label">Add Admin Key</div>
+      <div class="input-row">
+        <input type="text" id="new-admin-key-input" placeholder="Enter admin key..." />
+        <button class="btn btn-primary" id="btn-add-admin-key">Add Admin Key</button>
+      </div>
+      <div class="feedback" id="fb-admin-keys"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   API HELPER
+═══════════════════════════════════════════════ */
+async function adminFetch(path, opts = {}) {
+  const options = {
+    credentials: 'include',
+    ...opts,
+  };
+  if (opts.body !== undefined && typeof opts.body === 'object') {
+    options.body = JSON.stringify(opts.body);
+    options.headers = {
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+    };
+  }
+  const res = await fetch(path, options);
+  if (res.status === 403) {
+    window.location.href = '/';
+    throw new Error('Forbidden');
+  }
+  let data;
+  try { data = await res.json(); } catch { data = {}; }
+  return { ok: res.ok, status: res.status, data };
+}
+
+/* ═══════════════════════════════════════════════
+   FEEDBACK HELPER
+═══════════════════════════════════════════════ */
+function showFeedback(elId, msg, isOk, timeoutMs = 4000) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'feedback ' + (isOk ? 'ok' : 'err');
+  if (timeoutMs) setTimeout(() => { el.textContent = ''; el.className = 'feedback'; }, timeoutMs);
+}
+
+/* ═══════════════════════════════════════════════
+   RELATIVE TIME
+═══════════════════════════════════════════════ */
+function relTime(ts) {
+  if (!ts) return '—';
+  const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+  if (diff < 5)   return 'just now';
+  if (diff < 60)  return diff + ' sec ago';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
+  return Math.floor(diff / 86400) + ' days ago';
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER BADGES
+═══════════════════════════════════════════════ */
+function updateBadges(siteDisabled, gamesDisabled) {
+  const badgeSite  = document.getElementById('badge-site');
+  const badgeGames = document.getElementById('badge-games');
+
+  if (siteDisabled) {
+    badgeSite.textContent = 'SITE: MAINTENANCE';
+    badgeSite.className = 'badge red';
+  } else {
+    badgeSite.textContent = 'SITE: ONLINE';
+    badgeSite.className = 'badge green';
+  }
+
+  if (gamesDisabled) {
+    badgeGames.textContent = 'GAMES: DISABLED';
+    badgeGames.className = 'badge red';
+  } else {
+    badgeGames.textContent = 'GAMES: ENABLED';
+    badgeGames.className = 'badge green';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SITE CONTROL — TOGGLES
+═══════════════════════════════════════════════ */
+function initToggleMaintenance(initialVal) {
+  const tog = document.getElementById('toggle-maintenance');
+  const status = document.getElementById('maint-status');
+
+  function applyUI(val) {
+    tog.checked = !!val;
+    status.textContent = val ? 'ON' : 'OFF';
+    status.style.color = val ? 'var(--red)' : 'var(--muted)';
+  }
+
+  applyUI(initialVal);
+
+  tog.addEventListener('change', async () => {
+    const val = tog.checked;
+    applyUI(val);
+    updateBadges(val, !document.getElementById('toggle-games').checked);
+    try {
+      const { ok } = await adminFetch('/api/admin/config', {
+        method: 'POST',
+        body: { siteDisabled: val },
+      });
+      if (!ok) throw new Error('Failed');
+    } catch {
+      applyUI(!val);
+      tog.checked = !val;
+      updateBadges(!val, !document.getElementById('toggle-games').checked);
+    }
+  });
+}
+
+function initToggleGames(initialVal) {
+  // initialVal = gamesDisabled (API field); toggle shows "Games Enabled" so invert
+  const tog = document.getElementById('toggle-games');
+  const status = document.getElementById('games-status');
+
+  function applyUI(gamesEnabled) {
+    tog.checked = gamesEnabled;
+    status.textContent = gamesEnabled ? 'ON' : 'OFF';
+    status.style.color = gamesEnabled ? 'var(--green)' : 'var(--red)';
+  }
+
+  applyUI(!initialVal); // gamesDisabled → gamesEnabled
+
+  tog.addEventListener('change', async () => {
+    const gamesEnabled = tog.checked;
+    applyUI(gamesEnabled);
+    updateBadges(document.getElementById('toggle-maintenance').checked, !gamesEnabled);
+    try {
+      const { ok } = await adminFetch('/api/admin/config', {
+        method: 'POST',
+        body: { gamesDisabled: !gamesEnabled },
+      });
+      if (!ok) throw new Error('Failed');
+    } catch {
+      applyUI(!gamesEnabled);
+      tog.checked = !gamesEnabled;
+      updateBadges(document.getElementById('toggle-maintenance').checked, gamesEnabled);
+    }
+  });
+}
+
+function initMaintenanceMessage(initialMsg) {
+  const input = document.getElementById('maint-message');
+  input.value = initialMsg || '';
+
+  document.getElementById('btn-save-message').addEventListener('click', async () => {
+    const msg = input.value.trim();
+    try {
+      const { ok } = await adminFetch('/api/admin/config', {
+        method: 'POST',
+        body: { maintenanceMessage: msg },
+      });
+      showFeedback('fb-message', ok ? '> Saved.' : '> Error saving message.', ok);
+    } catch {
+      showFeedback('fb-message', '> Request failed.', false);
+    }
+  });
+}
+
+function initClearSessions() {
+  document.getElementById('btn-clear-sessions').addEventListener('click', async () => {
+    if (!confirm('Clear ALL active sessions? This will log out every user.')) return;
+    try {
+      const { ok, data } = await adminFetch('/api/admin/clear-sessions', { method: 'POST' });
+      showFeedback('fb-sessions', ok ? '> All sessions cleared.' : ('> Error: ' + (data.error || 'Failed')), ok);
+    } catch {
+      showFeedback('fb-sessions', '> Request failed.', false);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   BROADCAST
+═══════════════════════════════════════════════ */
+function initBroadcast() {
+  document.getElementById('btn-broadcast').addEventListener('click', async () => {
+    const message = document.getElementById('broadcast-msg').value.trim();
+    if (!message) { showFeedback('fb-broadcast', '> Message cannot be empty.', false); return; }
+    try {
+      const { ok, data } = await adminFetch('/api/admin/broadcast', {
+        method: 'POST',
+        body: { message },
+      });
+      if (ok) {
+        showFeedback('fb-broadcast', '> Broadcast sent.', true);
+        document.getElementById('broadcast-msg').value = '';
+      } else {
+        showFeedback('fb-broadcast', '> Error: ' + (data.error || 'Failed'), false);
+      }
+    } catch {
+      showFeedback('fb-broadcast', '> Request failed.', false);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   USER MANAGEMENT
+═══════════════════════════════════════════════ */
+async function loadUsers() {
+  const body = document.getElementById('users-body');
+  body.innerHTML = '<p class="empty-state">Loading...</p>';
+  try {
+    const { ok, data } = await adminFetch('/api/admin/users');
+    if (!ok) { body.innerHTML = '<p class="empty-state" style="color:var(--red)">Error loading users.</p>'; return; }
+    const users = Array.isArray(data) ? data : (data.users || []);
+    if (users.length === 0) {
+      body.innerHTML = '<p class="empty-state">No active users.</p>';
+      return;
+    }
+    const table = document.createElement('table');
+    table.className = 'user-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Last Seen</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody"></tbody>`;
+    body.innerHTML = '';
+    body.appendChild(table);
+    const tbody = document.getElementById('users-tbody');
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escHtml(u.username || u.uid || '—')}</td>
+        <td>${relTime(u.lastSeen)}</td>
+        <td>
+          ${u.banned
+            ? '<span class="chip banned">BANNED</span>'
+            : '<span class="chip active">ACTIVE</span>'}
+        </td>
+        <td class="actions">
+          <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}">Kick</button>
+          <button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    tbody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const { action, uid } = btn.dataset;
+      if (action === 'kick') {
+        btn.disabled = true;
+        try {
+          const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid } });
+          btn.textContent = ok ? 'Kicked' : 'Failed';
+          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+        } catch { btn.disabled = false; }
+      } else if (action === 'revoke') {
+        const key = prompt('Enter the key to revoke (leave blank to use UID):') ?? '';
+        const revokeKey = key.trim() || uid;
+        if (!revokeKey) return;
+        btn.disabled = true;
+        try {
+          const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key: revokeKey } });
+          btn.textContent = ok ? 'Revoked' : 'Failed';
+          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+        } catch { btn.disabled = false; }
+      }
+    });
+  } catch {
+    body.innerHTML = '<p class="empty-state" style="color:var(--red)">Request failed.</p>';
+  }
+}
+
+function initUserManagement() {
+  document.getElementById('btn-refresh-users').addEventListener('click', loadUsers);
+  loadUsers();
+}
+
+/* ═══════════════════════════════════════════════
+   KEY MANAGEMENT
+═══════════════════════════════════════════════ */
+async function loadKeys() {
+  const activeEl = document.getElementById('keys-active');
+  const usedEl   = document.getElementById('keys-used');
+  activeEl.innerHTML = '<li class="empty-state">Loading...</li>';
+  usedEl.innerHTML   = '<li class="empty-state">Loading...</li>';
+  try {
+    const { ok, data } = await adminFetch('/api/admin/keys');
+    if (!ok) {
+      activeEl.innerHTML = '<li class="empty-state" style="color:var(--red)">Error.</li>';
+      usedEl.innerHTML   = '<li class="empty-state" style="color:var(--red)">Error.</li>';
+      return;
+    }
+    const active = Array.isArray(data.active) ? data.active : [];
+    const used   = Array.isArray(data.used)   ? data.used   : [];
+
+    // Active keys
+    if (active.length === 0) {
+      activeEl.innerHTML = '<li class="empty-state">No active keys.</li>';
+    } else {
+      activeEl.innerHTML = '';
+      active.forEach(k => {
+        const li = document.createElement('li');
+        li.className = 'key-item';
+        li.innerHTML = `<span class="key-val">${escHtml(k)}</span>
+          <button class="btn btn-danger btn-xs" data-key="${escAttr(k)}" data-action="revoke-key">Revoke</button>`;
+        activeEl.appendChild(li);
+      });
+    }
+
+    // Used keys (read-only)
+    if (used.length === 0) {
+      usedEl.innerHTML = '<li class="empty-state">No used keys.</li>';
+    } else {
+      usedEl.innerHTML = '';
+      used.forEach(k => {
+        const li = document.createElement('li');
+        li.className = 'key-item';
+        li.innerHTML = `<span class="key-val used">${escHtml(k)}</span>`;
+        usedEl.appendChild(li);
+      });
+    }
+  } catch {
+    activeEl.innerHTML = '<li class="empty-state" style="color:var(--red)">Request failed.</li>';
+    usedEl.innerHTML   = '<li class="empty-state" style="color:var(--red)">Request failed.</li>';
+  }
+}
+
+function initKeyManagement() {
+  // Revoke from active list
+  document.getElementById('keys-active').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action="revoke-key"]');
+    if (!btn) return;
+    const key = btn.dataset.key;
+    if (!confirm('Revoke key: ' + key + '?')) return;
+    btn.disabled = true;
+    try {
+      const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key } });
+      showFeedback('fb-keys', ok ? '> Key revoked.' : '> Error revoking key.', ok);
+      if (ok) await loadKeys();
+      else btn.disabled = false;
+    } catch {
+      showFeedback('fb-keys', '> Request failed.', false);
+      btn.disabled = false;
+    }
+  });
+
+  // Add key
+  document.getElementById('btn-add-key').addEventListener('click', async () => {
+    const input = document.getElementById('new-key-input');
+    const key = input.value.trim();
+    if (!key) { showFeedback('fb-keys', '> Key cannot be empty.', false); return; }
+    try {
+      const { ok, data } = await adminFetch('/api/admin/add-key', { method: 'POST', body: { key } });
+      showFeedback('fb-keys', ok ? '> Key added.' : ('> Error: ' + (data.error || 'Failed')), ok);
+      if (ok) { input.value = ''; await loadKeys(); }
+    } catch {
+      showFeedback('fb-keys', '> Request failed.', false);
+    }
+  });
+
+  loadKeys();
+}
+
+/* ═══════════════════════════════════════════════
+   ADMIN KEYS
+═══════════════════════════════════════════════ */
+async function loadAdminKeys() {
+  const listEl = document.getElementById('admin-keys-list');
+  listEl.innerHTML = '<li class="empty-state">Loading...</li>';
+  try {
+    const { ok, data } = await adminFetch('/api/admin/admin-keys');
+    if (!ok) { listEl.innerHTML = '<li class="empty-state" style="color:var(--red)">Error.</li>'; return; }
+    const keys = Array.isArray(data) ? data : (data.keys || []);
+    if (keys.length === 0) {
+      listEl.innerHTML = '<li class="empty-state">No admin keys.</li>';
+      return;
+    }
+    listEl.innerHTML = '';
+    keys.forEach(k => {
+      const li = document.createElement('li');
+      li.className = 'key-item';
+      li.innerHTML = `<span class="key-val">${escHtml(k)}</span>
+        <button class="btn btn-danger btn-xs" data-key="${escAttr(k)}" data-action="remove-admin-key">Remove</button>`;
+      listEl.appendChild(li);
+    });
+  } catch {
+    listEl.innerHTML = '<li class="empty-state" style="color:var(--red)">Request failed.</li>';
+  }
+}
+
+function initAdminKeys() {
+  // Remove admin key
+  document.getElementById('admin-keys-list').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action="remove-admin-key"]');
+    if (!btn) return;
+    const key = btn.dataset.key;
+    if (!confirm('Remove admin key: ' + key + '?\n\nIf this is your own key, you will lose access.')) return;
+    btn.disabled = true;
+    try {
+      const { ok } = await adminFetch('/api/admin/admin-keys', {
+        method: 'POST',
+        body: { action: 'remove', key },
+      });
+      showFeedback('fb-admin-keys', ok ? '> Admin key removed.' : '> Error removing key.', ok);
+      if (ok) await loadAdminKeys();
+      else btn.disabled = false;
+    } catch {
+      showFeedback('fb-admin-keys', '> Request failed.', false);
+      btn.disabled = false;
+    }
+  });
+
+  // Add admin key
+  document.getElementById('btn-add-admin-key').addEventListener('click', async () => {
+    const input = document.getElementById('new-admin-key-input');
+    const key = input.value.trim();
+    if (!key) { showFeedback('fb-admin-keys', '> Key cannot be empty.', false); return; }
+    try {
+      const { ok, data } = await adminFetch('/api/admin/admin-keys', {
+        method: 'POST',
+        body: { action: 'add', key },
+      });
+      showFeedback('fb-admin-keys', ok ? '> Admin key added.' : ('> Error: ' + (data.error || 'Failed')), ok);
+      if (ok) { input.value = ''; await loadAdminKeys(); }
+    } catch {
+      showFeedback('fb-admin-keys', '> Request failed.', false);
+    }
+  });
+
+  loadAdminKeys();
+}
+
+/* ═══════════════════════════════════════════════
+   ESCAPE HELPERS
+═══════════════════════════════════════════════ */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function escAttr(s) { return escHtml(s); }
+
+/* ═══════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', async () => {
+  let statusData;
+  try {
+    const res = await fetch('/api/admin/status', { credentials: 'include' });
+    if (res.status === 403) { window.location.href = '/'; return; }
+    statusData = await res.json().catch(() => ({}));
+  } catch {
+    window.location.href = '/';
+    return;
+  }
+
+  // Hide loading, show page
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('main-page').style.display = '';
+
+  // Populate from status response
+  const siteDisabled  = !!statusData.siteDisabled;
+  const gamesDisabled = !!statusData.gamesDisabled;
+  const maintMsg      = statusData.maintenanceMessage || '';
+
+  updateBadges(siteDisabled, gamesDisabled);
+  initToggleMaintenance(siteDisabled);
+  initToggleGames(gamesDisabled);
+  initMaintenanceMessage(maintMsg);
+  initClearSessions();
+  initBroadcast();
+  initUserManagement();
+  initKeyManagement();
+  initAdminKeys();
+});
+</script>
+</body>
+</html>

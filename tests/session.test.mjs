@@ -14,7 +14,7 @@ const SECRET = "test-session-secret";
 test("createSessionValue returns a verifiable session token", async () => {
   const value = await createSessionValue(SECRET);
 
-  assert.equal(await verifySessionValue(value, SECRET), true);
+  assert.notEqual(await verifySessionValue(value, SECRET), null);
 });
 
 test("verifySessionValue rejects tampered tokens", async () => {
@@ -22,7 +22,7 @@ test("verifySessionValue rejects tampered tokens", async () => {
   const [payload, signature] = value.split(".");
   const tampered = `${payload.slice(0, -1)}x.${signature}`;
 
-  assert.equal(await verifySessionValue(tampered, SECRET), false);
+  assert.equal(await verifySessionValue(tampered, SECRET), null);
 });
 
 test("buildSessionCookie creates a session-scoped HttpOnly cookie", () => {
