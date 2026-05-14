@@ -1,4 +1,5 @@
 import { SESSION_COOKIE_NAME, verifySessionValue } from "../lib/session.mjs";
+import { normalizeAccessKey } from "../lib/access-keys.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -137,9 +138,10 @@ export default async function handler(req, res) {
     // POST /api/admin/revoke-key — delete an access key
     if (action === "revoke-key" && method === "POST") {
       const { key } = await readJsonBody(req);
-      if (!key) return res.status(400).json({ error: "Missing key" });
-      await db.collection("keys").doc(key).delete();
-      await db.collection("used_keys").doc(key).delete();
+      const normalizedKey = normalizeAccessKey(key);
+      if (!normalizedKey) return res.status(400).json({ error: "Missing key" });
+      await db.collection("keys").doc(normalizedKey).delete();
+      await db.collection("used_keys").doc(normalizedKey).delete();
       return res.status(200).json({ ok: true });
     }
 
@@ -155,26 +157,36 @@ export default async function handler(req, res) {
       });
     }
 
+    // GET /api/admin/admin-keys — list admin keys
+    if (action === "admin-keys" && method === "GET") {
+      const adminSnap = await db.collection("dev_keys").get();
+      return res.status(200).json({
+        keys: adminSnap.docs.map(d => d.id),
+      });
+    }
+
     // POST /api/admin/add-key — add a new access key
     if (action === "add-key" && method === "POST") {
       const { key } = await readJsonBody(req);
-      if (!key || typeof key !== "string" || key.trim() === "") {
+      const normalizedKey = normalizeAccessKey(key);
+      if (!normalizedKey) {
         return res.status(400).json({ error: "Invalid key" });
       }
-      await db.collection("keys").doc(key.trim()).set({ createdAt: Date.now() });
+      await db.collection("keys").doc(normalizedKey).set({ createdAt: Date.now() });
       return res.status(200).json({ ok: true });
     }
 
     // POST /api/admin/admin-keys — add or remove admin keys
     if (action === "admin-keys" && method === "POST") {
       const { action: op, key } = await readJsonBody(req);
-      if (!key || !["add", "remove"].includes(op)) {
+      const normalizedKey = normalizeAccessKey(key);
+      if (!normalizedKey || !["add", "remove"].includes(op)) {
         return res.status(400).json({ error: "Invalid request" });
       }
       if (op === "add") {
-        await db.collection("dev_keys").doc(key.trim()).set({ createdAt: Date.now() });
+        await db.collection("dev_keys").doc(normalizedKey).set({ createdAt: Date.now() });
       } else {
-        await db.collection("dev_keys").doc(key.trim()).delete();
+        await db.collection("dev_keys").doc(normalizedKey).delete();
       }
       return res.status(200).json({ ok: true });
     }

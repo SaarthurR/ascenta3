@@ -1,4 +1,5 @@
 import { buildSessionCookie, createSessionValue } from "../lib/session.mjs";
+import { normalizeAccessKey } from "../lib/access-keys.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -74,12 +75,14 @@ export default async function handler(req, res) {
 
   try {
     const { key, hwid } = await readJsonBody(req);
+    const normalizedKey = normalizeAccessKey(key);
+    const normalizedHwid = String(hwid ?? "").trim();
 
-    if (!key || !hwid) {
+    if (!normalizedKey || !normalizedHwid) {
       return res.status(400).json({ error: "Missing key or device fingerprint" });
     }
 
-    const adminDoc = await getDocument("dev_keys", key);
+    const adminDoc = await getDocument("dev_keys", normalizedKey);
     if (adminDoc) {
       await grantSession(res, req, { isAdmin: true });
       return res.status(200).json({ status: "admin" });
@@ -90,21 +93,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: "disabled" });
     }
 
-    const keyDoc = await getDocument("keys", key);
+    const keyDoc = await getDocument("keys", normalizedKey);
     if (keyDoc) {
-      await setDocument("used_keys", key, {
-        hwid: String(hwid),
+      await setDocument("used_keys", normalizedKey, {
+        hwid: normalizedHwid,
         time: Date.now(),
       });
-      await deleteDocument("keys", key);
+      await deleteDocument("keys", normalizedKey);
       await grantSession(res, req);
       return res.status(200).json({ status: "granted" });
     }
 
-    const usedDoc = await getDocument("used_keys", key);
+    const usedDoc = await getDocument("used_keys", normalizedKey);
     if (usedDoc) {
       const usedHwid = usedDoc.hwid ?? "";
-      if (usedHwid === hwid) {
+      if (usedHwid === normalizedHwid) {
         await grantSession(res, req);
         return res.status(200).json({ status: "granted" });
       }
