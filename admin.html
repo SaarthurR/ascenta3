@@ -450,12 +450,16 @@
     <div class="section-header">
       <div class="section-header-row">
         <span>// USER MANAGEMENT</span>
-        <button class="btn btn-default btn-sm" id="btn-refresh-users">&#8635; Refresh</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-danger btn-sm" id="btn-clear-chat-users">Clear Chat Users</button>
+          <button class="btn btn-default btn-sm" id="btn-refresh-users">&#8635; Refresh</button>
+        </div>
       </div>
     </div>
     <div class="section-body" id="users-body">
       <p class="empty-state">Loading users...</p>
     </div>
+    <div class="feedback" id="fb-users"></div>
   </div>
 
   <!-- ─── KEY MANAGEMENT ─── -->
@@ -759,7 +763,11 @@ async function loadUsers() {
         </td>
         <td class="actions">
           <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}" data-source="${escAttr(u.source || '')}">Kick</button>
-          <button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>
+          ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
+          ${u.source === 'chat' ? `
+            <button class="btn btn-default btn-xs" data-action="rename-chat" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || '')}">Rename</button>
+            <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Remove</button>
+          ` : ''}
         </td>`;
       tbody.appendChild(tr);
     });
@@ -804,6 +812,26 @@ async function loadUsers() {
           btn.textContent = ok ? 'Revoked' : 'Failed';
           btn.style.color = ok ? 'var(--green)' : 'var(--red)';
         } catch { btn.disabled = false; }
+      } else if (action === 'rename-chat') {
+        const newName = prompt('New name for ' + btn.dataset.name + ':', btn.dataset.name);
+        if (!newName || newName.trim() === btn.dataset.name) return;
+        btn.disabled = true;
+        try {
+          const { ok } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
+          if (ok) { btn.dataset.name = newName.trim(); btn.closest('tr').querySelector('td').textContent = newName.trim(); }
+          btn.textContent = ok ? 'Renamed' : 'Failed';
+          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+        } catch { btn.disabled = false; }
+      } else if (action === 'remove-chat') {
+        if (!confirm('Permanently remove this chat user? They can rejoin.')) return;
+        btn.disabled = true;
+        try {
+          const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
+          if (ok) {
+            const tr = btn.closest('tr');
+            if (tr) tr.remove();
+          } else { btn.disabled = false; }
+        } catch { btn.disabled = false; }
       }
     });
   } catch {
@@ -813,7 +841,16 @@ async function loadUsers() {
 
 function initUserManagement() {
   document.getElementById('btn-refresh-users').addEventListener('click', loadUsers);
+  document.getElementById('btn-clear-chat-users').addEventListener('click', async () => {
+    if (!confirm('Delete ALL AscentChat users? They can rejoin with a new name.')) return;
+    try {
+      const { ok, data } = await adminFetch('/api/admin/clear-chat-users', { method: 'POST' });
+      showFeedback('fb-users', ok ? `> Cleared ${data.deleted || 0} chat users.` : '> Error: ' + (data?.error || 'Failed'), ok);
+      if (ok) loadUsers();
+    } catch { showFeedback('fb-users', '> Request failed.', false); }
+  });
   loadUsers();
+  setInterval(loadUsers, 1000);
 }
 
 /* ═══════════════════════════════════════════════
@@ -834,7 +871,6 @@ async function loadKeys() {
     const active = Array.isArray(data.active) ? data.active : [];
     const used   = Array.isArray(data.used)   ? data.used   : [];
 
-    // Active keys — no revoke (unused keys are clean, just delete if needed via used section)
     if (active.length === 0) {
       activeEl.innerHTML = '<li class="empty-state">No unused keys.</li>';
     } else {
@@ -844,7 +880,11 @@ async function loadKeys() {
         if (!key) return;
         const li = document.createElement('li');
         li.className = 'key-item';
-        li.innerHTML = `<span class="key-val">${escHtml(key)}</span>`;
+        li.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px">
+            <span class="key-val">${escHtml(key)}</span>
+            <button class="btn btn-danger btn-xs" data-key="${escAttr(key)}" data-action="remove-active-key">Remove</button>
+          </div>`;
         activeEl.appendChild(li);
       });
     }
@@ -879,6 +919,24 @@ async function loadKeys() {
 }
 
 function initKeyManagement() {
+  // Remove from active list
+  document.getElementById('keys-active').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action="remove-active-key"]');
+    if (!btn) return;
+    const key = btn.dataset.key;
+    if (!confirm('Remove active key: ' + key + '?\n\nThis key will no longer work for login.')) return;
+    btn.disabled = true;
+    try {
+      const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key } });
+      showFeedback('fb-keys', ok ? '> Active key removed.' : '> Error removing key.', ok);
+      if (ok) await loadKeys();
+      else btn.disabled = false;
+    } catch {
+      showFeedback('fb-keys', '> Request failed.', false);
+      btn.disabled = false;
+    }
+  });
+
   // Revoke from used list
   document.getElementById('keys-used').addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action="revoke-key"]');
