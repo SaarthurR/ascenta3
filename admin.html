@@ -929,16 +929,31 @@ function initKeyManagement() {
     const btn = e.target.closest('button[data-action="remove-active-key"]');
     if (!btn) return;
     const key = btn.dataset.key;
-    if (!confirm('Remove active key: ' + key + '?\n\nThis key will no longer work for login.')) return;
+    // Two-click confirm: first click turns button red with "Sure?", second click executes
+    if (btn.dataset.confirming !== '1') {
+      btn.dataset.confirming = '1';
+      btn.textContent = 'Sure?';
+      btn.style.background = 'var(--red)';
+      btn.style.color = '#fff';
+      setTimeout(() => { if (btn.dataset.confirming === '1') { btn.dataset.confirming = '0'; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = ''; } }, 3000);
+      return;
+    }
+    btn.dataset.confirming = '0';
     btn.disabled = true;
+    btn.textContent = '…';
+    const li = btn.closest('li');
     try {
       const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key } });
-      showFeedback('fb-keys', ok ? '> Active key removed.' : '> Error removing key.', ok);
-      if (ok) await loadKeys();
-      else btn.disabled = false;
+      if (ok) {
+        if (li) li.remove();
+        showFeedback('fb-keys', '> Key removed.', true);
+      } else {
+        btn.disabled = false; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = '';
+        showFeedback('fb-keys', '> Error removing key.', false);
+      }
     } catch {
+      btn.disabled = false; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = '';
       showFeedback('fb-keys', '> Request failed.', false);
-      btn.disabled = false;
     }
   });
 
