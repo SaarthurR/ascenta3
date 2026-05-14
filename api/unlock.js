@@ -90,14 +90,14 @@ export default async function handler(req, res) {
     const devKeyDoc = await getDocument("dev_keys", normalizedKey);
     if (devKeyDoc) {
       await grantSession(res, req, { isAdmin: true });
-      return res.status(200).json({ status: "admin", displayHint: maskKey(normalizedKey) });
+      return res.status(200).json({ status: "admin", displayHint: maskKey(normalizedKey), fullKey: normalizedKey });
     }
 
     // admin_keys: reusable multi-device keys that grant regular hub access (no HWID lock)
     const adminKeyDoc = await getDocument("admin_keys", normalizedKey);
     if (adminKeyDoc) {
       await grantSession(res, req);
-      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
+      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey), fullKey: normalizedKey });
     }
 
     const configDoc = await getDocument("config", "global");
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
       });
       await deleteDocument("keys", normalizedKey);
       await grantSession(res, req);
-      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
+      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey), fullKey: normalizedKey });
     }
 
     const usedDoc = await getDocument("used_keys", normalizedKey);
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       const usedHwid = usedDoc.hwid ?? "";
       if (usedHwid === normalizedHwid) {
         await grantSession(res, req);
-        return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
+        return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey), fullKey: normalizedKey });
       }
       return res.status(200).json({ status: "locked" });
     }

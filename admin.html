@@ -724,8 +724,9 @@ async function loadUsers() {
     table.innerHTML = `
       <thead>
         <tr>
-          <th>Username</th>
+          <th>Username / Key</th>
           <th>Where</th>
+          <th>Game</th>
           <th>Last Seen</th>
           <th>Status</th>
           <th>Actions</th>
@@ -737,12 +738,19 @@ async function loadUsers() {
     const tbody = document.getElementById('users-tbody');
     users.forEach(u => {
       const tr = document.createElement('tr');
+      const maskedName = escHtml(u.username || u.uid || '—');
+      const keyCell = u.fullKey
+        ? `<div style="font-size:10px;color:var(--text-dim);margin-top:3px">
+             <span class="key-reveal-mask" style="cursor:pointer;letter-spacing:1px" title="Click to reveal" data-full="${escAttr(u.fullKey)}">${escHtml('****' + u.fullKey.slice(-4))} 👁</span>
+           </div>`
+        : '';
       tr.innerHTML = `
-        <td>${escHtml(u.username || u.uid || '—')}</td>
+        <td>${maskedName}${keyCell}</td>
         <td>${u.source === 'hub'
             ? '<span style="font-size:10px;letter-spacing:1px;padding:2px 6px;border:1px solid var(--cyan);color:var(--cyan)">HUB</span>'
             : '<span style="font-size:10px;letter-spacing:1px;padding:2px 6px;border:1px solid var(--green);color:var(--green)">CHAT</span>'
           }</td>
+        <td style="font-size:11px;color:var(--text-dim)">${u.game ? escHtml(u.game) : '—'}</td>
         <td>${relTime(u.lastSeen)}</td>
         <td>
           ${u.banned
@@ -750,20 +758,29 @@ async function loadUsers() {
             : '<span class="chip active">ACTIVE</span>'}
         </td>
         <td class="actions">
-          <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}">Kick</button>
+          <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}" data-source="${escAttr(u.source || '')}">Kick</button>
           <button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>
         </td>`;
       tbody.appendChild(tr);
     });
 
     tbody.addEventListener('click', async (e) => {
+      // Key reveal toggle
+      const revealSpan = e.target.closest('.key-reveal-mask');
+      if (revealSpan) {
+        const full = revealSpan.dataset.full;
+        const showing = revealSpan.dataset.showing === '1';
+        revealSpan.textContent = showing ? ('****' + full.slice(-4) + ' 👁') : (full + ' 🙈');
+        revealSpan.dataset.showing = showing ? '0' : '1';
+        return;
+      }
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
-      const { action, uid } = btn.dataset;
+      const { action, uid, source } = btn.dataset;
       if (action === 'kick') {
         btn.disabled = true;
         try {
-          const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid } });
+          const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid, source } });
           if (ok) {
             const tr = btn.closest('tr');
             if (tr) tr.remove();

@@ -5,6 +5,7 @@ import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
+// Main app (keys, config, hub_sessions)
 if (!getApps().length) {
   initializeApp({
     credential: cert({
@@ -14,8 +15,27 @@ if (!getApps().length) {
     }),
   });
 }
-
 const db = getFirestore();
+
+// Chat app — asenchata project (may be same as main or separate)
+// Set CHAT_FIREBASE_PROJECT_ID / CHAT_FIREBASE_CLIENT_EMAIL / CHAT_FIREBASE_PRIVATE_KEY
+// in Vercel if your main FIREBASE_PROJECT_ID is NOT "asenchata".
+// If not set, falls back to main db (assumes same project).
+function getChatDb() {
+  const proj = process.env.CHAT_FIREBASE_PROJECT_ID;
+  if (!proj) return db;
+  const appName = "asenchata-chat";
+  const existing = getApps().find(a => a.name === appName);
+  if (existing) return getFirestore(existing);
+  const app = initializeApp({
+    credential: cert({
+      projectId: proj,
+      clientEmail: process.env.CHAT_FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.CHAT_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  }, appName);
+  return getFirestore(app);
+}
 
 function readCookie(cookieHeader, name) {
   const prefix = `${name}=`;
@@ -86,6 +106,42 @@ export default async function handler(req, res) {
     }
   }
 
+  // Low-auth: valid session but not admin required
+  if (action === "heartbeat" && method === "POST") {
+    try {
+      const cookieHeader = req.headers["cookie"] || "";
+      const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
+      const payload = await verifySessionValue(sessionValue, SESSION_SECRET);
+      if (!payload) return res.status(401).json({ error: "No session" });
+      const { sid, hint, fullKey, game } = await readJsonBody(req);
+      if (!sid || typeof sid !== "string" || sid.length > 32 || !/^[a-z0-9]+$/.test(sid)) {
+        return res.status(400).json({ error: "Invalid sid" });
+      }
+      const safeHint = typeof hint === "string" ? hint.slice(0, 12) : "";
+      const update = { lastSeen: Timestamp.now() };
+      if (safeHint) update.hint = safeHint;
+      if (typeof fullKey === "string" && fullKey.length <= 64) update.fullKey = fullKey;
+      if (typeof game === "string") update.game = game.slice(0, 80);
+      else update.game = null;
+      await db.collection("hub_sessions").doc(sid).set(update, { merge: true });
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ error: "Heartbeat failed" });
+    }
+  }
+
+  // No auth: check if a hub session has been kicked (sid is unguessable random string)
+  if (action === "check-kick" && method === "GET") {
+    try {
+      const sid = url.searchParams.get("sid");
+      if (!sid || !/^[a-z0-9]{6,32}$/.test(sid)) return res.status(400).json({ error: "Invalid" });
+      const doc = await db.collection("hub_sessions").doc(sid).get();
+      return res.status(200).json({ kicked: doc.exists && !!doc.data().kicked });
+    } catch {
+      return res.status(200).json({ kicked: false });
+    }
+  }
+
   // All routes below require admin session
   const adminPayload = await requireAdmin(req, res);
   if (!adminPayload) return;
@@ -116,47 +172,43 @@ export default async function handler(req, res) {
 
     // GET /api/admin/users — online users (chat + hub) within last 90s
     if (action === "users" && method === "GET") {
-      const cutoff = Timestamp.fromMillis(Date.now() - 90 * 1000);
+      const cutoffMs = Date.now() - 90 * 1000;
+      const tsMs = ts => {
+        if (!ts) return 0;
+        if (typeof ts.toMillis === "function") return ts.toMillis();
+        if (typeof ts.toDate === "function") return ts.toDate().getTime();
+        if (typeof ts === "number") return ts;
+        return 0;
+      };
+      const chatDb = getChatDb();
       const [chatSnap, hubSnap] = await Promise.all([
-        db.collection("users").where("lastSeen", ">", cutoff).get(),
-        db.collection("hub_sessions").where("lastSeen", ">", cutoff).get(),
+        chatDb.collection("users").get(),
+        db.collection("hub_sessions").where("lastSeen", ">", Timestamp.fromMillis(cutoffMs)).get(),
       ]);
-      const tsMs = ts => ts && typeof ts.toMillis === "function" ? ts.toMillis() : (ts || 0);
-      const chatUsers = chatSnap.docs.map(doc => {
-        const d = doc.data();
-        return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, source: "chat" };
-      });
+      const chatUsers = chatSnap.docs
+        .map(doc => {
+          const d = doc.data();
+          return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, source: "chat" };
+        })
+        .filter(u => u.lastSeen > cutoffMs);
       const hubUsers = hubSnap.docs.map(doc => {
         const d = doc.data();
         const hint = d.hint ? `Player (${d.hint})` : "Hub User";
-        return { uid: doc.id, username: hint, lastSeen: tsMs(d.lastSeen), banned: false, source: "hub" };
+        return { uid: doc.id, username: hint, fullKey: d.fullKey || null, game: d.game || null, lastSeen: tsMs(d.lastSeen), banned: false, source: "hub" };
       });
       const users = [...chatUsers, ...hubUsers].sort((a, b) => b.lastSeen - a.lastSeen);
       return res.status(200).json({ users });
     }
 
-    // POST /api/admin/heartbeat — hub presence ping (requires valid session, no admin needed)
-    if (action === "heartbeat" && method === "POST") {
-      const cookieHeader = req.headers["cookie"] || "";
-      const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
-      const payload = await verifySessionValue(sessionValue, SESSION_SECRET);
-      if (!payload) return res.status(401).json({ error: "No session" });
-      const { sid, hint } = await readJsonBody(req);
-      if (!sid || typeof sid !== "string" || sid.length > 32 || !/^[a-z0-9]+$/.test(sid)) {
-        return res.status(400).json({ error: "Invalid sid" });
-      }
-      const safeHint = typeof hint === "string" ? hint.slice(0, 12) : "";
-      const update = { lastSeen: Timestamp.now() };
-      if (safeHint) update.hint = safeHint;
-      await db.collection("hub_sessions").doc(sid).set(update, { merge: true });
-      return res.status(200).json({ ok: true });
-    }
-
-    // POST /api/admin/kick-user — ban user from chat
+    // POST /api/admin/kick-user — kick chat or hub user
     if (action === "kick-user" && method === "POST") {
-      const { uid } = await readJsonBody(req);
+      const { uid, source } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
-      await db.collection("users").doc(uid).set({ banned: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
+      if (source === "hub") {
+        await db.collection("hub_sessions").doc(uid).set({ kicked: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
+      } else {
+        await db.collection("users").doc(uid).set({ banned: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
+      }
       return res.status(200).json({ ok: true });
     }
 

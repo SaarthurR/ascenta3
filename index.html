@@ -1693,6 +1693,7 @@ async function tryUnlock(){
     const result=await response.json();
     if(result.status==='granted'){
       if(result.displayHint) sessionStorage.setItem('hub_hint', result.displayHint);
+      if(result.fullKey) sessionStorage.setItem('hub_key', result.fullKey);
       msg.className='success';
       msg.textContent='✓ Access granted';
       setTimeout(beginWarp,650);
@@ -1701,6 +1702,7 @@ async function tryUnlock(){
 
     if(result.status==='admin'){
       if(result.displayHint) sessionStorage.setItem('hub_hint', result.displayHint);
+      if(result.fullKey) sessionStorage.setItem('hub_key', result.fullKey);
       msg.className='success';
       msg.textContent='✓ Admin access granted';
       setTimeout(()=>{ window.location.href='/admin.html'; },800);
@@ -1815,8 +1817,25 @@ sessionStorage.setItem('hub_sid', _hubSid);
 function startBroadcastPolling(){
   pollConfig();
   hubHeartbeat();
+  checkKick();
   setInterval(pollConfig, 3000);
   setInterval(hubHeartbeat, 30000);
+  setInterval(checkKick, 2000);
+}
+
+async function checkKick(){
+  try{
+    const r=await fetch(`/api/admin/check-kick?sid=${encodeURIComponent(_hubSid)}`);
+    if(!r.ok) return;
+    const d=await r.json();
+    if(d.kicked){
+      sessionStorage.removeItem('ascenta_unlocked');
+      sessionStorage.removeItem('hub_sid');
+      sessionStorage.removeItem('hub_hint');
+      sessionStorage.removeItem('hub_key');
+      location.href='/';
+    }
+  }catch(e){}
 }
 
 async function pollConfig(){
@@ -1852,7 +1871,8 @@ async function pollConfig(){
 async function hubHeartbeat(){
   try{
     const hint=sessionStorage.getItem('hub_hint')||'';
-    await fetch('/api/admin/heartbeat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:_hubSid,hint})});
+    const fullKey=sessionStorage.getItem('hub_key')||'';
+    await fetch('/api/admin/heartbeat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:_hubSid,hint,fullKey,game:_activeGame})});
   }catch(e){}
 }
 
@@ -2186,7 +2206,9 @@ document.getElementById('chatEntry').addEventListener('click',()=>{
   openStage({title:'AscentChat',tag:'Free · Schoolwide',src:'/chat/',externalLink:'/chat/'});
 });
 
+let _activeGame = null;
 function openStage({title,tag,src,externalLink=''}){
+  _activeGame = title || null;
   stageTitle.textContent=tag ? `${title} · ${tag}` : title;
   stageFrame.src=src;
   stageOpen.hidden=!externalLink;
@@ -2222,6 +2244,7 @@ function launchGradeCompass(){
   });
 }
 function closeStage(){
+  _activeGame = null;
   stage.classList.remove('live');
   stageFrame.src='about:blank';
   stageOpen.hidden=true;
