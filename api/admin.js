@@ -78,6 +78,7 @@ export default async function handler(req, res) {
         maintenanceMessage: configDoc?.maintenanceMessage ?? "Ascenta3 is temporarily offline. Check back soon.",
         broadcastMessage: configDoc?.broadcastMessage ?? null,
         broadcastSentAt: configDoc?.broadcastSentAt ?? 0,
+        sessionRevokedAt: configDoc?.sessionRevokedAt ?? 0,
       });
     } catch (err) {
       console.error("admin/config GET failed", err);
