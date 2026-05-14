@@ -818,7 +818,7 @@ async function loadKeys() {
       });
     }
 
-    // Used keys (read-only)
+    // Used keys (show HWID)
     if (used.length === 0) {
       usedEl.innerHTML = '<li class="empty-state">No used keys.</li>';
     } else {
@@ -826,9 +826,12 @@ async function loadKeys() {
       used.forEach(entry => {
         const key = readKeyValue(entry);
         if (!key) return;
+        const hwid = entry && entry.hwid ? entry.hwid : '';
         const li = document.createElement('li');
         li.className = 'key-item';
-        li.innerHTML = `<span class="key-val used">${escHtml(key)}</span>`;
+        li.style.flexDirection = 'column';
+        li.style.alignItems = 'flex-start';
+        li.innerHTML = `<span class="key-val used">${escHtml(key)}</span>${hwid ? `<span style="font-size:10px;color:var(--text-dim);word-break:break-all">HWID: ${escHtml(hwid)}</span>` : ''}`;
         usedEl.appendChild(li);
       });
     }
