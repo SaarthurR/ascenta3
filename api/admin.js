@@ -172,9 +172,9 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid request" });
       }
       if (op === "add") {
-        await db.collection("admin_keys").doc(key.trim()).set({ createdAt: Date.now() });
+        await db.collection("dev_keys").doc(key.trim()).set({ createdAt: Date.now() });
       } else {
-        await db.collection("admin_keys").doc(key.trim()).delete();
+        await db.collection("dev_keys").doc(key.trim()).delete();
       }
       return res.status(200).json({ ok: true });
     }
