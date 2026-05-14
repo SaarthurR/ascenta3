@@ -90,8 +90,9 @@ body{
    2. ASCENTA 3 letters compress/stack into the leading A
    3. camera flies into the A's counter (hole) until white takes over          */
 #lock.flying .access-box,
+#lock.flying .free-feature-cards,
+#lock.flying .lock-or-divider,
 #lock.flying .logo-subtitle,
-#lock.flying .lock-announcement,
 #lock.flying .lock-free,
 #lock.flying .lock-footer{
   animation:auxFade 500ms ease forwards;
@@ -242,6 +243,68 @@ body{
   0%,100%{box-shadow:0 0 8px rgba(96,165,250,0.15),0 0 20px rgba(96,165,250,0.08)}
   50%{box-shadow:0 0 14px rgba(96,165,250,0.35),0 0 32px rgba(96,165,250,0.18)}
 }
+.free-feature-cards{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:14px;
+  opacity:0;
+  animation:fadeIn .8s 1.9s forwards;
+}
+@media(max-width:380px){
+  .free-feature-cards{grid-template-columns:1fr}
+}
+.free-feature-card{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:16px 16px 14px;
+  border:1px solid rgba(96,165,250,0.28);
+  border-radius:12px;
+  background:rgba(96,165,250,0.07);
+  cursor:pointer;text-align:left;
+  transition:.2s;
+  width:100%;
+}
+.free-feature-card:hover{
+  border-color:rgba(96,165,250,0.5);
+  background:rgba(96,165,250,0.14);
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(96,165,250,0.12);
+}
+.ffc-badge{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:1.2px;text-transform:uppercase;
+  color:#60a5fa;margin-bottom:8px;
+}
+.ffc-title{
+  font-family:var(--sans);
+  font-size:15px;font-weight:600;
+  color:#fafafa;margin-bottom:4px;
+}
+.ffc-desc{
+  font-family:var(--sans);
+  font-size:11px;line-height:1.5;
+  color:var(--ink-dim);flex:1;
+}
+.ffc-arrow{
+  margin-top:10px;
+  font-size:13px;color:var(--accent);
+  align-self:flex-end;
+}
+.lock-or-divider{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;
+  opacity:0;animation:fadeIn .8s 2.0s forwards;
+}
+.lock-or-divider::before,
+.lock-or-divider::after{
+  content:'';flex:1;height:1px;background:var(--line);
+}
+.lock-or-divider span{
+  font-family:var(--mono);font-size:10px;
+  color:var(--ink-faintest);letter-spacing:.8px;text-transform:uppercase;
+  white-space:nowrap;
+}
+
 .access-panel{
   display:none;
   padding:14px 14px 10px;
@@ -984,51 +1047,34 @@ body{
       <div class="logo-subtitle">Arcade Gateway</div>
     </div>
 
-    <div class="access-box">
-      <div class="access-tabs" role="tablist" aria-label="Access tabs">
-        <button class="access-tab active" id="terminalTabUnlock" type="button" data-panel="unlock" aria-selected="true">Access Terminal</button>
-        <button class="access-tab" id="terminalTabCompass" type="button" data-panel="compass" aria-selected="false">AscentaCompass</button>
-        <button class="access-tab" id="terminalTabChat" type="button" data-panel="chat" aria-selected="false">AscentChat</button>
-      </div>
-
-      <div class="access-panel active" data-panel="unlock">
-        <div class="access-header">
-          <div class="status-dot"></div>
-          <div class="access-title">Access Terminal</div>
-          <div class="access-id">NODE&nbsp;//&nbsp;03A</div>
-        </div>
-
-        <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
-        <button id="unlockBtn">Authenticate</button>
-        <div id="needCodeRow"><a href="/get-code.html" id="needCodeLink">Need a code?</a></div>
-        <div id="msg"></div>
-      </div>
-
-      <div class="access-panel" data-panel="compass">
-        <div class="access-header">
-          <div class="status-dot"></div>
-          <div class="access-title">Free Access</div>
-          <div class="access-id">APP&nbsp;//&nbsp;AC1</div>
-        </div>
-
-        <div class="access-note">Access AscentaCompass to track grades.</div>
-        <button class="lock-free-btn" id="gradeCompassEntry" type="button">Access AscentaCompass</button>
-      </div>
-
-      <div class="access-panel" data-panel="chat">
-        <div class="access-header">
-          <div class="status-dot"></div>
-          <div class="access-title">Free Access</div>
-          <div class="access-id">CHAT&nbsp;//&nbsp;FREE</div>
-        </div>
-        <div class="access-note">Schoolwide chat — DMs &amp; group chats. No code needed.</div>
-        <button class="lock-free-btn" id="chatEntry" type="button">Open AscentChat</button>
-      </div>
+    <div class="free-feature-cards">
+      <button class="free-feature-card" id="chatEntry" type="button">
+        <div class="ffc-badge">Free · No Code</div>
+        <div class="ffc-title">AscentChat</div>
+        <div class="ffc-desc">DMs &amp; group chats with anyone at school</div>
+        <div class="ffc-arrow">→</div>
+      </button>
+      <button class="free-feature-card" id="gradeCompassEntry" type="button">
+        <div class="ffc-badge">Free · No Code</div>
+        <div class="ffc-title">AscentaCompass</div>
+        <div class="ffc-desc">Track your grades &amp; academic progress</div>
+        <div class="ffc-arrow">→</div>
+      </button>
     </div>
 
-    <div class="lock-announcement">
-      <div class="lock-announcement-label">New Drop</div>
-      <div class="lock-announcement-copy">Free schoolwide chatting is here — no code needed.</div>
+    <div class="lock-or-divider"><span>or enter an access code</span></div>
+
+    <div class="access-box">
+      <div class="access-header">
+        <div class="status-dot"></div>
+        <div class="access-title">Access Terminal</div>
+        <div class="access-id">NODE&nbsp;//&nbsp;03A</div>
+      </div>
+
+      <input id="keyInput" type="password" placeholder="Enter access key" autocomplete="off">
+      <button id="unlockBtn">Authenticate</button>
+      <div id="needCodeRow"><a href="/get-code.html" id="needCodeLink">Need a code?</a></div>
+      <div id="msg"></div>
     </div>
 
     <div class="lock-footer">
@@ -1560,26 +1606,8 @@ const hub=document.getElementById('hub');
 const msg=document.getElementById('msg');
 const input=document.getElementById('keyInput');
 const btn=document.getElementById('unlockBtn');
-const terminalTabs=[...document.querySelectorAll('.access-tab')];
-const accessPanels=[...document.querySelectorAll('.access-panel')];
-
-function setAccessPanel(panel){
-  terminalTabs.forEach(tab=>{
-    const active=tab.dataset.panel===panel;
-    tab.classList.toggle('active',active);
-    tab.setAttribute('aria-selected',active ? 'true' : 'false');
-  });
-  accessPanels.forEach(section=>{
-    section.classList.toggle('active',section.dataset.panel===panel);
-  });
-  if(panel==='unlock') input.focus({preventScroll:true});
-}
-
 btn.addEventListener('click',tryUnlock);
 input.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
-terminalTabs.forEach(tab=>{
-  tab.addEventListener('click',()=>setAccessPanel(tab.dataset.panel));
-});
 
 // auto-skip if already unlocked this session
 if(sessionStorage.getItem('ascenta_unlocked')==='1'){
