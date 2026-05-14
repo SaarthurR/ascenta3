@@ -1817,6 +1817,7 @@ sessionStorage.setItem('hub_sid', _hubSid);
 // pollConfig runs immediately and every 1.5s from page load — covers both
 // lock screen and hub so maintenance shows instantly regardless of state
 let _hubActive = false;
+let _gamesDisabled = null; // null = unknown (first poll), true/false = known state
 pollConfig();
 setInterval(pollConfig, 1500);
 
@@ -1862,6 +1863,18 @@ async function pollConfig(){
 
     // Hub-only checks
     if(!_hubActive) return;
+
+    // Instant games enable/disable
+    const gd = cfg.gamesDisabled || false;
+    if(gd !== _gamesDisabled){
+      const prev = _gamesDisabled;
+      _gamesDisabled = gd;
+      if(gd){
+        grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:4rem 1rem;color:#888;font-family:monospace;font-size:.95rem;letter-spacing:.05em;">GAMES UNAVAILABLE — Check back later</div>';
+      } else if(prev === true){
+        buildHub();
+      }
+    }
 
     // Instant logout when admin clears sessions
     const revokedAt = cfg.sessionRevokedAt || 0;
