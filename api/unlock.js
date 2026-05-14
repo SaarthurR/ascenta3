@@ -82,10 +82,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing key or device fingerprint" });
     }
 
-    const adminDoc = await getDocument("dev_keys", normalizedKey);
-    if (adminDoc) {
+    const devKeyDoc = await getDocument("dev_keys", normalizedKey);
+    if (devKeyDoc) {
       await grantSession(res, req, { isAdmin: true });
       return res.status(200).json({ status: "admin" });
+    }
+
+    // admin_keys: reusable multi-device keys that grant regular hub access (no HWID lock)
+    const adminKeyDoc = await getDocument("admin_keys", normalizedKey);
+    if (adminKeyDoc) {
+      await grantSession(res, req);
+      return res.status(200).json({ status: "granted" });
     }
 
     const configDoc = await getDocument("config", "global");
