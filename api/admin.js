@@ -76,6 +76,8 @@ export default async function handler(req, res) {
         siteDisabled: configDoc?.siteDisabled ?? false,
         gamesDisabled: configDoc?.gamesDisabled ?? false,
         maintenanceMessage: configDoc?.maintenanceMessage ?? "Ascenta3 is temporarily offline. Check back soon.",
+        broadcastMessage: configDoc?.broadcastMessage ?? null,
+        broadcastSentAt: configDoc?.broadcastSentAt ?? 0,
       });
     } catch (err) {
       console.error("admin/config GET failed", err);
@@ -198,17 +200,26 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // POST /api/admin/broadcast — send announcement to chat
+    // POST /api/admin/broadcast — send announcement to chat and hub
     if (action === "broadcast" && method === "POST") {
       const { message } = await readJsonBody(req);
       if (!message || typeof message !== "string" || message.trim() === "") {
         return res.status(400).json({ error: "Missing message" });
       }
-      await db.collection("announcements").doc("global").set({
-        message: message.trim(),
-        sentAt: Date.now(),
-        sentBy: "admin",
-      });
+      const sentAt = Date.now();
+      await Promise.all([
+        // chat picks this up via onSnapshot
+        db.collection("announcements").doc("global").set({
+          message: message.trim(),
+          sentAt,
+          sentBy: "admin",
+        }),
+        // hub polls config and picks this up
+        db.collection("config").doc("global").set({
+          broadcastMessage: message.trim(),
+          broadcastSentAt: sentAt,
+        }, { merge: true }),
+      ]);
       return res.status(200).json({ ok: true });
     }
 
