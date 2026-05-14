@@ -207,7 +207,8 @@ export default async function handler(req, res) {
       if (source === "hub") {
         await db.collection("hub_sessions").doc(uid).set({ kicked: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
       } else {
-        await db.collection("users").doc(uid).set({ banned: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
+        const chatDb = getChatDb();
+        await chatDb.collection("users").doc(uid).set({ kickedAt: Timestamp.now(), lastSeen: Timestamp.fromMillis(0) }, { merge: true });
       }
       return res.status(200).json({ ok: true });
     }
@@ -288,6 +289,34 @@ export default async function handler(req, res) {
           broadcastSentAt: sentAt,
         }, { merge: true }),
       ]);
+      return res.status(200).json({ ok: true });
+    }
+
+    // POST /api/admin/clear-chat-users — delete all chat user docs
+    if (action === "clear-chat-users" && method === "POST") {
+      const chatDb = getChatDb();
+      const snap = await chatDb.collection("users").get();
+      const batch = chatDb.batch();
+      snap.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      return res.status(200).json({ ok: true, deleted: snap.size });
+    }
+
+    // POST /api/admin/rename-chat-user — rename a chat user
+    if (action === "rename-chat-user" && method === "POST") {
+      const { uid, name } = await readJsonBody(req);
+      if (!uid || !name) return res.status(400).json({ error: "Missing uid or name" });
+      const chatDb = getChatDb();
+      await chatDb.collection("users").doc(uid).update({ name: name.trim() });
+      return res.status(200).json({ ok: true });
+    }
+
+    // POST /api/admin/remove-chat-user — delete a single chat user doc
+    if (action === "remove-chat-user" && method === "POST") {
+      const { uid } = await readJsonBody(req);
+      if (!uid) return res.status(400).json({ error: "Missing uid" });
+      const chatDb = getChatDb();
+      await chatDb.collection("users").doc(uid).delete();
       return res.status(200).json({ ok: true });
     }
 

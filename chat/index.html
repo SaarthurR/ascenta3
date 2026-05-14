@@ -133,10 +133,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .ci-name{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ci-preview{font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .ci-preview.unread{color:var(--ink2);font-weight:600}
-.ci.has-unread{background:rgba(96,165,250,0.07)}
-.ci.has-unread:hover,.ci.has-unread:active{background:rgba(96,165,250,0.13)}
+.ci.has-unread{background:rgba(96,165,250,0.11);border-left:2px solid var(--A)}
+.ci.has-unread:hover,.ci.has-unread:active{background:rgba(96,165,250,0.18)}
 .ci-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
-.ci-udot{width:8px;height:8px;border-radius:50%;background:var(--A);box-shadow:0 0 6px rgba(96,165,250,0.7)}
+.ci-udot{width:9px;height:9px;border-radius:50%;background:var(--A);box-shadow:0 0 6px rgba(96,165,250,0.7);animation:udPulse 1.8s ease-in-out infinite}
+@keyframes udPulse{0%,100%{box-shadow:0 0 4px rgba(96,165,250,0.6)}50%{box-shadow:0 0 12px rgba(96,165,250,1),0 0 22px rgba(96,165,250,0.4)}}
 .ci-time{font-size:10px;color:var(--ink4)}
 .ci-badge{min-width:18px;height:18px;border-radius:9px;background:var(--A);color:#000;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
 .c-empty{padding:28px 12px;text-align:center;font-size:12px;color:var(--ink4);line-height:1.9}
@@ -246,6 +247,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .spin{display:inline-block;width:20px;height:20px;border:2.5px solid var(--line);border-top-color:var(--A);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* ── KICK OVERLAY ── */
+#kickOverlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:rgba(8,3,3,0.88);backdrop-filter:blur(10px);animation:kickFadeIn .4s ease-out}
+#kickOverlay.show{display:flex}
+@keyframes kickFadeIn{from{opacity:0}to{opacity:1}}
+.kick-border{position:fixed;inset:0;z-index:9998;pointer-events:none;box-shadow:inset 0 0 0 3px #f87171,inset 0 0 80px rgba(248,113,113,0.35);animation:kickGlow 1.1s ease-in-out infinite}
+@keyframes kickGlow{0%,100%{box-shadow:inset 0 0 0 3px #f87171,inset 0 0 60px rgba(248,113,113,0.3)}50%{box-shadow:inset 0 0 0 4px #ef4444,inset 0 0 120px rgba(239,68,68,0.55)}}
+.kick-icon{font-size:52px;animation:kickShake .5s ease-in-out}
+@keyframes kickShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.kick-title{font-size:20px;font-weight:700;color:#f87171;letter-spacing:1px}
+.kick-sub{font-size:12px;color:rgba(248,113,113,0.7);letter-spacing:.5px}
+
 /* ── RENAME POPOVER ── */
 .tb-chip{cursor:pointer;transition:var(--ease)}
 .tb-chip:hover{background:rgba(96,165,250,0.2);box-shadow:0 0 0 1.5px rgba(96,165,250,0.35)}
@@ -266,6 +278,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 <body>
 
 <div id="toasts"></div>
+
+<!-- ── KICK OVERLAY ── -->
+<div id="kickOverlay">
+  <div class="kick-border"></div>
+  <div class="kick-icon">🚫</div>
+  <div class="kick-title">You've been removed</div>
+  <div class="kick-sub">Redirecting you out…</div>
+</div>
 
 <!-- ── SETUP ── -->
 <div id="setup">
@@ -467,12 +487,47 @@ function reset(){$('joinBtn').disabled=false;$('joinBtn').textContent='Enter Asc
 
 // ─── App start ───
 const _pageStartTs = Date.now();
+let _lastBroadcastAt = 0;
 function startApp(){
   hb(); setInterval(hb,30000);
   listenUsers();
   listenMyGroups();
   listenAnnouncements();
+  listenKick();
   buildEp();
+  setInterval(pollBroadcast, 3000);
+}
+
+// ─── Broadcast polling (fallback — in case chat Firebase onSnapshot misses it) ───
+async function pollBroadcast(){
+  try{
+    const r=await fetch('/api/admin/config');
+    if(!r.ok)return;
+    const cfg=await r.json();
+    const sentAt=cfg.broadcastSentAt||0;
+    if(sentAt>_pageStartTs&&sentAt!==_lastBroadcastAt&&cfg.broadcastMessage){
+      _lastBroadcastAt=sentAt;
+      showBroadcast(cfg.broadcastMessage);
+    }
+  }catch(e){}
+}
+
+// ─── Kick detection ───
+function listenKick(){
+  db.collection('users').doc(myUid).onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const d=snap.data();
+    const kt=d.kickedAt&&d.kickedAt.toMillis?d.kickedAt.toMillis():0;
+    if(kt>_pageStartTs) showKicked();
+  });
+}
+function showKicked(){
+  document.getElementById('kickOverlay').classList.add('show');
+  setTimeout(()=>{
+    localStorage.removeItem('ac_n');
+    localStorage.removeItem('ac_u');
+    location.reload();
+  },4000);
 }
 
 // ─── Announcements (broadcast from admin) ───
