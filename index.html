@@ -1814,11 +1814,17 @@ let _lastBroadcastSentAt = 0;
 const _hubSid = (sessionStorage.getItem('hub_sid') || Math.random().toString(36).slice(2,12));
 sessionStorage.setItem('hub_sid', _hubSid);
 
+// pollConfig runs immediately and every 1.5s from page load — covers both
+// lock screen and hub so maintenance shows instantly regardless of state
+let _hubActive = false;
+pollConfig();
+setInterval(pollConfig, 1500);
+
+// Called when hub is entered — starts hub-only intervals
 function startBroadcastPolling(){
-  pollConfig();
+  _hubActive = true;
   hubHeartbeat();
   checkKick();
-  setInterval(pollConfig, 3000);
   setInterval(hubHeartbeat, 30000);
   setInterval(checkKick, 2000);
 }
@@ -1844,18 +1850,24 @@ async function pollConfig(){
     if(!r.ok) return;
     const cfg = await r.json();
 
+    // Maintenance — show overlay for everyone (lock screen or hub)
+    if(cfg.siteDisabled){
+      if(cfg.maintenanceMessage) document.getElementById('maintenanceMsg').textContent = cfg.maintenanceMessage;
+      document.getElementById('maintenanceOverlay').style.display = 'flex';
+      return;
+    } else {
+      // Hide overlay if maintenance was just turned off
+      document.getElementById('maintenanceOverlay').style.display = 'none';
+    }
+
+    // Hub-only checks
+    if(!_hubActive) return;
+
     // Instant logout when admin clears sessions
     const revokedAt = cfg.sessionRevokedAt || 0;
     if(revokedAt > _revokeBaseline){
       sessionStorage.removeItem('ascenta_unlocked');
       location.reload();
-      return;
-    }
-
-    // Instant maintenance overlay while in hub
-    if(cfg.siteDisabled){
-      if(cfg.maintenanceMessage) document.getElementById('maintenanceMsg').textContent = cfg.maintenanceMessage;
-      document.getElementById('maintenanceOverlay').style.display = 'flex';
       return;
     }
 
