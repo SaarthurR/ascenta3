@@ -488,22 +488,22 @@
     </div>
   </div>
 
-  <!-- ─── ADMIN KEYS ─── -->
+  <!-- ─── DEV CODES ─── -->
   <div class="section">
-    <div class="section-header">// ADMIN KEYS</div>
+    <div class="section-header">// DEV CODES</div>
     <div class="section-body">
       <div class="warn-box">
-        &#9888; Warning: Removing your own admin key will lock you out of this panel.
+        &#9888; Warning: Removing your own dev code will lock you out of this panel.
       </div>
-      <div class="section-label">Admin Keys</div>
+      <div class="section-label">Dev Codes</div>
       <ul class="key-list" id="admin-keys-list">
         <li class="empty-state">Loading...</li>
       </ul>
       <hr class="sep" />
-      <div class="section-label">Add Admin Key</div>
+      <div class="section-label">Add Dev Code</div>
       <div class="input-row">
-        <input type="text" id="new-admin-key-input" placeholder="Enter admin key..." />
-        <button class="btn btn-primary" id="btn-add-admin-key">Add Admin Key</button>
+        <input type="text" id="new-admin-key-input" placeholder="Enter dev code..." />
+        <button class="btn btn-primary" id="btn-add-admin-key">Add Dev Code</button>
       </div>
       <div class="feedback" id="fb-admin-keys"></div>
     </div>
@@ -725,6 +725,7 @@ async function loadUsers() {
       <thead>
         <tr>
           <th>Username</th>
+          <th>Where</th>
           <th>Last Seen</th>
           <th>Status</th>
           <th>Actions</th>
@@ -738,6 +739,7 @@ async function loadUsers() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escHtml(u.username || u.uid || '—')}</td>
+        <td style="font-size:10px;color:var(--text-dim)">${u.source === 'hub' ? 'Hub' : 'Chat'}</td>
         <td>${relTime(u.lastSeen)}</td>
         <td>
           ${u.banned
@@ -802,9 +804,9 @@ async function loadKeys() {
     const active = Array.isArray(data.active) ? data.active : [];
     const used   = Array.isArray(data.used)   ? data.used   : [];
 
-    // Active keys
+    // Active keys — no revoke (unused keys are clean, just delete if needed via used section)
     if (active.length === 0) {
-      activeEl.innerHTML = '<li class="empty-state">No active keys.</li>';
+      activeEl.innerHTML = '<li class="empty-state">No unused keys.</li>';
     } else {
       activeEl.innerHTML = '';
       active.forEach(entry => {
@@ -812,13 +814,12 @@ async function loadKeys() {
         if (!key) return;
         const li = document.createElement('li');
         li.className = 'key-item';
-        li.innerHTML = `<span class="key-val">${escHtml(key)}</span>
-          <button class="btn btn-danger btn-xs" data-key="${escAttr(key)}" data-action="revoke-key">Revoke</button>`;
+        li.innerHTML = `<span class="key-val">${escHtml(key)}</span>`;
         activeEl.appendChild(li);
       });
     }
 
-    // Used keys (show HWID)
+    // Used keys — show HWID + Revoke
     if (used.length === 0) {
       usedEl.innerHTML = '<li class="empty-state">No used keys.</li>';
     } else {
@@ -831,7 +832,13 @@ async function loadKeys() {
         li.className = 'key-item';
         li.style.flexDirection = 'column';
         li.style.alignItems = 'flex-start';
-        li.innerHTML = `<span class="key-val used">${escHtml(key)}</span>${hwid ? `<span style="font-size:10px;color:var(--text-dim);word-break:break-all">HWID: ${escHtml(hwid)}</span>` : ''}`;
+        li.style.gap = '4px';
+        li.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap">
+            <span class="key-val used">${escHtml(key)}</span>
+            <button class="btn btn-danger btn-xs" data-key="${escAttr(key)}" data-action="revoke-key">Revoke</button>
+          </div>
+          ${hwid ? `<span style="font-size:10px;color:var(--text-dim);word-break:break-all">HWID: ${escHtml(hwid)}</span>` : ''}`;
         usedEl.appendChild(li);
       });
     }
@@ -842,12 +849,12 @@ async function loadKeys() {
 }
 
 function initKeyManagement() {
-  // Revoke from active list
-  document.getElementById('keys-active').addEventListener('click', async (e) => {
+  // Revoke from used list
+  document.getElementById('keys-used').addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-action="revoke-key"]');
     if (!btn) return;
     const key = btn.dataset.key;
-    if (!confirm('Revoke key: ' + key + '?')) return;
+    if (!confirm('Revoke used key: ' + key + '?\n\nThis will remove the key and free the device lock.')) return;
     btn.disabled = true;
     try {
       const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key } });

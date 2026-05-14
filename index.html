@@ -1795,13 +1795,17 @@ function enterHub(skipAnim){
   startBroadcastPolling();
 }
 
-/* ── Broadcast polling ── */
+/* ── Broadcast polling + hub heartbeat ── */
 const _hubEnteredAt = Date.now();
 let _lastBroadcastSentAt = 0;
-let _bcTimer = null;
+const _hubSid = (sessionStorage.getItem('hub_sid') || Math.random().toString(36).slice(2,12));
+sessionStorage.setItem('hub_sid', _hubSid);
+
 function startBroadcastPolling(){
   pollBroadcast();
-  _bcTimer = setInterval(pollBroadcast, 30000);
+  hubHeartbeat();
+  setInterval(pollBroadcast, 30000);
+  setInterval(hubHeartbeat, 30000);
 }
 async function pollBroadcast(){
   try{
@@ -1813,6 +1817,11 @@ async function pollBroadcast(){
       _lastBroadcastSentAt = sentAt;
       showBroadcastToast(cfg.broadcastMessage);
     }
+  }catch(e){}
+}
+async function hubHeartbeat(){
+  try{
+    await fetch('/api/admin/heartbeat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:_hubSid})});
   }catch(e){}
 }
 function showBroadcastToast(msg){

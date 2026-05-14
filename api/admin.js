@@ -1,7 +1,7 @@
 import { SESSION_COOKIE_NAME, verifySessionValue } from "../lib/session.mjs";
 import { normalizeAccessKey } from "../lib/access-keys.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -113,27 +113,38 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // GET /api/admin/users — online AscentChat users (lastSeen within 10 min)
+    // GET /api/admin/users — online users (chat + hub) within last 10 min
     if (action === "users" && method === "GET") {
-      // lastSeen is stored as a Firestore Timestamp via serverTimestamp(); compare with Date
-      const cutoff = new Date(Date.now() - 10 * 60 * 1000);
-      const snapshot = await db.collection("users")
-        .where("lastSeen", ">", cutoff)
-        .orderBy("lastSeen", "desc")
-        .get();
-      const users = snapshot.docs.map(doc => {
+      const cutoff = Timestamp.fromMillis(Date.now() - 10 * 60 * 1000);
+      const [chatSnap, hubSnap] = await Promise.all([
+        db.collection("users").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
+        db.collection("hub_sessions").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
+      ]);
+      const tsMs = ts => ts && typeof ts.toMillis === "function" ? ts.toMillis() : (ts || 0);
+      const chatUsers = chatSnap.docs.map(doc => {
         const d = doc.data();
-        const ts = d.lastSeen;
-        // Firestore Timestamp → milliseconds for JSON
-        const lastSeenMs = ts && typeof ts.toMillis === "function" ? ts.toMillis() : (ts || 0);
-        return {
-          uid: doc.id,
-          username: d.name ?? d.username ?? doc.id,
-          lastSeen: lastSeenMs,
-          banned: d.banned ?? false,
-        };
+        return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, source: "chat" };
       });
+      const hubUsers = hubSnap.docs.map(doc => {
+        const d = doc.data();
+        return { uid: doc.id, username: "Hub User", lastSeen: tsMs(d.lastSeen), banned: false, source: "hub" };
+      });
+      const users = [...chatUsers, ...hubUsers].sort((a, b) => b.lastSeen - a.lastSeen);
       return res.status(200).json({ users });
+    }
+
+    // POST /api/admin/heartbeat — hub presence ping (requires valid session, no admin needed)
+    if (action === "heartbeat" && method === "POST") {
+      const cookieHeader = req.headers["cookie"] || "";
+      const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
+      const payload = await verifySessionValue(sessionValue, SESSION_SECRET);
+      if (!payload) return res.status(401).json({ error: "No session" });
+      const { sid } = await readJsonBody(req);
+      if (!sid || typeof sid !== "string" || sid.length > 32 || !/^[a-z0-9]+$/.test(sid)) {
+        return res.status(400).json({ error: "Invalid sid" });
+      }
+      await db.collection("hub_sessions").doc(sid).set({ lastSeen: Timestamp.now() }, { merge: true });
+      return res.status(200).json({ ok: true });
     }
 
     // POST /api/admin/kick-user — ban user from chat
