@@ -761,8 +761,18 @@ async function loadUsers() {
         btn.disabled = true;
         try {
           const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid } });
-          btn.textContent = ok ? 'Kicked' : 'Failed';
-          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+          if (ok) {
+            const tr = btn.closest('tr');
+            if (tr) tr.remove();
+            const tbody = document.getElementById('users-tbody');
+            if (tbody && !tbody.hasChildNodes()) {
+              document.getElementById('users-body').innerHTML = '<p class="empty-state">No active users.</p>';
+            }
+          } else {
+            btn.textContent = 'Failed';
+            btn.style.color = 'var(--red)';
+            btn.disabled = false;
+          }
         } catch { btn.disabled = false; }
       } else if (action === 'revoke') {
         const key = prompt('Enter the key to revoke (leave blank to use UID):') ?? '';

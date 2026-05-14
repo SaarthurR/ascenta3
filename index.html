@@ -1692,6 +1692,7 @@ async function tryUnlock(){
 
     const result=await response.json();
     if(result.status==='granted'){
+      if(result.displayHint) sessionStorage.setItem('hub_hint', result.displayHint);
       msg.className='success';
       msg.textContent='✓ Access granted';
       setTimeout(beginWarp,650);
@@ -1699,6 +1700,7 @@ async function tryUnlock(){
     }
 
     if(result.status==='admin'){
+      if(result.displayHint) sessionStorage.setItem('hub_hint', result.displayHint);
       msg.className='success';
       msg.textContent='✓ Admin access granted';
       setTimeout(()=>{ window.location.href='/admin.html'; },800);
@@ -1849,7 +1851,8 @@ async function pollConfig(){
 
 async function hubHeartbeat(){
   try{
-    await fetch('/api/admin/heartbeat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:_hubSid})});
+    const hint=sessionStorage.getItem('hub_hint')||'';
+    await fetch('/api/admin/heartbeat',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:_hubSid,hint})});
   }catch(e){}
 }
 

@@ -47,6 +47,11 @@ async function deleteDocument(collection, id) {
   await db.collection(collection).doc(id).delete();
 }
 
+function maskKey(key) {
+  const s = String(key ?? "");
+  return s.length <= 4 ? "****" : "****" + s.slice(-4);
+}
+
 async function readJsonBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
   if (typeof req.body === "string" && req.body.length > 0) return JSON.parse(req.body);
@@ -85,14 +90,14 @@ export default async function handler(req, res) {
     const devKeyDoc = await getDocument("dev_keys", normalizedKey);
     if (devKeyDoc) {
       await grantSession(res, req, { isAdmin: true });
-      return res.status(200).json({ status: "admin" });
+      return res.status(200).json({ status: "admin", displayHint: maskKey(normalizedKey) });
     }
 
     // admin_keys: reusable multi-device keys that grant regular hub access (no HWID lock)
     const adminKeyDoc = await getDocument("admin_keys", normalizedKey);
     if (adminKeyDoc) {
       await grantSession(res, req);
-      return res.status(200).json({ status: "granted" });
+      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
     }
 
     const configDoc = await getDocument("config", "global");
@@ -108,7 +113,7 @@ export default async function handler(req, res) {
       });
       await deleteDocument("keys", normalizedKey);
       await grantSession(res, req);
-      return res.status(200).json({ status: "granted" });
+      return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
     }
 
     const usedDoc = await getDocument("used_keys", normalizedKey);
@@ -116,7 +121,7 @@ export default async function handler(req, res) {
       const usedHwid = usedDoc.hwid ?? "";
       if (usedHwid === normalizedHwid) {
         await grantSession(res, req);
-        return res.status(200).json({ status: "granted" });
+        return res.status(200).json({ status: "granted", displayHint: maskKey(normalizedKey) });
       }
       return res.status(200).json({ status: "locked" });
     }

@@ -116,7 +116,7 @@ export default async function handler(req, res) {
 
     // GET /api/admin/users — online users (chat + hub) within last 10 min
     if (action === "users" && method === "GET") {
-      const cutoff = Timestamp.fromMillis(Date.now() - 10 * 60 * 1000);
+      const cutoff = Timestamp.fromMillis(Date.now() - 90 * 1000);
       const [chatSnap, hubSnap] = await Promise.all([
         db.collection("users").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
         db.collection("hub_sessions").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
@@ -128,7 +128,8 @@ export default async function handler(req, res) {
       });
       const hubUsers = hubSnap.docs.map(doc => {
         const d = doc.data();
-        return { uid: doc.id, username: "Hub User", lastSeen: tsMs(d.lastSeen), banned: false, source: "hub" };
+        const hint = d.hint ? `Player (${d.hint})` : "Hub User";
+        return { uid: doc.id, username: hint, lastSeen: tsMs(d.lastSeen), banned: false, source: "hub" };
       });
       const users = [...chatUsers, ...hubUsers].sort((a, b) => b.lastSeen - a.lastSeen);
       return res.status(200).json({ users });
@@ -144,7 +145,11 @@ export default async function handler(req, res) {
       if (!sid || typeof sid !== "string" || sid.length > 32 || !/^[a-z0-9]+$/.test(sid)) {
         return res.status(400).json({ error: "Invalid sid" });
       }
-      await db.collection("hub_sessions").doc(sid).set({ lastSeen: Timestamp.now() }, { merge: true });
+      const { hint } = await readJsonBody(req);
+      const safeHint = typeof hint === "string" ? hint.slice(0, 12) : "";
+      const update = { lastSeen: Timestamp.now() };
+      if (safeHint) update.hint = safeHint;
+      await db.collection("hub_sessions").doc(sid).set(update, { merge: true });
       return res.status(200).json({ ok: true });
     }
 
@@ -152,7 +157,7 @@ export default async function handler(req, res) {
     if (action === "kick-user" && method === "POST") {
       const { uid } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
-      await db.collection("users").doc(uid).set({ banned: true, lastSeen: 0 }, { merge: true });
+      await db.collection("users").doc(uid).set({ banned: true, lastSeen: Timestamp.fromMillis(0) }, { merge: true });
       return res.status(200).json({ ok: true });
     }
 
