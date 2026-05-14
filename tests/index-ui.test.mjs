@@ -22,19 +22,15 @@ test("hub no longer exposes a separate AscentaCompass free-access panel", () => 
 
 test("landing screen exposes AscentaCompass before authentication", () => {
   assert.match(indexHtml, /id="gradeCompassEntry"/);
-  assert.match(indexHtml, /Access AscentaCompass to track grades\./);
-  assert.match(indexHtml, /id="terminalTabUnlock"/);
-  assert.match(indexHtml, /id="terminalTabCompass"/);
-  assert.match(indexHtml, /data-panel="unlock"/);
-  assert.match(indexHtml, /data-panel="compass"/);
-  assert.match(indexHtml, /const terminalTabs=\[\.\.\.document\.querySelectorAll\('\.access-tab'\)\];/);
-  assert.match(indexHtml, /function setAccessPanel\(panel\)/);
+  assert.match(indexHtml, /<div class="ffc-title">AscentaCompass<\/div>/);
+  assert.match(indexHtml, /Track your grades &amp; academic progress/);
+  assert.match(indexHtml, /<div class="lock-or-divider"><span>or enter an access code<\/span><\/div>/);
 });
 
-test("landing screen advertises the new Omegle addition before authentication", () => {
-  assert.match(indexHtml, /New! Omegle added\./);
-  assert.match(indexHtml, /Get a code now to use it\./);
-  assert.match(indexHtml, /#lock\.flying \.lock-announcement[\s\S]*animation:auxFade 500ms ease forwards;/);
+test("landing screen exposes the free chat card before authentication", () => {
+  assert.match(indexHtml, /id="chatEntry"/);
+  assert.match(indexHtml, /<div class="ffc-title">AscentChat<\/div>/);
+  assert.match(indexHtml, /DMs &amp; group chats with anyone at school/);
 });
 
 test("grade compass uses the hosted ascenta compass url inside the iframe stage", () => {
@@ -46,12 +42,13 @@ test("grade compass uses the hosted ascenta compass url inside the iframe stage"
   assert.doesNotMatch(indexHtml, /window\.open\(GRADE_COMPASS_URL,'_blank','noopener'\)/);
 });
 
-test("hub injects Umingle as the first featured game card and launches it inside the iframe stage", () => {
+test("hub injects Emerald Chat as the first featured game card and launches it inside the iframe stage", () => {
   assert.match(indexHtml, /const FEATURED_GAME=\{/);
-  assert.match(indexHtml, /title:'Umingle'/);
-  assert.match(indexHtml, /desc:'New! Omegle is back in the hub — jump in once you have a code\.'/);
-  assert.match(indexHtml, /path:'https:\/\/umingle\.com\/'/);
-  assert.match(indexHtml, /externalLink:'https:\/\/umingle\.com\/'/);
+  assert.match(indexHtml, /id:'umingle'/);
+  assert.match(indexHtml, /title:'Emerald Chat'/);
+  assert.match(indexHtml, /desc:'Free schoolwide chat is live — message anyone at school, no code needed\.'/);
+  assert.match(indexHtml, /path:'https:\/\/emeraldchat\.com\/'/);
+  assert.match(indexHtml, /externalLink:'https:\/\/emeraldchat\.com\/'/);
   assert.match(indexHtml, /const HUB_GAMES=\[FEATURED_GAME,\s*\.\.\.GAMES\];/);
   assert.match(indexHtml, /HUB_GAMES\.forEach\(g=>\{/);
   assert.match(indexHtml, /openStage\(\{\s*title:currentGame\.title,/);

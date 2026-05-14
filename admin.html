@@ -807,11 +807,13 @@ async function loadKeys() {
       activeEl.innerHTML = '<li class="empty-state">No active keys.</li>';
     } else {
       activeEl.innerHTML = '';
-      active.forEach(k => {
+      active.forEach(entry => {
+        const key = readKeyValue(entry);
+        if (!key) return;
         const li = document.createElement('li');
         li.className = 'key-item';
-        li.innerHTML = `<span class="key-val">${escHtml(k)}</span>
-          <button class="btn btn-danger btn-xs" data-key="${escAttr(k)}" data-action="revoke-key">Revoke</button>`;
+        li.innerHTML = `<span class="key-val">${escHtml(key)}</span>
+          <button class="btn btn-danger btn-xs" data-key="${escAttr(key)}" data-action="revoke-key">Revoke</button>`;
         activeEl.appendChild(li);
       });
     }
@@ -821,10 +823,12 @@ async function loadKeys() {
       usedEl.innerHTML = '<li class="empty-state">No used keys.</li>';
     } else {
       usedEl.innerHTML = '';
-      used.forEach(k => {
+      used.forEach(entry => {
+        const key = readKeyValue(entry);
+        if (!key) return;
         const li = document.createElement('li');
         li.className = 'key-item';
-        li.innerHTML = `<span class="key-val used">${escHtml(k)}</span>`;
+        li.innerHTML = `<span class="key-val used">${escHtml(key)}</span>`;
         usedEl.appendChild(li);
       });
     }
@@ -885,11 +889,13 @@ async function loadAdminKeys() {
       return;
     }
     listEl.innerHTML = '';
-    keys.forEach(k => {
+    keys.forEach(entry => {
+      const key = readKeyValue(entry);
+      if (!key) return;
       const li = document.createElement('li');
       li.className = 'key-item';
-      li.innerHTML = `<span class="key-val">${escHtml(k)}</span>
-        <button class="btn btn-danger btn-xs" data-key="${escAttr(k)}" data-action="remove-admin-key">Remove</button>`;
+      li.innerHTML = `<span class="key-val">${escHtml(key)}</span>
+        <button class="btn btn-danger btn-xs" data-key="${escAttr(key)}" data-action="remove-admin-key">Remove</button>`;
       listEl.appendChild(li);
     });
   } catch {
@@ -950,6 +956,12 @@ function escHtml(s) {
     .replace(/"/g,'&quot;');
 }
 function escAttr(s) { return escHtml(s); }
+function readKeyValue(entry) {
+  if (entry && typeof entry === 'object') {
+    return String(entry.key ?? entry.id ?? '').trim();
+  }
+  return String(entry ?? '').trim();
+}
 
 /* ═══════════════════════════════════════════════
    BOOT
