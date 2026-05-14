@@ -32,6 +32,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .t-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:0 0 34px;background:var(--As);color:var(--A)}
 .t-body .t-who{font-size:12px;font-weight:600;color:var(--ink)}
 .t-body .t-msg{font-size:11px;color:var(--ink3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.toast.announce{background:#1a1500;border-color:#f59e0b;cursor:default}
+.toast.announce .t-av{background:rgba(245,158,11,0.15);color:#f59e0b}
+.toast.announce .t-body .t-who{color:#f59e0b}
+.toast.announce .t-body .t-msg{color:#d4b87a;white-space:normal;max-width:220px;overflow:visible}
 
 /* ── SETUP ── */
 #setup{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
@@ -462,11 +466,34 @@ function setErr(msg,c='var(--R)'){$('sErr').textContent=msg;$('sErr').style.colo
 function reset(){$('joinBtn').disabled=false;$('joinBtn').textContent='Enter AscentChat'}
 
 // ─── App start ───
+const _pageStartTs = Date.now();
 function startApp(){
   hb(); setInterval(hb,30000);
   listenUsers();
   listenMyGroups();
+  listenAnnouncements();
   buildEp();
+}
+
+// ─── Announcements (broadcast from admin) ───
+function listenAnnouncements(){
+  db.collection('announcements').doc('global').onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const data=snap.data();
+    const sentAt=data.sentAt||0;
+    if(sentAt>_pageStartTs&&data.message){
+      showBroadcast(data.message);
+    }
+  });
+}
+function showBroadcast(msg){
+  const t=document.createElement('div');
+  t.className='toast announce';
+  t.innerHTML=`<div class="t-av">📢</div><div class="t-body"><div class="t-who">ANNOUNCEMENT</div><div class="t-msg">${esc(msg)}</div></div>`;
+  const dismiss=()=>{t.classList.add('bye');setTimeout(()=>t.remove(),220)};
+  t.onclick=dismiss;
+  $('toasts').appendChild(t);
+  setTimeout(dismiss,12000);
 }
 function hb(){if(myUid)db.collection('users').doc(myUid).update({lastSeen:TS()}).catch(()=>{})}
 

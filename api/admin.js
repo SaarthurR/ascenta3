@@ -113,17 +113,24 @@ export default async function handler(req, res) {
 
     // GET /api/admin/users — online AscentChat users (lastSeen within 10 min)
     if (action === "users" && method === "GET") {
-      const cutoff = Date.now() - 10 * 60 * 1000;
+      // lastSeen is stored as a Firestore Timestamp via serverTimestamp(); compare with Date
+      const cutoff = new Date(Date.now() - 10 * 60 * 1000);
       const snapshot = await db.collection("users")
         .where("lastSeen", ">", cutoff)
         .orderBy("lastSeen", "desc")
         .get();
-      const users = snapshot.docs.map(doc => ({
-        uid: doc.id,
-        username: doc.data().username ?? doc.id,
-        lastSeen: doc.data().lastSeen,
-        banned: doc.data().banned ?? false,
-      }));
+      const users = snapshot.docs.map(doc => {
+        const d = doc.data();
+        const ts = d.lastSeen;
+        // Firestore Timestamp → milliseconds for JSON
+        const lastSeenMs = ts && typeof ts.toMillis === "function" ? ts.toMillis() : (ts || 0);
+        return {
+          uid: doc.id,
+          username: d.name ?? d.username ?? doc.id,
+          lastSeen: lastSeenMs,
+          banned: d.banned ?? false,
+        };
+      });
       return res.status(200).json({ users });
     }
 
