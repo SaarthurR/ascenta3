@@ -114,12 +114,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // GET /api/admin/users — online users (chat + hub) within last 10 min
+    // GET /api/admin/users — online users (chat + hub) within last 90s
     if (action === "users" && method === "GET") {
       const cutoff = Timestamp.fromMillis(Date.now() - 90 * 1000);
       const [chatSnap, hubSnap] = await Promise.all([
-        db.collection("users").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
-        db.collection("hub_sessions").where("lastSeen", ">", cutoff).orderBy("lastSeen", "desc").get(),
+        db.collection("users").where("lastSeen", ">", cutoff).get(),
+        db.collection("hub_sessions").where("lastSeen", ">", cutoff).get(),
       ]);
       const tsMs = ts => ts && typeof ts.toMillis === "function" ? ts.toMillis() : (ts || 0);
       const chatUsers = chatSnap.docs.map(doc => {
@@ -141,11 +141,10 @@ export default async function handler(req, res) {
       const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
       const payload = await verifySessionValue(sessionValue, SESSION_SECRET);
       if (!payload) return res.status(401).json({ error: "No session" });
-      const { sid } = await readJsonBody(req);
+      const { sid, hint } = await readJsonBody(req);
       if (!sid || typeof sid !== "string" || sid.length > 32 || !/^[a-z0-9]+$/.test(sid)) {
         return res.status(400).json({ error: "Invalid sid" });
       }
-      const { hint } = await readJsonBody(req);
       const safeHint = typeof hint === "string" ? hint.slice(0, 12) : "";
       const update = { lastSeen: Timestamp.now() };
       if (safeHint) update.hint = safeHint;
