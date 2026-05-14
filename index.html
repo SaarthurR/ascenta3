@@ -1031,6 +1031,18 @@ body{
   #stageTimer{margin-left:auto}
 }
 </style>
+<style>
+#bc-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a1500;border:1px solid #f59e0b;border-radius:12px;padding:12px 18px;display:flex;align-items:flex-start;gap:10px;max-width:min(480px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.6);animation:bcIn .35s cubic-bezier(.34,1.56,.64,1) forwards;font-family:'IBM Plex Mono',monospace}
+#bc-toast.bye{animation:bcOut .2s ease-in forwards}
+@keyframes bcIn{from{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes bcOut{to{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.9)}}
+#bc-toast .bc-icon{font-size:18px;flex:0 0 auto;margin-top:1px}
+#bc-toast .bc-body{flex:1}
+#bc-toast .bc-label{font-size:10px;letter-spacing:2px;color:#f59e0b;text-transform:uppercase;margin-bottom:4px}
+#bc-toast .bc-msg{font-size:13px;color:#e5c97a;line-height:1.4}
+#bc-toast .bc-close{background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:0;line-height:1;flex:0 0 auto;margin-top:-2px}
+#bc-toast .bc-close:hover{color:#f59e0b}
+</style>
 </head>
 <body>
 
@@ -1780,6 +1792,37 @@ function enterHub(skipAnim){
   sessionStorage.setItem('ascenta_unlocked','1');
   buildHub();
   syncBackToTopVisibility();
+  startBroadcastPolling();
+}
+
+/* ── Broadcast polling ── */
+const _hubEnteredAt = Date.now();
+let _lastBroadcastSentAt = 0;
+let _bcTimer = null;
+function startBroadcastPolling(){
+  pollBroadcast();
+  _bcTimer = setInterval(pollBroadcast, 30000);
+}
+async function pollBroadcast(){
+  try{
+    const r = await fetch('/api/admin/config');
+    if(!r.ok) return;
+    const cfg = await r.json();
+    const sentAt = cfg.broadcastSentAt || 0;
+    if(sentAt > _hubEnteredAt && sentAt !== _lastBroadcastSentAt && cfg.broadcastMessage){
+      _lastBroadcastSentAt = sentAt;
+      showBroadcastToast(cfg.broadcastMessage);
+    }
+  }catch(e){}
+}
+function showBroadcastToast(msg){
+  const existing = document.getElementById('bc-toast');
+  if(existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'bc-toast';
+  t.innerHTML = `<span class="bc-icon">📢</span><div class="bc-body"><div class="bc-label">Announcement</div><div class="bc-msg">${msg.replace(/</g,'&lt;')}</div></div><button class="bc-close" onclick="this.closest('#bc-toast').classList.add('bye');setTimeout(()=>this.closest('#bc-toast')?.remove(),220)">✕</button>`;
+  document.body.appendChild(t);
+  setTimeout(()=>{if(t.parentNode){t.classList.add('bye');setTimeout(()=>t.remove(),220)}},15000);
 }
 
 /* ============================================================
