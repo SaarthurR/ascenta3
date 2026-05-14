@@ -79,7 +79,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing key or device fingerprint" });
     }
 
-    const adminDoc = await getDocument("admin_keys", key);
+    const adminDoc = await getDocument("dev_keys", key);
     if (adminDoc) {
       await grantSession(res, req, { isAdmin: true });
       return res.status(200).json({ status: "admin" });
