@@ -712,43 +712,51 @@ function initBroadcast() {
 /* ═══════════════════════════════════════════════
    USER MANAGEMENT
 ═══════════════════════════════════════════════ */
-async function loadUsers() {
+async function loadUsers(silent = false) {
   const body = document.getElementById('users-body');
-  body.innerHTML = '<p class="empty-state">Loading...</p>';
+  if (!silent) body.innerHTML = '<p class="empty-state">Loading...</p>';
   try {
     const { ok, data } = await adminFetch('/api/admin/users');
-    if (!ok) { body.innerHTML = '<p class="empty-state" style="color:var(--red)">Error loading users.</p>'; return; }
+    if (!ok) { if (!silent) body.innerHTML = '<p class="empty-state" style="color:var(--red)">Error loading users.</p>'; return; }
     const users = Array.isArray(data) ? data : (data.users || []);
     if (users.length === 0) {
-      body.innerHTML = '<p class="empty-state">No active users.</p>';
+      if (!silent) body.innerHTML = '<p class="empty-state">No active users.</p>';
+      else if (!document.getElementById('users-tbody')) body.innerHTML = '<p class="empty-state">No active users.</p>';
       return;
     }
-    const table = document.createElement('table');
-    table.className = 'user-table';
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Username / Key</th>
-          <th>Where</th>
-          <th>Game</th>
-          <th>Last Seen</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="users-tbody"></tbody>`;
-    body.innerHTML = '';
-    body.appendChild(table);
-    const tbody = document.getElementById('users-tbody');
+    let tbody = document.getElementById('users-tbody');
+    if (!tbody) {
+      const table = document.createElement('table');
+      table.className = 'user-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Username / Key</th>
+            <th>Where</th>
+            <th>Game</th>
+            <th>Last Seen</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>`;
+      body.innerHTML = '';
+      body.appendChild(table);
+      tbody = document.getElementById('users-tbody');
+    }
+    // Diff update: preserve rows that haven't changed, add new, remove gone
+    const existingRows = {};
+    tbody.querySelectorAll('tr[data-uid]').forEach(tr => { existingRows[tr.dataset.uid] = tr; });
+    const seen = new Set();
     users.forEach(u => {
-      const tr = document.createElement('tr');
+      seen.add(u.uid);
       const maskedName = escHtml(u.username || u.uid || '—');
       const keyCell = u.fullKey
         ? `<div style="font-size:10px;color:var(--text-dim);margin-top:3px">
              <span class="key-reveal-mask" style="cursor:pointer;letter-spacing:1px" title="Click to reveal" data-full="${escAttr(u.fullKey)}">${escHtml('****' + u.fullKey.slice(-4))} 👁</span>
            </div>`
         : '';
-      tr.innerHTML = `
+      const rowHTML = `
         <td>${maskedName}${keyCell}</td>
         <td>${u.source === 'hub'
             ? '<span style="font-size:10px;letter-spacing:1px;padding:2px 6px;border:1px solid var(--cyan);color:var(--cyan)">HUB</span>'
@@ -756,11 +764,7 @@ async function loadUsers() {
           }</td>
         <td style="font-size:11px;color:var(--text-dim)">${u.game ? escHtml(u.game) : '—'}</td>
         <td>${relTime(u.lastSeen)}</td>
-        <td>
-          ${u.banned
-            ? '<span class="chip banned">BANNED</span>'
-            : '<span class="chip active">ACTIVE</span>'}
-        </td>
+        <td>${u.banned ? '<span class="chip banned">BANNED</span>' : '<span class="chip active">ACTIVE</span>'}</td>
         <td class="actions">
           <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}" data-source="${escAttr(u.source || '')}">Kick</button>
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
@@ -769,88 +773,89 @@ async function loadUsers() {
             <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Remove</button>
           ` : ''}
         </td>`;
-      tbody.appendChild(tr);
-    });
-
-    tbody.addEventListener('click', async (e) => {
-      // Key reveal toggle
-      const revealSpan = e.target.closest('.key-reveal-mask');
-      if (revealSpan) {
-        const full = revealSpan.dataset.full;
-        const showing = revealSpan.dataset.showing === '1';
-        revealSpan.textContent = showing ? ('****' + full.slice(-4) + ' 👁') : (full + ' 🙈');
-        revealSpan.dataset.showing = showing ? '0' : '1';
-        return;
-      }
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const { action, uid, source } = btn.dataset;
-      if (action === 'kick') {
-        btn.disabled = true;
-        try {
-          const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid, source } });
-          if (ok) {
-            const tr = btn.closest('tr');
-            if (tr) tr.remove();
-            const tbody = document.getElementById('users-tbody');
-            if (tbody && !tbody.hasChildNodes()) {
-              document.getElementById('users-body').innerHTML = '<p class="empty-state">No active users.</p>';
-            }
-          } else {
-            btn.textContent = 'Failed';
-            btn.style.color = 'var(--red)';
-            btn.disabled = false;
-          }
-        } catch { btn.disabled = false; }
-      } else if (action === 'revoke') {
-        const key = prompt('Enter the key to revoke (leave blank to use UID):') ?? '';
-        const revokeKey = key.trim() || uid;
-        if (!revokeKey) return;
-        btn.disabled = true;
-        try {
-          const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key: revokeKey } });
-          btn.textContent = ok ? 'Revoked' : 'Failed';
-          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
-        } catch { btn.disabled = false; }
-      } else if (action === 'rename-chat') {
-        const newName = prompt('New name for ' + btn.dataset.name + ':', btn.dataset.name);
-        if (!newName || newName.trim() === btn.dataset.name) return;
-        btn.disabled = true;
-        try {
-          const { ok } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
-          if (ok) { btn.dataset.name = newName.trim(); btn.closest('tr').querySelector('td').textContent = newName.trim(); }
-          btn.textContent = ok ? 'Renamed' : 'Failed';
-          btn.style.color = ok ? 'var(--green)' : 'var(--red)';
-        } catch { btn.disabled = false; }
-      } else if (action === 'remove-chat') {
-        if (!confirm('Permanently remove this chat user? They can rejoin.')) return;
-        btn.disabled = true;
-        try {
-          const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
-          if (ok) {
-            const tr = btn.closest('tr');
-            if (tr) tr.remove();
-          } else { btn.disabled = false; }
-        } catch { btn.disabled = false; }
+      if (existingRows[u.uid]) {
+        // Update only the volatile cells (game col=2, lastSeen col=3) to avoid disrupting interactions
+        const cells = existingRows[u.uid].cells;
+        if (cells[2]) cells[2].innerHTML = u.game ? escHtml(u.game) : '—';
+        if (cells[3]) cells[3].textContent = relTime(u.lastSeen);
+      } else {
+        const tr = document.createElement('tr');
+        tr.dataset.uid = u.uid;
+        tr.innerHTML = rowHTML;
+        tbody.appendChild(tr);
       }
     });
+    // Remove rows for users who left
+    Object.keys(existingRows).forEach(uid => { if (!seen.has(uid)) existingRows[uid].remove(); });
   } catch {
-    body.innerHTML = '<p class="empty-state" style="color:var(--red)">Request failed.</p>';
+    if (!silent) body.innerHTML = '<p class="empty-state" style="color:var(--red)">Request failed.</p>';
   }
 }
 
 function initUserManagement() {
-  document.getElementById('btn-refresh-users').addEventListener('click', loadUsers);
+  document.getElementById('btn-refresh-users').addEventListener('click', () => loadUsers(false));
   document.getElementById('btn-clear-chat-users').addEventListener('click', async () => {
     if (!confirm('Delete ALL AscentChat users? They can rejoin with a new name.')) return;
     try {
       const { ok, data } = await adminFetch('/api/admin/clear-chat-users', { method: 'POST' });
       showFeedback('fb-users', ok ? `> Cleared ${data.deleted || 0} chat users.` : '> Error: ' + (data?.error || 'Failed'), ok);
-      if (ok) loadUsers();
+      if (ok) loadUsers(false);
     } catch { showFeedback('fb-users', '> Request failed.', false); }
   });
-  loadUsers();
-  setInterval(loadUsers, 1000);
+
+  // Delegated click handler — attached once, works across silent refreshes
+  document.getElementById('users-body').addEventListener('click', async (e) => {
+    const revealSpan = e.target.closest('.key-reveal-mask');
+    if (revealSpan) {
+      const full = revealSpan.dataset.full;
+      const showing = revealSpan.dataset.showing === '1';
+      revealSpan.textContent = showing ? ('****' + full.slice(-4) + ' 👁') : (full + ' 🙈');
+      revealSpan.dataset.showing = showing ? '0' : '1';
+      return;
+    }
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const { action, uid, source } = btn.dataset;
+    if (action === 'kick') {
+      btn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/kick-user', { method: 'POST', body: { uid, source } });
+        if (ok) { const tr = btn.closest('tr'); if (tr) tr.remove(); }
+        else { btn.textContent = 'Failed'; btn.style.color = 'var(--red)'; btn.disabled = false; }
+      } catch { btn.disabled = false; }
+    } else if (action === 'revoke') {
+      const key = prompt('Enter the key to revoke (leave blank to use UID):') ?? '';
+      const revokeKey = key.trim() || uid;
+      if (!revokeKey) return;
+      btn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key: revokeKey } });
+        btn.textContent = ok ? 'Revoked' : 'Failed';
+        btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+      } catch { btn.disabled = false; }
+    } else if (action === 'rename-chat') {
+      const newName = prompt('New name for ' + btn.dataset.name + ':', btn.dataset.name);
+      if (!newName || newName.trim() === btn.dataset.name) return;
+      btn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
+        if (ok) { btn.dataset.name = newName.trim(); btn.closest('tr').cells[0].childNodes[0].textContent = newName.trim(); }
+        btn.textContent = ok ? 'Renamed' : 'Failed';
+        btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+      } catch { btn.disabled = false; }
+    } else if (action === 'remove-chat') {
+      if (!confirm('Permanently remove this chat user? They can rejoin.')) return;
+      btn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
+        if (ok) { const tr = btn.closest('tr'); if (tr) tr.remove(); }
+        else btn.disabled = false;
+      } catch { btn.disabled = false; }
+    }
+  });
+
+  loadUsers(false);
+  setInterval(() => loadUsers(true), 1000);
 }
 
 /* ═══════════════════════════════════════════════
