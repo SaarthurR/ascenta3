@@ -276,8 +276,8 @@ export default async function handler(req, res) {
       }
       const sentAt = Date.now();
       await Promise.all([
-        // chat picks this up via onSnapshot
-        db.collection("announcements").doc("global").set({
+        // chat picks this up via onSnapshot — must write to chat's firebase project
+        getChatDb().collection("announcements").doc("global").set({
           message: message.trim(),
           sentAt,
           sentBy: "admin",
