@@ -1804,7 +1804,7 @@ sessionStorage.setItem('hub_sid', _hubSid);
 function startBroadcastPolling(){
   pollBroadcast();
   hubHeartbeat();
-  setInterval(pollBroadcast, 30000);
+  setInterval(pollBroadcast, 8000);
   setInterval(hubHeartbeat, 30000);
 }
 async function pollBroadcast(){
