@@ -201,7 +201,7 @@ export default async function handler(req, res) {
       const chatUsers = chatSnap.docs
         .map(doc => {
           const d = doc.data();
-          return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, source: "chat" };
+          return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, isChatAdmin: d.isChatAdmin ?? false, source: "chat" };
         })
         .filter(u => u.lastSeen > cutoffMs);
       const hubUsers = hubSnap.docs.map(doc => {
@@ -330,6 +330,26 @@ export default async function handler(req, res) {
       if (!uid) return res.status(400).json({ error: "Missing uid" });
       const chatDb = getChatDb();
       await chatDb.collection("users").doc(uid).delete();
+      return res.status(200).json({ ok: true });
+    }
+
+    // GET /api/admin/chat-users — all chat users (for admin grant UI)
+    if (action === "chat-users" && method === "GET") {
+      const chatDb = getChatDb();
+      const snap = await chatDb.collection("users").get();
+      const users = snap.docs.map(doc => {
+        const d = doc.data();
+        return { uid: doc.id, username: d.name ?? d.username ?? doc.id, isChatAdmin: d.isChatAdmin ?? false };
+      });
+      users.sort((a, b) => (a.username || "").localeCompare(b.username || ""));
+      return res.status(200).json({ users });
+    }
+
+    // POST /api/admin/set-chat-admin — grant or revoke chat admin on a user doc
+    if (action === "set-chat-admin" && method === "POST") {
+      const { uid, isChatAdmin } = await readJsonBody(req);
+      if (!uid) return res.status(400).json({ error: "Missing uid" });
+      await getChatDb().collection("users").doc(uid).update({ isChatAdmin: !!isChatAdmin });
       return res.status(200).json({ ok: true });
     }
 

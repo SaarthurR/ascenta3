@@ -296,6 +296,9 @@
     }
     .chip.banned { color: var(--red); border-color: var(--red); }
     .chip.active { color: var(--green); border-color: var(--green); }
+    .ca-row { display: flex; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .ca-row:last-child { border-bottom: none; }
+    .ca-name { color: var(--text); flex: 1; }
 
     /* ─── LOADING ─── */
     #loading-screen {
@@ -476,6 +479,26 @@
       <p class="empty-state">Loading users...</p>
     </div>
     <div class="feedback" id="fb-users"></div>
+  </div>
+
+  <!-- ─── CHAT ADMINS ─── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-header-row">
+        <span>// CHAT ADMINS</span>
+        <button class="btn btn-default btn-sm" id="btn-refresh-chat-admins">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="section-body">
+      <p style="font-size:11px;color:var(--text-dim);margin-bottom:10px">Grant users permission to send messages even when chat is muted.</p>
+      <div class="input-row" style="margin-bottom:10px">
+        <input type="text" id="chat-admin-search" placeholder="Search by name..." style="flex:1" />
+      </div>
+      <div id="chat-admins-body">
+        <p class="empty-state">Loading...</p>
+      </div>
+    </div>
+    <div class="feedback" id="fb-chat-admins"></div>
   </div>
 
   <!-- ─── KEY MANAGEMENT ─── -->
@@ -906,6 +929,95 @@ function initUserManagement() {
 }
 
 /* ═══════════════════════════════════════════════
+   CHAT ADMINS
+═══════════════════════════════════════════════ */
+let _chatAdminsCache = [];
+
+async function loadChatAdmins(silent = false) {
+  const body = document.getElementById('chat-admins-body');
+  if (!silent) body.innerHTML = '<p class="empty-state">Loading...</p>';
+  try {
+    const { ok, data } = await adminFetch('/api/admin/chat-users');
+    if (!ok) {
+      if (!silent) body.innerHTML = '<p class="empty-state" style="color:var(--red)">Error loading users.</p>';
+      return;
+    }
+    _chatAdminsCache = Array.isArray(data) ? data : (data.users || []);
+    renderChatAdmins();
+  } catch {
+    if (!silent) body.innerHTML = '<p class="empty-state" style="color:var(--red)">Request failed.</p>';
+  }
+}
+
+function renderChatAdmins() {
+  const body = document.getElementById('chat-admins-body');
+  const q = (document.getElementById('chat-admin-search')?.value || '').toLowerCase().trim();
+  const users = q
+    ? _chatAdminsCache.filter(u => (u.username || '').toLowerCase().includes(q))
+    : _chatAdminsCache;
+
+  if (users.length === 0) {
+    body.innerHTML = '<p class="empty-state">No chat users found.</p>';
+    return;
+  }
+
+  const sorted = [...users].sort((a, b) => {
+    if (a.isChatAdmin !== b.isChatAdmin) return a.isChatAdmin ? -1 : 1;
+    return (a.username || '').localeCompare(b.username || '');
+  });
+
+  if (!body.querySelector('.chat-admins-list')) {
+    body.innerHTML = '<div class="chat-admins-list"></div>';
+  }
+  const list = body.querySelector('.chat-admins-list');
+  list.innerHTML = '';
+  sorted.forEach(u => {
+    const row = document.createElement('div');
+    row.className = 'ca-row';
+    row.dataset.uid = u.uid;
+    row.innerHTML = `
+      <span class="ca-name">${escHtml(u.username || u.uid)}</span>
+      ${u.isChatAdmin ? '<span class="chip active" style="font-size:9px;padding:2px 6px;margin-left:6px;margin-right:6px">ADMIN</span>' : ''}
+      <button class="btn ${u.isChatAdmin ? 'btn-danger' : 'btn-primary'} btn-xs ca-toggle"
+        data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">
+        ${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}
+      </button>`;
+    list.appendChild(row);
+  });
+}
+
+function initChatAdmins() {
+  document.getElementById('btn-refresh-chat-admins').addEventListener('click', () => loadChatAdmins(false));
+  document.getElementById('chat-admin-search').addEventListener('input', () => renderChatAdmins());
+
+  document.getElementById('chat-admins-body').addEventListener('click', async e => {
+    const btn = e.target.closest('.ca-toggle');
+    if (!btn) return;
+    const { uid } = btn.dataset;
+    const isAdmin = btn.dataset.admin === '1';
+    btn.disabled = true;
+    try {
+      const { ok } = await adminFetch('/api/admin/set-chat-admin', { method: 'POST', body: { uid, isChatAdmin: !isAdmin } });
+      if (ok) {
+        const u = _chatAdminsCache.find(x => x.uid === uid);
+        if (u) u.isChatAdmin = !isAdmin;
+        renderChatAdmins();
+        showFeedback('fb-chat-admins', `> ${isAdmin ? 'Revoked' : 'Granted'} chat admin for ${u?.username || uid}`, true);
+      } else {
+        btn.disabled = false;
+        showFeedback('fb-chat-admins', '> Failed to update.', false);
+      }
+    } catch {
+      btn.disabled = false;
+      showFeedback('fb-chat-admins', '> Request failed.', false);
+    }
+  });
+
+  loadChatAdmins(false);
+  setInterval(() => loadChatAdmins(true), 1000);
+}
+
+/* ═══════════════════════════════════════════════
    KEY MANAGEMENT
 ═══════════════════════════════════════════════ */
 async function loadKeys() {
@@ -1161,6 +1273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initClearSessions();
   initBroadcast();
   initUserManagement();
+  initChatAdmins();
   initKeyManagement();
   initAdminKeys();
 });
