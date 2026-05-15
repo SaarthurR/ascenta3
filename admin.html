@@ -905,9 +905,8 @@ async function loadUsers(silent = false) {
           <button class="btn btn-default btn-xs" data-action="kick" data-uid="${escAttr(u.uid)}" data-source="${escAttr(u.source || '')}">Kick</button>
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
           ${u.source === 'chat' ? `
-            <button class="btn btn-default btn-xs" data-action="rename-chat" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || '')}">Rename</button>
             <button class="btn btn-default btn-xs" data-action="add-community" data-uid="${escAttr(u.uid)}" title="Force-add to Ascenta Community group">+Community</button>
-            <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Remove</button>
+            <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Delete/Ban</button>
           ` : ''}
         </td>`;
       if (existingRows[u.uid]) {
@@ -970,16 +969,6 @@ function initUserManagement() {
         btn.textContent = ok ? 'Revoked' : 'Failed';
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
       } catch { btn.disabled = false; }
-    } else if (action === 'rename-chat') {
-      const newName = prompt('New name for ' + btn.dataset.name + ':', btn.dataset.name);
-      if (!newName || newName.trim() === btn.dataset.name) return;
-      btn.disabled = true;
-      try {
-        const { ok } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
-        if (ok) { btn.dataset.name = newName.trim(); btn.closest('tr').cells[0].childNodes[0].textContent = newName.trim(); }
-        btn.textContent = ok ? 'Renamed' : 'Failed';
-        btn.style.color = ok ? 'var(--green)' : 'var(--red)';
-      } catch { btn.disabled = false; }
     } else if (action === 'add-community') {
       btn.disabled = true;
       try {
@@ -988,7 +977,7 @@ function initUserManagement() {
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
       } catch { btn.disabled = false; }
     } else if (action === 'remove-chat') {
-      if (!confirm('Permanently remove this chat user? They can rejoin.')) return;
+      if (!confirm('Permanently delete and ban this chat user from AscentChat?')) return;
       btn.disabled = true;
       try {
         const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
@@ -1052,11 +1041,15 @@ function renderChatAdmins() {
     row.innerHTML = `
       <span class="ca-name">${escHtml(u.username || u.uid)}</span>
       ${u.isChatAdmin ? '<span class="chip active" style="font-size:9px;padding:2px 6px;margin-left:6px;margin-right:6px">ADMIN</span>' : ''}
+      <button class="btn btn-default btn-xs ca-rename"
+        data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">
+        Rename
+      </button>
       <button class="btn ${u.isChatAdmin ? 'btn-danger' : 'btn-primary'} btn-xs ca-toggle"
         data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">
         ${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}
       </button>
-      <button class="btn btn-danger btn-xs ca-remove" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" style="margin-left:6px">Remove</button>`;
+      <button class="btn btn-danger btn-xs ca-remove" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" style="margin-left:6px">Delete/Ban</button>`;
     list.appendChild(row);
   });
 }
@@ -1066,20 +1059,42 @@ function initChatAdmins() {
   document.getElementById('chat-admin-search').addEventListener('input', () => renderChatAdmins());
 
   document.getElementById('chat-admins-body').addEventListener('click', async e => {
+    const renameBtn = e.target.closest('.ca-rename');
+    if (renameBtn) {
+      const { uid, name } = renameBtn.dataset;
+      const newName = prompt('New name for ' + name + ':', name);
+      if (!newName || newName.trim() === name) return;
+      renameBtn.disabled = true;
+      try {
+        const { ok, data } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
+        if (ok) {
+          _chatAdminsCache = _chatAdminsCache.map(user => user.uid === uid ? { ...user, username: newName.trim() } : user);
+          renderChatAdmins();
+          showFeedback('fb-chat-admins', `> Renamed ${name} to ${newName.trim()}`, true);
+        } else {
+          renameBtn.disabled = false;
+          showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to rename.'), false);
+        }
+      } catch {
+        renameBtn.disabled = false;
+        showFeedback('fb-chat-admins', '> Request failed.', false);
+      }
+      return;
+    }
     const removeBtn = e.target.closest('.ca-remove');
     if (removeBtn) {
       const { uid, name } = removeBtn.dataset;
-      if (!confirm(`Remove "${name}"? They can rejoin with the same name.`)) return;
+      if (!confirm(`Permanently delete and ban "${name}" from AscentChat?`)) return;
       removeBtn.disabled = true;
       try {
-        const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
+        const { ok, data } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
         if (ok) {
           _chatAdminsCache = _chatAdminsCache.filter(x => x.uid !== uid);
           renderChatAdmins();
-          showFeedback('fb-chat-admins', `> Removed ${name}`, true);
+          showFeedback('fb-chat-admins', `> Deleted and banned ${name}`, true);
         } else {
           removeBtn.disabled = false;
-          showFeedback('fb-chat-admins', '> Failed to remove.', false);
+          showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to delete/ban.'), false);
         }
       } catch { removeBtn.disabled = false; }
       return;

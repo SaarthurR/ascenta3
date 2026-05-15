@@ -285,8 +285,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 <div id="kickOverlay">
   <div class="kick-border"></div>
   <div class="kick-icon">🚫</div>
-  <div class="kick-title">You've been removed</div>
-  <div class="kick-sub">Redirecting you out…</div>
+  <div class="kick-title" id="kickTitle">You've been removed</div>
+  <div class="kick-sub" id="kickSub">Redirecting you out…</div>
 </div>
 
 <!-- ── SETUP ── -->
@@ -437,7 +437,7 @@ const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 // ─── State ───
 let myUid=null, myName=null;
 let activeId=null, activeType=null, activeName=null, activePeer=null;
-let unsubMsgs=null, unsubGroups=null;
+let unsubMsgs=null, unsubGroups=null, unsubModeration=null;
 let allUsers=[];
 let myGroups=[];
 let tab='dm';
@@ -448,6 +448,9 @@ let _lastChatMuted=false;
 let _accountsLocked=false;
 let _namesLocked=false;
 let _activeGroupMembers=[];
+let _usersLoaded=false;
+let _repairingGroups=new Set();
+let _removedShown=false;
 
 let unread={};
 let lastMsg={};     // {cid:{text,mine,ts}} — last known message per conversation
@@ -462,6 +465,45 @@ const $=id=>document.getElementById(id);
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function dmId(a,b){return[a,b].sort().join('__')}
 function ini(n){return(n||'?')[0].toUpperCase()}
+function banKeyForName(name){return(name||'').trim().toLowerCase().replace(/\s+/g,'_')}
+function getKnownUserIds(){
+  const ids=new Set();
+  if(myUid)ids.add(myUid);
+  allUsers.forEach(u=>{if(u&&u.uid)ids.add(u.uid)});
+  return ids;
+}
+function getVisibleGroupMembers(members){
+  const known=getKnownUserIds();
+  return (Array.isArray(members)?members:[]).filter(uid=>known.has(uid));
+}
+async function repairGroupMembers(group){
+  if(!_usersLoaded||!group||!group.id||_repairingGroups.has(group.id))return;
+  const known=getKnownUserIds();
+  const members=Array.isArray(group.members)?group.members:[];
+  const unknown=members.filter(uid=>uid&&!known.has(uid));
+  if(!unknown.length)return;
+  _repairingGroups.add(group.id);
+  try{
+    await db.collection('groups').doc(group.id).update({
+      members:firebase.firestore.FieldValue.arrayRemove(...unknown)
+    });
+  }catch(e){console.error('Repair group members:',e)}
+  finally{_repairingGroups.delete(group.id)}
+}
+function refreshActiveGroupUi(){
+  if(activeType!=='group'||!activeId)return;
+  const active=myGroups.find(g=>g.id===activeId);
+  if(!active)return;
+  _activeGroupMembers=getVisibleGroupMembers(active.members||[]);
+  const others=_activeGroupMembers.filter(m=>m!==myUid).map(uid=>{
+    const u=allUsers.find(x=>x.uid===uid);
+    return u?u.name:'Former member';
+  });
+  const subText=`${_activeGroupMembers.length} members${others.length?' · '+others.slice(0,3).join(', ')+(others.length>3?'…':''):''}`;
+  const sub=$('chSub');
+  if(sub)sub.textContent=subText;
+  if($('membersOv').style.display==='flex')showMembersModal();
+}
 function fmtT(ts){const d=ts&&ts.toDate?ts.toDate():new Date();return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}
 function fmtD(ts){
   const d=ts&&ts.toDate?ts.toDate():new Date(),t=new Date();
@@ -530,6 +572,7 @@ async function doJoin(){
   $('joinBtn').disabled=true;$('joinBtn').textContent='Connecting…';
   _joining=true;
   try{
+    let justCreated=false;
     await auth.setPersistence($('remMe').checked
       ?firebase.auth.Auth.Persistence.LOCAL
       :firebase.auth.Auth.Persistence.SESSION);
@@ -543,7 +586,7 @@ async function doJoin(){
         throw e;
       }
     } else {
-      try{cred=await auth.createUserWithEmailAndPassword(email,pass);}
+      try{cred=await auth.createUserWithEmailAndPassword(email,pass);justCreated=true;}
       catch(e1){
         if(e1.code==='auth/email-already-in-use'){
           try{cred=await auth.signInWithEmailAndPassword(email,pass);}
@@ -553,6 +596,17 @@ async function doJoin(){
           }
         } else throw e1;
       }
+    }
+    const bannedSnap=await db.collection('banned_names').doc(banKeyForName(name)).get();
+    if(bannedSnap.exists){
+      if(justCreated){
+        try{await cred.user.delete();}catch(e){console.error('Delete banned signup:',e)}
+      }
+      await auth.signOut().catch(()=>{});
+      _joining=false;
+      setErr('This name has been banned from AscentChat.');
+      reset();
+      return;
     }
     myUid=cred.user.uid; myName=name;
     const snap=await db.collection('users').where('name','==',name).get();
@@ -580,6 +634,7 @@ function startApp(){
   listenMyGroups();
   listenAnnouncements();
   listenKick();
+  listenModeration();
   listenChatConfig();
   joinCommunityGroup();
   buildEp();
@@ -611,14 +666,31 @@ function listenKick(){
     applyMuteState(_lastChatMuted);
   });
 }
-function showKicked(){
+function listenModeration(){
+  if(unsubModeration)unsubModeration();
+  unsubModeration=db.collection('moderation_events').doc(myUid).onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const d=snap.data();
+    const ts=d.bannedAt&&d.bannedAt.toMillis?d.bannedAt.toMillis():0;
+    if((d.action==='removed'||d.action==='banned')&&ts>=_pageStartTs){
+      showRemoved(d.title||"You've been removed",d.message||'Redirecting you out…');
+    }
+  });
+}
+function showRemoved(title,sub){
+  if(_removedShown)return;
+  _removedShown=true;
+  $('kickTitle').textContent=title||"You've been removed";
+  $('kickSub').textContent=sub||'Redirecting you out…';
   document.getElementById('kickOverlay').classList.add('show');
   setTimeout(()=>{
     localStorage.removeItem('ac_n');
     localStorage.removeItem('ac_u');
+    auth.signOut().catch(()=>{});
     location.reload();
   },4000);
 }
+function showKicked(){showRemoved("You've been removed",'Redirecting you out…')}
 
 // ─── Announcements (broadcast from admin) ───
 function listenAnnouncements(){
@@ -703,7 +775,10 @@ function listenUsers(){
   db.collection('users').onSnapshot(snap=>{
     allUsers=[];
     snap.forEach(d=>{const u=d.data();if(u.uid!==myUid)allUsers.push(u)});
+    _usersLoaded=true;
     allUsers.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    myGroups.forEach(g=>repairGroupMembers(g));
+    refreshActiveGroupUi();
     renderList();
     startGroupPingListeners();
     loadConversationPreviews();
@@ -716,6 +791,8 @@ function listenMyGroups(){
   unsubGroups=db.collection('groups').where('members','array-contains',myUid)
     .onSnapshot(snap=>{
       myGroups=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(_usersLoaded)myGroups.forEach(g=>repairGroupMembers(g));
+      refreshActiveGroupUi();
       myGroups.sort((a,b)=>{
         const ta=a.updatedAt&&a.updatedAt.toDate?a.updatedAt.toDate().getTime():0;
         const tb=b.updatedAt&&b.updatedAt.toDate?b.updatedAt.toDate().getTime():0;
@@ -793,6 +870,7 @@ function renderList(){
     }
     list.innerHTML='';
     groups.forEach(g=>{
+      const visibleMembers=getVisibleGroupMembers(g.members||[]);
       const isAct=activeId===g.id&&activeType==='group';
       const ur=unread[g.id]||null;
       const lm=lastMsg[g.id]||null;
@@ -800,7 +878,7 @@ function renderList(){
       if(ur){previewText=ur.preview;previewUnread=true;}
       else if(lm){previewText=lm.mine?'You: '+lm.text:lm.text;}
       else if(g.lastMsg){previewText=g.lastMsg;}
-      else{previewText=g.members?g.members.length+' members':'Group chat';}
+      else{previewText=visibleMembers.length?visibleMembers.length+' members':'Group chat';}
       const isMuted=myMutedGroups.has(g.id);
       const el=document.createElement('div');
       el.className='ci'+(isAct?' on':ur?' has-unread':'');
@@ -814,7 +892,7 @@ function renderList(){
           <div class="ci-time">${ur?'now':ago(g.updatedAt)}</div>
           ${ur?`<div class="ci-udot"></div>`:''}
         </div>`;
-      el.onclick=()=>openGroup(g.id,g.name,g.members||[]);
+      el.onclick=()=>openGroup(g.id,g.name,visibleMembers);
       list.appendChild(el);
     });
   }
@@ -847,10 +925,10 @@ function openDM(uid,name){
 // ─── Open Group ───
 function openGroup(id,name,members){
   activeType='group'; activeId=id; activeName=name; activePeer=null;
-  _activeGroupMembers=members||[];
+  _activeGroupMembers=getVisibleGroupMembers(members||[]);
   const others=_activeGroupMembers.filter(m=>m!==myUid).map(uid=>{
     const u=allUsers.find(x=>x.uid===uid);
-    return u?u.name:uid.slice(0,6);
+    return u?u.name:'Former member';
   });
   const subText=`${_activeGroupMembers.length} members${others.length?' · '+others.slice(0,3).join(', ')+(others.length>3?'…':''):''}`;
   mountChat('👥',name||'Group',subText);
@@ -895,7 +973,7 @@ function showMembersModal(){
   list.innerHTML='';
   _activeGroupMembers.forEach(uid=>{
     const u=allUsers.find(x=>x.uid===uid);
-    const name=u?u.name:(uid===myUid?'You':uid.slice(0,8));
+    const name=u?u.name:(uid===myUid?'You':'Former member');
     const div=document.createElement('div');
     div.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)';
     div.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 32px">${esc(ini(name))}</div><span style="font-size:13px">${esc(name)}${uid===myUid?' <span style="font-size:10px;color:var(--ink3)">(you)</span>':''}</span>`;
