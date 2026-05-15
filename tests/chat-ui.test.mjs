@@ -31,6 +31,8 @@ test("chat listens for moderation events and blocks banned names from rejoining"
   assert.match(chatHtml, /db\.collection\('banned_names'\)\.doc\(banKeyForName\(name\)\)\.get\(\)/);
 });
 
-test("chat message bubbles no longer render per-message timestamps", () => {
-  assert.doesNotMatch(chatHtml, /<div class="m-time">\$\{fmtT\(m\.timestamp\)\}<\/div>/);
+test("chat shows timestamps once at the top of each sender chain", () => {
+  assert.match(chatHtml, /function fmtT\(ts\)/);
+  assert.match(chatHtml, /const showChainTime=lastFrom!==m\.from;/);
+  assert.match(chatHtml, /\$\{showChainTime\?`<div class="m-time">\$\{fmtT\(m\.timestamp\)\}<\/div>`:''\}/);
 });
