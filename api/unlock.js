@@ -1,22 +1,8 @@
 import { buildSessionCookie, createSessionValue } from "../lib/session.mjs";
 import { normalizeAccessKey } from "../lib/access-keys.mjs";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getMainDb, hasMainFirebaseConfig } from "../lib/firebase-admin-apps.mjs";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
-
-// Initialize Firebase Admin SDK once (bypasses Firestore security rules)
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
-}
-
-const db = getFirestore();
 
 function shouldUseSecureCookies(req) {
   const forwardedProto = req.headers["x-forwarded-proto"];
@@ -35,16 +21,16 @@ async function grantSession(res, req, extra = {}) {
 }
 
 async function getDocument(collection, id) {
-  const doc = await db.collection(collection).doc(id).get();
+  const doc = await getMainDb().collection(collection).doc(id).get();
   return doc.exists ? doc.data() : null;
 }
 
 async function setDocument(collection, id, fields) {
-  await db.collection(collection).doc(id).set(fields);
+  await getMainDb().collection(collection).doc(id).set(fields);
 }
 
 async function deleteDocument(collection, id) {
-  await db.collection(collection).doc(id).delete();
+  await getMainDb().collection(collection).doc(id).delete();
 }
 
 function maskKey(key) {
@@ -66,7 +52,7 @@ async function readJsonBody(req) {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+  if (!hasMainFirebaseConfig()) {
     return res.status(500).json({ error: "Unlock service is not configured" });
   }
 

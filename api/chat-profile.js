@@ -2,53 +2,7 @@ import {
   renameUserHistory,
   validateChatName,
 } from "../lib/chat-admin-identity.mjs";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
-}
-
-const db = getFirestore();
-
-function getChatDb() {
-  const proj = process.env.CHAT_FIREBASE_PROJECT_ID;
-  if (!proj) return db;
-  const appName = "asenchata-chat";
-  const existing = getApps().find(app => app.name === appName);
-  if (existing) return getFirestore(existing);
-  const app = initializeApp({
-    credential: cert({
-      projectId: proj,
-      clientEmail: process.env.CHAT_FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.CHAT_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  }, appName);
-  return getFirestore(app);
-}
-
-function getChatAuth() {
-  const proj = process.env.CHAT_FIREBASE_PROJECT_ID;
-  if (!proj) return getAuth();
-  const appName = "asenchata-chat";
-  const existing = getApps().find(app => app.name === appName);
-  if (existing) return getAuth(existing);
-  const app = initializeApp({
-    credential: cert({
-      projectId: proj,
-      clientEmail: process.env.CHAT_FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.CHAT_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  }, appName);
-  return getAuth(app);
-}
+import { getChatAuth, getChatDb, hasMainFirebaseConfig } from "../lib/firebase-admin-apps.mjs";
 
 async function readJsonBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
@@ -69,7 +23,7 @@ async function ensureUniqueChatName(chatDb, uid, name) {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+  if (!hasMainFirebaseConfig()) {
     return res.status(500).json({ error: "Service not configured" });
   }
 
