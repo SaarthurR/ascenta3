@@ -149,16 +149,22 @@ export default async function handler(req, res) {
   try {
     // GET /api/admin/status
     if (action === "status" && method === "GET") {
-      const configDoc = await getDocument("config", "global");
+      const chatDb = getChatDb();
+      const [configDoc, chatConfigSnap] = await Promise.all([
+        getDocument("config", "global"),
+        chatDb.collection("config").doc("global").get(),
+      ]);
+      const chatMuted = chatConfigSnap.exists ? (chatConfigSnap.data().chatMuted ?? false) : false;
       return res.status(200).json({
         siteDisabled: configDoc?.siteDisabled ?? false,
         gamesDisabled: configDoc?.gamesDisabled ?? false,
         maintenanceMessage: configDoc?.maintenanceMessage ?? "",
         sessionRevokedAt: configDoc?.sessionRevokedAt ?? 0,
+        chatMuted,
       });
     }
 
-    // POST /api/admin/config — update site/games flags
+    // POST /api/admin/config — update site/games flags and chat mute
     if (action === "config" && method === "POST") {
       const body = await readJsonBody(req);
       const allowed = ["siteDisabled", "gamesDisabled", "maintenanceMessage"];
@@ -166,7 +172,14 @@ export default async function handler(req, res) {
       for (const key of allowed) {
         if (key in body) updates[key] = body[key];
       }
-      await db.collection("config").doc("global").set(updates, { merge: true });
+      const promises = [];
+      if (Object.keys(updates).length) {
+        promises.push(db.collection("config").doc("global").set(updates, { merge: true }));
+      }
+      if ("chatMuted" in body) {
+        promises.push(getChatDb().collection("config").doc("global").set({ chatMuted: !!body.chatMuted }, { merge: true }));
+      }
+      await Promise.all(promises);
       return res.status(200).json({ ok: true });
     }
 
