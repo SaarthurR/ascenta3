@@ -443,6 +443,7 @@ let sbOpen=false;
 let myMutedGroups=new Set();
 let isChatAdmin=false;
 let _lastChatMuted=false;
+let _nameLocked=false;
 let _activeGroupMembers=[];
 
 let unread={};
@@ -490,6 +491,9 @@ function enterApp(){
   startApp();
 }
 
+// ─── Pre-load public config (for nameLocked before auth) ───
+fetch('/api/admin/config').then(r=>r.json()).then(cfg=>{_nameLocked=!!(cfg.nameLocked);}).catch(()=>{});
+
 // ─── Auto-resume via Firebase auth persistence ───
 let _joining=false;
 const _savedName=localStorage.getItem('ac_n');
@@ -527,15 +531,24 @@ async function doJoin(){
       :firebase.auth.Auth.Persistence.SESSION);
     const email=toEmail(name);
     let cred;
-    try{cred=await auth.createUserWithEmailAndPassword(email,pass);}
-    catch(e1){
-      if(e1.code==='auth/email-already-in-use'){
-        try{cred=await auth.signInWithEmailAndPassword(email,pass);}
-        catch(e2){
-          if(e2.code==='auth/wrong-password'||e2.code==='auth/invalid-credential'){setErr('Incorrect password.');reset();return;}
-          throw e2;
-        }
-      } else throw e1;
+    if(_nameLocked){
+      try{cred=await auth.signInWithEmailAndPassword(email,pass);}
+      catch(e){
+        if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){setErr('Incorrect password.');reset();return;}
+        if(e.code==='auth/user-not-found'||e.code==='auth/invalid-email'){setErr('Account not found — new accounts are currently locked.');reset();return;}
+        throw e;
+      }
+    } else {
+      try{cred=await auth.createUserWithEmailAndPassword(email,pass);}
+      catch(e1){
+        if(e1.code==='auth/email-already-in-use'){
+          try{cred=await auth.signInWithEmailAndPassword(email,pass);}
+          catch(e2){
+            if(e2.code==='auth/wrong-password'||e2.code==='auth/invalid-credential'){setErr('Incorrect password.');reset();return;}
+            throw e2;
+          }
+        } else throw e1;
+      }
     }
     myUid=cred.user.uid; myName=name;
     const snap=await db.collection('users').where('name','==',name).get();
@@ -643,7 +656,9 @@ function applyMuteState(muted){
 }
 function listenChatConfig(){
   db.collection('config').doc('global').onSnapshot(snap=>{
-    _lastChatMuted=snap.exists?(snap.data().chatMuted??false):false;
+    const d=snap.exists?snap.data():{};
+    _lastChatMuted=d.chatMuted??false;
+    _nameLocked=d.nameLocked??false;
     applyMuteState(_lastChatMuted);
   },err=>console.error('Chat config listener:',err));
 }

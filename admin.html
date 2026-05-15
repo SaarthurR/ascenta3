@@ -426,6 +426,21 @@
         </div>
       </div>
 
+      <!-- Name lock toggle -->
+      <div class="control-row">
+        <div class="control-label">
+          Lock Names
+          <small>Prevent new accounts — only existing users can sign in to AscentChat</small>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-status" id="name-lock-status">OFF</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-name-lock" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
       <!-- Maintenance message -->
       <div class="control-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
         <div class="control-label">
@@ -751,6 +766,31 @@ function initClearSessions() {
       showFeedback('fb-sessions', ok ? '> All sessions cleared.' : ('> Error: ' + (data.error || 'Failed')), ok);
     } catch {
       showFeedback('fb-sessions', '> Request failed.', false);
+    }
+  });
+}
+
+function initToggleLockNames(initialVal) {
+  const tog = document.getElementById('toggle-name-lock');
+  const status = document.getElementById('name-lock-status');
+
+  function applyUI(val) {
+    tog.checked = !!val;
+    status.textContent = val ? 'ON' : 'OFF';
+    status.style.color = val ? 'var(--red)' : 'var(--muted)';
+  }
+
+  applyUI(initialVal);
+
+  tog.addEventListener('change', async () => {
+    const val = tog.checked;
+    applyUI(val);
+    try {
+      const { ok } = await adminFetch('/api/admin/config', { method: 'POST', body: { nameLocked: val } });
+      if (!ok) throw new Error('Failed');
+    } catch {
+      applyUI(!val);
+      tog.checked = !val;
     }
   });
 }
@@ -1291,11 +1331,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const gamesDisabled = !!statusData.gamesDisabled;
   const maintMsg      = statusData.maintenanceMessage || '';
   const chatMuted     = !!statusData.chatMuted;
+  const nameLocked    = !!statusData.nameLocked;
 
   updateBadges(siteDisabled, gamesDisabled);
   initToggleMaintenance(siteDisabled);
   initToggleGames(gamesDisabled);
   initToggleChatMute(chatMuted);
+  initToggleLockNames(nameLocked);
   initMaintenanceMessage(maintMsg);
   initClearSessions();
   initBroadcast();
