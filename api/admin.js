@@ -1,7 +1,7 @@
 import { SESSION_COOKIE_NAME, verifySessionValue } from "../lib/session.mjs";
 import { normalizeAccessKey } from "../lib/access-keys.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -350,6 +350,18 @@ export default async function handler(req, res) {
       const { uid, isChatAdmin } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
       await getChatDb().collection("users").doc(uid).update({ isChatAdmin: !!isChatAdmin });
+      return res.status(200).json({ ok: true });
+    }
+
+    // POST /api/admin/add-to-community — force-add a chat user to the community group
+    if (action === "add-to-community" && method === "POST") {
+      const { uid } = await readJsonBody(req);
+      if (!uid) return res.status(400).json({ error: "Missing uid" });
+      const chatDb = getChatDb();
+      await chatDb.collection("groups").doc("community").set(
+        { members: FieldValue.arrayUnion(uid) },
+        { merge: true }
+      );
       return res.status(200).json({ ok: true });
     }
 
