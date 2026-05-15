@@ -928,8 +928,7 @@ function loadConversationPreviews(){
         const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
         lastMsg[cid]={text:m.text||'',mine,ts};
         if(!lastActivity[cid]||ts>lastActivity[cid])lastActivity[cid]=ts;
-        // Only mark unread for historical msgs (pre-load); real-time handled by ping listener
-        if(ts<_pageStartTs&&!mine&&ts>(lastReadTs[cid]||0)&&activeId!==cid&&!unread[cid]){
+        if(!mine&&ts>(lastReadTs[cid]||0)&&activeId!==cid&&!unread[cid]){
           unread[cid]={count:1,preview:m.text||'',fromName:m.fromName||u.name};
         }
         renderList();
