@@ -359,6 +359,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
             <div class="ch-sub" id="chSub">—</div>
           </div>
           <button id="chMuteBtn" onclick="toggleGroupMute()" title="Mute/unmute notifications" style="display:none;width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink3);cursor:pointer;font-size:16px;flex:0 0 32px;transition:var(--ease)">🔔</button>
+          <div id="grpMenuWrap" style="display:none;position:relative;flex:0 0 auto">
+            <button id="grpMenuBtn" onclick="toggleGrpMenu()" title="Group options" style="width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink3);cursor:pointer;font-size:18px;line-height:1;transition:var(--ease)">⋮</button>
+            <div id="grpMenuDrop" style="display:none;position:absolute;right:0;top:38px;background:var(--card,#16213e);border:1px solid var(--line);border-radius:10px;min-width:160px;z-index:200;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+              <button onclick="leaveGroup()" style="display:block;width:100%;text-align:left;padding:11px 16px;background:none;border:none;border-bottom:1px solid var(--line);color:var(--ink2,#ccc);font-size:12px;cursor:pointer" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=''">Leave Group</button>
+              <button onclick="deleteGroup()" style="display:block;width:100%;text-align:left;padding:11px 16px;background:none;border:none;color:#f87171;font-size:12px;cursor:pointer" onmouseover="this.style.background='rgba(248,113,113,0.08)'" onmouseout="this.style.background=''">Delete Group</button>
+            </div>
+          </div>
         </div>
         <div class="msgs" id="msgs" onscroll="onMsgsScroll()"></div>
         <button class="sfab" id="sfab" onclick="scrollBot()" aria-label="Scroll to bottom">↓</button>
@@ -826,9 +833,34 @@ function openGroup(id,name,members){
   const sub=$('chSub');
   sub.style.cursor='pointer';sub.title='View members';
   sub.onclick=()=>showMembersModal();
+  $('grpMenuWrap').style.display=id==='community'?'none':'flex';
   markRead(activeId);
   const _mb=$('chMuteBtn');if(_mb){_mb.style.display='flex';updateMuteBtn();}
   if(window.innerWidth<=768)closeSb();
+}
+
+// ─── Group menu (leave / delete) ───
+function toggleGrpMenu(){
+  const d=$('grpMenuDrop');
+  d.style.display=d.style.display==='block'?'none':'block';
+}
+async function leaveGroup(){
+  $('grpMenuDrop').style.display='none';
+  if(!activeId||activeType!=='group')return;
+  if(!confirm(`Leave "${activeName}"?`))return;
+  try{
+    await db.collection('groups').doc(activeId).update({members:firebase.firestore.FieldValue.arrayRemove(myUid)});
+    goBack();
+  }catch(e){console.error('Leave group:',e);}
+}
+async function deleteGroup(){
+  $('grpMenuDrop').style.display='none';
+  if(!activeId||activeType!=='group')return;
+  if(!confirm(`Delete "${activeName}" for everyone? This cannot be undone.`))return;
+  try{
+    await db.collection('groups').doc(activeId).delete();
+    goBack();
+  }catch(e){console.error('Delete group:',e);}
 }
 
 // ─── Members modal ───
@@ -857,6 +889,7 @@ function mountChat(av,name,sub){
   $('chName').textContent=name;
   const subEl=$('chSub');
   subEl.textContent=sub;subEl.style.cursor='';subEl.title='';subEl.onclick=null;
+  $('grpMenuWrap').style.display='none';$('grpMenuDrop').style.display='none';
   $('msgs').innerHTML='<div class="c-empty"><div class="spin"></div></div>';
   setTimeout(()=>$('chatIn').focus(),100);
   renderList();
@@ -1121,6 +1154,7 @@ function buildEp(){
 function toggleEp(){$('epPop').classList.toggle('open')}
 function insE(e){const t=$('chatIn');const pos=t.selectionStart||t.value.length;t.value=t.value.slice(0,pos)+e+t.value.slice(pos);t.focus();const np=pos+e.length;t.setSelectionRange(np,np)}
 document.addEventListener('click',e=>{if(!e.target.closest('#epPop')&&!e.target.closest('#emBtn'))$('epPop').classList.remove('open')});
+document.addEventListener('click',e=>{if(!e.target.closest('#grpMenuWrap'))$('grpMenuDrop').style.display='none'});
 
 // ─── Group modal ───
 function openGM(e){
