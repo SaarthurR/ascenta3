@@ -103,7 +103,8 @@ export default async function handler(req, res) {
         broadcastMessage: configDoc?.broadcastMessage ?? null,
         broadcastSentAt: configDoc?.broadcastSentAt ?? 0,
         sessionRevokedAt: configDoc?.sessionRevokedAt ?? 0,
-        nameLocked: chatConfig.nameLocked ?? false,
+        accountsLocked: chatConfig.accountsLocked ?? false,
+        namesLocked: chatConfig.namesLocked ?? false,
       });
     } catch (err) {
       console.error("admin/config GET failed", err);
@@ -159,15 +160,15 @@ export default async function handler(req, res) {
         getDocument("config", "global"),
         chatDb.collection("config").doc("global").get(),
       ]);
-      const chatMuted = chatConfigSnap.exists ? (chatConfigSnap.data().chatMuted ?? false) : false;
-      const nameLocked = chatConfigSnap.exists ? (chatConfigSnap.data().nameLocked ?? false) : false;
+      const chatData = chatConfigSnap.exists ? chatConfigSnap.data() : {};
       return res.status(200).json({
         siteDisabled: configDoc?.siteDisabled ?? false,
         gamesDisabled: configDoc?.gamesDisabled ?? false,
         maintenanceMessage: configDoc?.maintenanceMessage ?? "",
         sessionRevokedAt: configDoc?.sessionRevokedAt ?? 0,
-        chatMuted,
-        nameLocked,
+        chatMuted: chatData.chatMuted ?? false,
+        accountsLocked: chatData.accountsLocked ?? false,
+        namesLocked: chatData.namesLocked ?? false,
       });
     }
 
@@ -186,8 +187,11 @@ export default async function handler(req, res) {
       if ("chatMuted" in body) {
         promises.push(getChatDb().collection("config").doc("global").set({ chatMuted: !!body.chatMuted }, { merge: true }));
       }
-      if ("nameLocked" in body) {
-        promises.push(getChatDb().collection("config").doc("global").set({ nameLocked: !!body.nameLocked }, { merge: true }));
+      if ("accountsLocked" in body) {
+        promises.push(getChatDb().collection("config").doc("global").set({ accountsLocked: !!body.accountsLocked }, { merge: true }));
+      }
+      if ("namesLocked" in body) {
+        promises.push(getChatDb().collection("config").doc("global").set({ namesLocked: !!body.namesLocked }, { merge: true }));
       }
       await Promise.all(promises);
       return res.status(200).json({ ok: true });

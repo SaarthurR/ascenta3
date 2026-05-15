@@ -443,7 +443,8 @@ let sbOpen=false;
 let myMutedGroups=new Set();
 let isChatAdmin=false;
 let _lastChatMuted=false;
-let _nameLocked=false;
+let _accountsLocked=false;
+let _namesLocked=false;
 let _activeGroupMembers=[];
 
 let unread={};
@@ -492,7 +493,7 @@ function enterApp(){
 }
 
 // ─── Pre-load public config (for nameLocked before auth) ───
-fetch('/api/admin/config').then(r=>r.json()).then(cfg=>{_nameLocked=!!(cfg.nameLocked);}).catch(()=>{});
+fetch('/api/admin/config').then(r=>r.json()).then(cfg=>{_accountsLocked=!!(cfg.accountsLocked);_namesLocked=!!(cfg.namesLocked);}).catch(()=>{});
 
 // ─── Auto-resume via Firebase auth persistence ───
 let _joining=false;
@@ -531,7 +532,7 @@ async function doJoin(){
       :firebase.auth.Auth.Persistence.SESSION);
     const email=toEmail(name);
     let cred;
-    if(_nameLocked){
+    if(_accountsLocked){
       try{cred=await auth.signInWithEmailAndPassword(email,pass);}
       catch(e){
         if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){setErr('Incorrect password.');reset();return;}
@@ -555,7 +556,7 @@ async function doJoin(){
     if(snap.docs.some(d=>d.id!==myUid)){await auth.signOut();setErr('Name taken, try another.');reset();return;}
     const uSnap=await db.collection('users').doc(myUid).get();
     myMutedGroups=new Set(uSnap.exists?uSnap.data().mutedGroups||[]:[]);
-    await db.collection('users').doc(myUid).set({name,uid:myUid,lastSeen:TS()},{merge:true});
+    await db.collection('users').doc(myUid).set(_namesLocked?{uid:myUid,lastSeen:TS()}:{name,uid:myUid,lastSeen:TS()},{merge:true});
     if($('remMe').checked) localStorage.setItem('ac_n',name); else localStorage.removeItem('ac_n');
     _joining=false;
     enterApp();
@@ -658,7 +659,8 @@ function listenChatConfig(){
   db.collection('config').doc('global').onSnapshot(snap=>{
     const d=snap.exists?snap.data():{};
     _lastChatMuted=d.chatMuted??false;
-    _nameLocked=d.nameLocked??false;
+    _accountsLocked=d.accountsLocked??false;
+    _namesLocked=d.namesLocked??false;
     applyMuteState(_lastChatMuted);
   },err=>console.error('Chat config listener:',err));
 }

@@ -426,16 +426,31 @@
         </div>
       </div>
 
-      <!-- Name lock toggle -->
+      <!-- Account creation lock toggle -->
       <div class="control-row">
         <div class="control-label">
-          Lock Names
+          Lock Account Creation
           <small>Prevent new accounts — only existing users can sign in to AscentChat</small>
         </div>
         <div class="toggle-wrap">
-          <span class="toggle-status" id="name-lock-status">OFF</span>
+          <span class="toggle-status" id="accounts-lock-status">OFF</span>
           <label class="toggle">
-            <input type="checkbox" id="toggle-name-lock" />
+            <input type="checkbox" id="toggle-accounts-lock" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Name change lock toggle -->
+      <div class="control-row">
+        <div class="control-label">
+          Lock Name Changes
+          <small>Freeze display names — users can still log in but their stored name won't change</small>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-status" id="names-lock-status">OFF</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-names-lock" />
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -770,28 +785,39 @@ function initClearSessions() {
   });
 }
 
-function initToggleLockNames(initialVal) {
-  const tog = document.getElementById('toggle-name-lock');
-  const status = document.getElementById('name-lock-status');
-
+function initToggleLockAccounts(initialVal) {
+  const tog = document.getElementById('toggle-accounts-lock');
+  const status = document.getElementById('accounts-lock-status');
   function applyUI(val) {
     tog.checked = !!val;
     status.textContent = val ? 'ON' : 'OFF';
     status.style.color = val ? 'var(--red)' : 'var(--muted)';
   }
-
   applyUI(initialVal);
-
   tog.addEventListener('change', async () => {
-    const val = tog.checked;
-    applyUI(val);
+    const val = tog.checked; applyUI(val);
     try {
-      const { ok } = await adminFetch('/api/admin/config', { method: 'POST', body: { nameLocked: val } });
-      if (!ok) throw new Error('Failed');
-    } catch {
-      applyUI(!val);
-      tog.checked = !val;
-    }
+      const { ok } = await adminFetch('/api/admin/config', { method: 'POST', body: { accountsLocked: val } });
+      if (!ok) throw new Error();
+    } catch { applyUI(!val); tog.checked = !val; }
+  });
+}
+
+function initToggleLockNames(initialVal) {
+  const tog = document.getElementById('toggle-names-lock');
+  const status = document.getElementById('names-lock-status');
+  function applyUI(val) {
+    tog.checked = !!val;
+    status.textContent = val ? 'ON' : 'OFF';
+    status.style.color = val ? 'var(--red)' : 'var(--muted)';
+  }
+  applyUI(initialVal);
+  tog.addEventListener('change', async () => {
+    const val = tog.checked; applyUI(val);
+    try {
+      const { ok } = await adminFetch('/api/admin/config', { method: 'POST', body: { namesLocked: val } });
+      if (!ok) throw new Error();
+    } catch { applyUI(!val); tog.checked = !val; }
   });
 }
 
@@ -1331,13 +1357,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const gamesDisabled = !!statusData.gamesDisabled;
   const maintMsg      = statusData.maintenanceMessage || '';
   const chatMuted     = !!statusData.chatMuted;
-  const nameLocked    = !!statusData.nameLocked;
-
   updateBadges(siteDisabled, gamesDisabled);
   initToggleMaintenance(siteDisabled);
   initToggleGames(gamesDisabled);
   initToggleChatMute(chatMuted);
-  initToggleLockNames(nameLocked);
+  initToggleLockAccounts(!!statusData.accountsLocked);
+  initToggleLockNames(!!statusData.namesLocked);
   initMaintenanceMessage(maintMsg);
   initClearSessions();
   initBroadcast();
