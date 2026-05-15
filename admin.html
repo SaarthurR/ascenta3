@@ -368,6 +368,7 @@
         <div class="badges">
           <span id="badge-site" class="badge muted">SITE ...</span>
           <span id="badge-games" class="badge muted">GAMES ...</span>
+          <span id="badge-chat" class="badge muted">CHAT ...</span>
         </div>
       </div>
     </div>
@@ -402,6 +403,21 @@
           <span class="toggle-status" id="games-status">ON</span>
           <label class="toggle">
             <input type="checkbox" id="toggle-games" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Chat mute toggle -->
+      <div class="control-row">
+        <div class="control-label">
+          Chat Muted
+          <small>Block all users from sending messages in AscentChat</small>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-status" id="chat-mute-status">OFF</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-chat-mute" />
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -651,6 +667,37 @@ function initToggleGames(initialVal) {
       applyUI(!gamesEnabled);
       tog.checked = !gamesEnabled;
       updateBadges(document.getElementById('toggle-maintenance').checked, gamesEnabled);
+    }
+  });
+}
+
+function initToggleChatMute(initialVal) {
+  const tog = document.getElementById('toggle-chat-mute');
+  const status = document.getElementById('chat-mute-status');
+  const badge = document.getElementById('badge-chat');
+
+  function applyUI(val) {
+    tog.checked = !!val;
+    status.textContent = val ? 'ON' : 'OFF';
+    status.style.color = val ? 'var(--red)' : 'var(--muted)';
+    badge.textContent = val ? 'CHAT: MUTED' : 'CHAT: LIVE';
+    badge.className = 'badge ' + (val ? 'red' : 'green');
+  }
+
+  applyUI(initialVal);
+
+  tog.addEventListener('change', async () => {
+    const val = tog.checked;
+    applyUI(val);
+    try {
+      const { ok } = await adminFetch('/api/admin/config', {
+        method: 'POST',
+        body: { chatMuted: val },
+      });
+      if (!ok) throw new Error('Failed');
+    } catch {
+      applyUI(!val);
+      tog.checked = !val;
     }
   });
 }
@@ -1104,10 +1151,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const siteDisabled  = !!statusData.siteDisabled;
   const gamesDisabled = !!statusData.gamesDisabled;
   const maintMsg      = statusData.maintenanceMessage || '';
+  const chatMuted     = !!statusData.chatMuted;
 
   updateBadges(siteDisabled, gamesDisabled);
   initToggleMaintenance(siteDisabled);
   initToggleGames(gamesDisabled);
+  initToggleChatMute(chatMuted);
   initMaintenanceMessage(maintMsg);
   initClearSessions();
   initBroadcast();

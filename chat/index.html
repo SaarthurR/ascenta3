@@ -295,6 +295,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
     <div class="s-card">
       <div class="s-lbl">Your display name</div>
       <input class="s-in" id="nameIn" type="text" maxlength="24" placeholder="e.g. luna_84" autocomplete="off" autocorrect="off" autocapitalize="off">
+      <div class="s-lbl">Password</div>
+      <input class="s-in" id="passIn" type="password" maxlength="128" placeholder="Min 6 characters" autocomplete="current-password">
       <label class="s-rem"><input type="checkbox" id="remMe" checked> Remember me on this device</label>
       <button class="s-btn" id="joinBtn">Enter AscentChat</button>
       <div class="s-err" id="sErr"></div>
@@ -356,10 +358,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
             <div class="ch-name" id="chName">—</div>
             <div class="ch-sub" id="chSub">—</div>
           </div>
+          <button id="chMuteBtn" onclick="toggleGroupMute()" title="Mute/unmute notifications" style="display:none;width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink3);cursor:pointer;font-size:16px;flex:0 0 32px;transition:var(--ease)">🔔</button>
         </div>
         <div class="msgs" id="msgs" onscroll="onMsgsScroll()"></div>
         <button class="sfab" id="sfab" onclick="scrollBot()" aria-label="Scroll to bottom">↓</button>
         <div class="inp-wrap">
+          <div id="chatMutedBanner" style="display:none;padding:8px 16px;font-size:11px;color:#f87171;text-align:center;letter-spacing:.5px;border-bottom:1px solid rgba(248,113,113,0.2)">Chat muted by admin — read only</div>
           <div class="ep-pop" id="epPop"></div>
           <div class="inp-row">
             <button class="em-btn" id="emBtn" onclick="toggleEp()" aria-label="Emoji">😊</button>
@@ -417,6 +421,7 @@ let allUsers=[];
 let myGroups=[];
 let tab='dm';
 let sbOpen=false;
+let myMutedGroups=new Set();
 
 let unread={};
 let lastMsg={};     // {cid:{text,mine,ts}} — last known message per conversation
@@ -449,40 +454,73 @@ function ago(ts){
 $('sbBtn').onclick=()=>sbOpen?closeSb():openSb();
 function openSb(){sbOpen=true;$('sidebar').classList.remove('closed');$('sbVeil').style.display=''}
 function closeSb(){sbOpen=false;$('sidebar').classList.add('closed');$('sbVeil').style.display='none'}
-function goBack(){closeSb();$('chatBody').style.display='none';$('chatPh').style.display='flex';activeId=null;activeType=null}
+function goBack(){closeSb();$('chatBody').style.display='none';$('chatPh').style.display='flex';activeId=null;activeType=null;$('chMuteBtn').style.display='none';}
 
-// ─── Persist session ───
-function saveS(){localStorage.setItem('ac_n',myName);localStorage.setItem('ac_u',myUid)}
-function clearS(){localStorage.removeItem('ac_n');localStorage.removeItem('ac_u')}
-function getS(){return{n:localStorage.getItem('ac_n'),u:localStorage.getItem('ac_u')}}
+// ─── Auth helpers ───
+function toEmail(name){return name.toLowerCase().replace(/\s+/g,'_')+'@ascenta.chat'}
 
-// ─── Auto-resume ───
-(function(){
-  const s=getS();
-  if(s.n&&s.u){$('nameIn').value=s.n;setErr('Resuming…','var(--ink3)');doJoin();}
-})();
+function enterApp(){
+  $('myNameDisp').textContent=myName;
+  $('myAv').textContent=ini(myName);
+  $('setup').style.display='none';
+  $('app').classList.add('live');
+  if(window.innerWidth>768)openSb();
+  startApp();
+}
+
+// ─── Auto-resume via Firebase auth persistence ───
+const _savedName=localStorage.getItem('ac_n');
+if(_savedName)$('nameIn').value=_savedName;
+
+auth.onAuthStateChanged(async user=>{
+  if(!user)return;
+  try{
+    const doc=await db.collection('users').doc(user.uid).get();
+    if(!doc.exists){await auth.signOut();return;}
+    myUid=user.uid;
+    myName=doc.data().name;
+    myMutedGroups=new Set(doc.data().mutedGroups||[]);
+    enterApp();
+  }catch(e){console.error('Auto-resume:',e)}
+});
+
 $('joinBtn').onclick=doJoin;
-$('nameIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doJoin()}};
+$('nameIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('passIn').focus()}};
+$('passIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doJoin()}};
 
 async function doJoin(){
   const name=$('nameIn').value.trim();
+  const pass=$('passIn').value;
   if(!name){setErr('Enter a display name.');return}
   if(name.length<2){setErr('Name needs at least 2 characters.');return}
   if(!/^[a-zA-Z0-9_.\- ]+$/.test(name)){setErr('Letters, numbers, _ . - only.');return}
+  if(!pass){setErr('Enter a password.');return}
+  if(pass.length<6){setErr('Password must be at least 6 characters.');return}
   $('joinBtn').disabled=true;$('joinBtn').textContent='Connecting…';
   try{
-    const cred=await auth.signInAnonymously();
+    await auth.setPersistence($('remMe').checked
+      ?firebase.auth.Auth.Persistence.LOCAL
+      :firebase.auth.Auth.Persistence.SESSION);
+    const email=toEmail(name);
+    let cred;
+    try{cred=await auth.createUserWithEmailAndPassword(email,pass);}
+    catch(e1){
+      if(e1.code==='auth/email-already-in-use'){
+        try{cred=await auth.signInWithEmailAndPassword(email,pass);}
+        catch(e2){
+          if(e2.code==='auth/wrong-password'||e2.code==='auth/invalid-credential'){setErr('Incorrect password.');reset();return;}
+          throw e2;
+        }
+      } else throw e1;
+    }
     myUid=cred.user.uid; myName=name;
     const snap=await db.collection('users').where('name','==',name).get();
-    if(snap.docs.some(d=>d.id!==myUid)){setErr('Name taken, try another.');reset();return}
+    if(snap.docs.some(d=>d.id!==myUid)){await auth.signOut();setErr('Name taken, try another.');reset();return;}
+    const uSnap=await db.collection('users').doc(myUid).get();
+    myMutedGroups=new Set(uSnap.exists?uSnap.data().mutedGroups||[]:[]);
     await db.collection('users').doc(myUid).set({name,uid:myUid,lastSeen:TS()},{merge:true});
-    if($('remMe').checked)saveS(); else clearS();
-    $('myNameDisp').textContent=name;
-    $('myAv').textContent=ini(name);
-    $('setup').style.display='none';
-    $('app').classList.add('live');
-    if(window.innerWidth>768)openSb();
-    startApp();
+    if($('remMe').checked) localStorage.setItem('ac_n',name); else localStorage.removeItem('ac_n');
+    enterApp();
   }catch(e){console.error(e);setErr('Connection error, try again.');reset()}
 }
 function setErr(msg,c='var(--R)'){$('sErr').textContent=msg;$('sErr').style.color=c}
@@ -497,6 +535,8 @@ function startApp(){
   listenMyGroups();
   listenAnnouncements();
   listenKick();
+  listenChatConfig();
+  joinCommunityGroup();
   buildEp();
   setInterval(pollBroadcast, 3000);
 }
@@ -554,6 +594,53 @@ function showBroadcast(msg){
   setTimeout(dismiss,12000);
 }
 function hb(){if(myUid)db.collection('users').doc(myUid).update({lastSeen:TS()}).catch(()=>{})}
+
+// ─── Community group auto-join ───
+async function joinCommunityGroup(){
+  try{
+    await db.collection('groups').doc('community').set(
+      {name:'Ascenta Community',members:firebase.firestore.FieldValue.arrayUnion(myUid),createdAt:TS()},
+      {merge:true}
+    );
+  }catch(e){console.error('Community join:',e)}
+}
+
+// ─── Chat config listener (admin mute) ───
+function listenChatConfig(){
+  db.collection('config').doc('global').onSnapshot(snap=>{
+    const muted=snap.exists?(snap.data().chatMuted??false):false;
+    $('chatIn').disabled=muted;
+    $('sndBtn').disabled=muted;
+    $('chatIn').placeholder=muted?'Chat muted by admin…':'Message…';
+    $('chatMutedBanner').style.display=muted?'block':'none';
+  },err=>console.error('Chat config listener:',err));
+}
+
+// ─── Group mute toggle ───
+async function toggleGroupMute(){
+  if(!activeId||activeType!=='group')return;
+  const wasMuted=myMutedGroups.has(activeId);
+  if(wasMuted) myMutedGroups.delete(activeId); else myMutedGroups.add(activeId);
+  updateMuteBtn();
+  try{
+    const op=wasMuted
+      ?firebase.firestore.FieldValue.arrayRemove(activeId)
+      :firebase.firestore.FieldValue.arrayUnion(activeId);
+    await db.collection('users').doc(myUid).update({mutedGroups:op});
+  }catch(e){
+    if(wasMuted) myMutedGroups.add(activeId); else myMutedGroups.delete(activeId);
+    updateMuteBtn();
+    console.error('Mute toggle:',e);
+  }
+}
+
+function updateMuteBtn(){
+  const btn=$('chMuteBtn');if(!btn)return;
+  const muted=activeId&&myMutedGroups.has(activeId);
+  btn.textContent=muted?'🔇':'🔔';
+  btn.title=muted?'Unmute notifications':'Mute notifications';
+  btn.style.color=muted?'var(--R)':'var(--ink3)';
+}
 
 // ─── Users listener ───
 function listenUsers(){
@@ -658,10 +745,11 @@ function renderList(){
       else if(lm){previewText=lm.mine?'You: '+lm.text:lm.text;}
       else if(g.lastMsg){previewText=g.lastMsg;}
       else{previewText=g.members?g.members.length+' members':'Group chat';}
+      const isMuted=myMutedGroups.has(g.id);
       const el=document.createElement('div');
       el.className='ci'+(isAct?' on':ur?' has-unread':'');
       el.innerHTML=`
-        <div class="ci-av">👥</div>
+        <div class="ci-av">${isMuted?'🔇':'👥'}</div>
         <div class="ci-info">
           <div class="ci-name">${esc(g.name||'Unnamed group')}</div>
           <div class="ci-preview${previewUnread?' unread':''}">${esc(previewText.slice(0,40))}</div>
@@ -696,6 +784,7 @@ function openDM(uid,name){
   activeType='dm'; activeId=dmId(myUid,uid); activeName=name; activePeer=uid;
   mountChat(ini(name),name,'Direct message');
   markRead(activeId);
+  $('chMuteBtn').style.display='none';
   if(window.innerWidth<=768)closeSb();
 }
 
@@ -709,6 +798,7 @@ function openGroup(id,name,members){
   const subText=`${(members||[]).length} members${others.length?' · '+others.slice(0,3).join(', ')+(others.length>3?'…':''):''}`;
   mountChat('👥',name||'Group',subText);
   markRead(activeId);
+  const _mb=$('chMuteBtn');if(_mb){_mb.style.display='flex';updateMuteBtn();}
   if(window.innerWidth<=768)closeSb();
 }
 
@@ -903,6 +993,7 @@ function startGroupPingListeners(){
 }
 
 function bumpUnread(cid,fromName,text,groupName){
+  if(myMutedGroups.has(cid))return;
   if(!unread[cid]) unread[cid]={count:0,preview:'',fromName};
   unread[cid].count++;
   unread[cid].preview=(groupName?fromName+': ':'')+text;
@@ -938,6 +1029,7 @@ function loadConversationPreviews(){
 }
 
 function showToast(from,text,cid,type,peerUid,peerName,groupName){
+  if(myMutedGroups.has(cid))return;
   let orig=document.title,fl=true;
   const ti=setInterval(()=>{document.title=fl?`🔔 ${from}: ${text.slice(0,20)}`:orig;fl=!fl},700);
   setTimeout(()=>{clearInterval(ti);updateGlobalBadge()},8000);
@@ -1058,7 +1150,7 @@ async function confirmRename(){
     myName=name;
     $('myNameDisp').textContent=name;
     $('myAv').textContent=ini(name);
-    if($('remMe').checked)saveS();
+    if(localStorage.getItem('ac_n'))localStorage.setItem('ac_n',name);
     closeRename();
   }catch(e){$('rpErr').textContent='Error, try again.';console.error(e)}
 }
