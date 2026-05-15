@@ -840,6 +840,7 @@ async function loadUsers(silent = false) {
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
           ${u.source === 'chat' ? `
             <button class="btn btn-default btn-xs" data-action="rename-chat" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || '')}">Rename</button>
+            <button class="btn btn-default btn-xs" data-action="add-community" data-uid="${escAttr(u.uid)}" title="Force-add to Ascenta Community group">+Community</button>
             <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Remove</button>
           ` : ''}
         </td>`;
@@ -911,6 +912,13 @@ function initUserManagement() {
         const { ok } = await adminFetch('/api/admin/rename-chat-user', { method: 'POST', body: { uid, name: newName.trim() } });
         if (ok) { btn.dataset.name = newName.trim(); btn.closest('tr').cells[0].childNodes[0].textContent = newName.trim(); }
         btn.textContent = ok ? 'Renamed' : 'Failed';
+        btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+      } catch { btn.disabled = false; }
+    } else if (action === 'add-community') {
+      btn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/add-to-community', { method: 'POST', body: { uid } });
+        btn.textContent = ok ? 'Added ✓' : 'Failed';
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
       } catch { btn.disabled = false; }
     } else if (action === 'remove-chat') {
