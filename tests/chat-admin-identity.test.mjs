@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildChatBanKey,
   removeUserFromGroups,
   renameUserHistory,
 } from "../lib/chat-admin-identity.mjs";
@@ -165,4 +166,10 @@ test("renameUserHistory backfills sender names and system history entries", asyn
       data: { text: 'New Name created "Ascenta Community" 🎉' },
     },
   ]);
+});
+
+test("buildChatBanKey normalizes banned chat names consistently", () => {
+  assert.equal(buildChatBanKey("Q qLkqd90G"), "q_qlkqd90g");
+  assert.equal(buildChatBanKey(" You "), "you");
+  assert.equal(buildChatBanKey(""), "");
 });

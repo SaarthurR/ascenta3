@@ -1,12 +1,14 @@
 import { SESSION_COOKIE_NAME, verifySessionValue } from "../lib/session.mjs";
 import { normalizeAccessKey } from "../lib/access-keys.mjs";
 import {
+  buildChatBanKey,
   removeUserFromGroups,
   renameUserHistory,
   validateChatName,
 } from "../lib/chat-admin-identity.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -40,6 +42,22 @@ function getChatDb() {
     }),
   }, appName);
   return getFirestore(app);
+}
+
+function getChatAuth() {
+  const proj = process.env.CHAT_FIREBASE_PROJECT_ID;
+  if (!proj) return getAuth();
+  const appName = "asenchata-chat";
+  const existing = getApps().find(a => a.name === appName);
+  if (existing) return getAuth(existing);
+  const app = initializeApp({
+    credential: cert({
+      projectId: proj,
+      clientEmail: process.env.CHAT_FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.CHAT_FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  }, appName);
+  return getAuth(app);
 }
 
 function readCookie(cookieHeader, name) {
@@ -368,8 +386,35 @@ export default async function handler(req, res) {
       const { uid } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
       const chatDb = getChatDb();
+      const userRef = chatDb.collection("users").doc(uid);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) return res.status(404).json({ error: "Chat user not found" });
+      const userData = userSnap.data();
+      const username = userData.name ?? userData.username ?? "";
+      const bannedAt = Timestamp.now();
+      const banKey = buildChatBanKey(username);
+      await chatDb.collection("moderation_events").doc(uid).set({
+        action: "removed",
+        title: "Your account was deleted",
+        message: "An admin permanently deleted and banned your AscentChat account.",
+        bannedAt,
+        uid,
+        name: username,
+      }, { merge: true });
+      if (banKey) {
+        await chatDb.collection("banned_names").doc(buildChatBanKey(username)).set({
+          uid,
+          name: username,
+          bannedAt,
+        }, { merge: true });
+      }
       await removeUserFromGroups(chatDb, uid);
-      await chatDb.collection("users").doc(uid).delete();
+      await userRef.delete();
+      try {
+        await getChatAuth().deleteUser(uid);
+      } catch (err) {
+        if (err?.code !== "auth/user-not-found") throw err;
+      }
       return res.status(200).json({ ok: true });
     }
 
