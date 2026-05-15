@@ -300,6 +300,43 @@
     .ca-row:last-child { border-bottom: none; }
     .ca-name { color: var(--text); flex: 1; }
 
+    /* ─── ADMIN TOOLS TABS ─── */
+    .admin-tools-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .admin-tools-tab {
+      font-family: var(--font);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .admin-tools-tab:hover {
+      color: var(--text);
+      border-color: var(--text-dim);
+    }
+    .admin-tools-tab.active {
+      color: #000;
+      background: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 0 10px rgba(0,255,136,0.22);
+    }
+    .admin-tool-panel {
+      display: none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.015);
+      padding: 16px;
+    }
+    .admin-tool-panel.open { display: block; }
+
     /* ─── LOADING ─── */
     #loading-screen {
       position: fixed;
@@ -531,54 +568,54 @@
     <div class="feedback" id="fb-chat-admins"></div>
   </div>
 
-  <!-- ─── KEY MANAGEMENT ─── -->
   <div class="section">
-    <div class="section-header">// KEY MANAGEMENT</div>
+    <div class="section-header">// ACCESS SYSTEMS</div>
     <div class="section-body">
-      <div class="grid2">
-        <!-- Active keys -->
-        <div>
-          <div class="section-label">Active Keys</div>
-          <ul class="key-list" id="keys-active">
-            <li class="empty-state">Loading...</li>
-          </ul>
-        </div>
-        <!-- Used keys -->
-        <div>
-          <div class="section-label">Used Keys</div>
-          <ul class="key-list" id="keys-used">
-            <li class="empty-state">Loading...</li>
-          </ul>
-        </div>
+      <div class="admin-tools-tabs" id="admin-tools-tabs">
+        <button class="admin-tools-tab active" type="button" data-tab="keys">Key Management</button>
+        <button class="admin-tools-tab" type="button" data-tab="dev-codes">Dev Codes</button>
       </div>
-      <hr class="sep" />
-      <div class="section-label">Add Key</div>
-      <div class="input-row">
-        <input type="text" id="new-key-input" placeholder="Enter new key..." />
-        <button class="btn btn-primary" id="btn-add-key">Add Key</button>
-      </div>
-      <div class="feedback" id="fb-keys"></div>
-    </div>
-  </div>
 
-  <!-- ─── DEV CODES ─── -->
-  <div class="section">
-    <div class="section-header">// DEV CODES</div>
-    <div class="section-body">
-      <div class="warn-box">
-        &#9888; Warning: Removing your own dev code will lock you out of this panel.
+      <div class="admin-tool-panel open" id="admin-tool-panel-keys">
+        <div class="grid2">
+          <div>
+            <div class="section-label">Active Keys</div>
+            <ul class="key-list" id="keys-active">
+              <li class="empty-state">Loading...</li>
+            </ul>
+          </div>
+          <div>
+            <div class="section-label">Used Keys</div>
+            <ul class="key-list" id="keys-used">
+              <li class="empty-state">Loading...</li>
+            </ul>
+          </div>
+        </div>
+        <hr class="sep" />
+        <div class="section-label">Add Key</div>
+        <div class="input-row">
+          <input type="text" id="new-key-input" placeholder="Enter new key..." />
+          <button class="btn btn-primary" id="btn-add-key">Add Key</button>
+        </div>
+        <div class="feedback" id="fb-keys"></div>
       </div>
-      <div class="section-label">Dev Codes</div>
-      <ul class="key-list" id="admin-keys-list">
-        <li class="empty-state">Loading...</li>
-      </ul>
-      <hr class="sep" />
-      <div class="section-label">Add Dev Code</div>
-      <div class="input-row">
-        <input type="text" id="new-admin-key-input" placeholder="Enter dev code..." />
-        <button class="btn btn-primary" id="btn-add-admin-key">Add Dev Code</button>
+
+      <div class="admin-tool-panel" id="admin-tool-panel-dev-codes">
+        <div class="warn-box">
+          &#9888; Warning: Removing your own dev code will lock you out of this panel.
+        </div>
+        <div class="section-label">Dev Codes</div>
+        <ul class="key-list" id="admin-keys-list">
+          <li class="empty-state">Loading...</li>
+        </ul>
+        <hr class="sep" />
+        <div class="section-label">Add Dev Code</div>
+        <div class="input-row">
+          <input type="text" id="new-admin-key-input" placeholder="Enter dev code..." />
+          <button class="btn btn-primary" id="btn-add-admin-key">Add Dev Code</button>
+        </div>
+        <div class="feedback" id="fb-admin-keys"></div>
       </div>
-      <div class="feedback" id="fb-admin-keys"></div>
     </div>
   </div>
 
@@ -931,10 +968,10 @@ async function loadUsers(silent = false) {
 function initUserManagement() {
   document.getElementById('btn-refresh-users').addEventListener('click', () => loadUsers(false));
   document.getElementById('btn-clear-chat-users').addEventListener('click', async () => {
-    if (!confirm('Delete ALL AscentChat users? They can rejoin with a new name.')) return;
+    if (!confirm('Permanently delete and ban ALL AscentChat users?')) return;
     try {
       const { ok, data } = await adminFetch('/api/admin/clear-chat-users', { method: 'POST' });
-      showFeedback('fb-users', ok ? `> Cleared ${data.deleted || 0} chat users.` : '> Error: ' + (data?.error || 'Failed'), ok);
+      showFeedback('fb-users', ok ? `> Deleted and banned ${data.deleted || 0} chat users.` : '> Error: ' + (data?.error || 'Failed'), ok);
       if (ok) loadUsers(false);
     } catch { showFeedback('fb-users', '> Request failed.', false); }
   });
@@ -1196,30 +1233,19 @@ function initKeyManagement() {
     const btn = e.target.closest('button[data-action="remove-active-key"]');
     if (!btn) return;
     const key = btn.dataset.key;
-    // Two-click confirm: first click turns button red with "Sure?", second click executes
-    if (btn.dataset.confirming !== '1') {
-      btn.dataset.confirming = '1';
-      btn.textContent = 'Sure?';
-      btn.style.background = 'var(--red)';
-      btn.style.color = '#fff';
-      setTimeout(() => { if (btn.dataset.confirming === '1') { btn.dataset.confirming = '0'; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = ''; } }, 3000);
-      return;
-    }
-    btn.dataset.confirming = '0';
+    if (!confirm('Remove active key: ' + key + '?\n\nThis will fully revoke it.')) return;
     btn.disabled = true;
-    btn.textContent = '…';
-    const li = btn.closest('li');
     try {
       const { ok } = await adminFetch('/api/admin/revoke-key', { method: 'POST', body: { key } });
       if (ok) {
-        if (li) li.remove();
+        await loadKeys();
         showFeedback('fb-keys', '> Key removed.', true);
       } else {
-        btn.disabled = false; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = '';
+        btn.disabled = false;
         showFeedback('fb-keys', '> Error removing key.', false);
       }
     } catch {
-      btn.disabled = false; btn.textContent = 'Remove'; btn.style.background = ''; btn.style.color = '';
+      btn.disabled = false;
       showFeedback('fb-keys', '> Request failed.', false);
     }
   });
@@ -1330,6 +1356,29 @@ function initAdminKeys() {
   loadAdminKeys();
 }
 
+function setAdminToolsTab(tab) {
+  const tabs = [...document.querySelectorAll('#admin-tools-tabs [data-tab]')];
+  const panels = {
+    keys: document.getElementById('admin-tool-panel-keys'),
+    'dev-codes': document.getElementById('admin-tool-panel-dev-codes'),
+  };
+  const isActive = tabs.find(btn => btn.dataset.tab === tab)?.classList.contains('active');
+  tabs.forEach(btn => btn.classList.toggle('active', !isActive && btn.dataset.tab === tab));
+  Object.entries(panels).forEach(([key, panel]) => {
+    if (panel) panel.classList.toggle('open', !isActive && key === tab);
+  });
+}
+
+function initAdminToolsTabs() {
+  const wrap = document.getElementById('admin-tools-tabs');
+  if (!wrap) return;
+  wrap.addEventListener('click', e => {
+    const btn = e.target.closest('[data-tab]');
+    if (!btn) return;
+    setAdminToolsTab(btn.dataset.tab);
+  });
+}
+
 /* ═══════════════════════════════════════════════
    ESCAPE HELPERS
 ═══════════════════════════════════════════════ */
@@ -1383,6 +1432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initBroadcast();
   initUserManagement();
   initChatAdmins();
+  initAdminToolsTabs();
   initKeyManagement();
   initAdminKeys();
 });
