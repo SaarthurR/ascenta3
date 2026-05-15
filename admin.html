@@ -1088,8 +1088,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let statusData;
   try {
     const res = await fetch('/api/admin/status', { credentials: 'include' });
-    if (res.status === 403) { window.location.href = '/'; return; }
-    statusData = await res.json().catch(() => ({}));
+    if (!res.ok) { window.location.href = '/'; return; }
+    statusData = await res.json().catch(() => null);
+    if (!statusData) { window.location.href = '/'; return; }
   } catch {
     window.location.href = '/';
     return;
