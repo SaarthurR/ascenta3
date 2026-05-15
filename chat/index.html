@@ -380,6 +380,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
   </div>
 </div>
 
+<!-- ── MEMBERS MODAL ── -->
+<div class="overlay" id="membersOv" style="display:none" onclick="if(event.target===this)closeMembersModal()">
+  <div class="modal" style="max-height:70vh;overflow-y:auto">
+    <div class="m-title" id="membersMTitle">Members</div>
+    <div id="membersList" style="margin:12px 0"></div>
+    <div class="m-acts">
+      <button class="mbtn cn" onclick="closeMembersModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── GROUP MODAL ── -->
 <div class="overlay" id="grpOv">
   <div class="modal">
@@ -422,6 +433,9 @@ let myGroups=[];
 let tab='dm';
 let sbOpen=false;
 let myMutedGroups=new Set();
+let isChatAdmin=false;
+let _lastChatMuted=false;
+let _activeGroupMembers=[];
 
 let unread={};
 let lastMsg={};     // {cid:{text,mine,ts}} — last known message per conversation
@@ -565,6 +579,8 @@ function listenKick(){
     const d=snap.data();
     const kt=d.kickedAt&&d.kickedAt.toMillis?d.kickedAt.toMillis():0;
     if(kt>_pageStartTs) showKicked();
+    isChatAdmin=!!(d.isChatAdmin);
+    applyMuteState(_lastChatMuted);
   });
 }
 function showKicked(){
@@ -609,13 +625,17 @@ async function joinCommunityGroup(){
 }
 
 // ─── Chat config listener (admin mute) ───
+function applyMuteState(muted){
+  const blocked=muted&&!isChatAdmin;
+  $('chatIn').disabled=blocked;
+  $('sndBtn').disabled=blocked;
+  $('chatIn').placeholder=blocked?'Chat muted by admin…':'Message…';
+  $('chatMutedBanner').style.display=blocked?'block':'none';
+}
 function listenChatConfig(){
   db.collection('config').doc('global').onSnapshot(snap=>{
-    const muted=snap.exists?(snap.data().chatMuted??false):false;
-    $('chatIn').disabled=muted;
-    $('sndBtn').disabled=muted;
-    $('chatIn').placeholder=muted?'Chat muted by admin…':'Message…';
-    $('chatMutedBanner').style.display=muted?'block':'none';
+    _lastChatMuted=snap.exists?(snap.data().chatMuted??false):false;
+    applyMuteState(_lastChatMuted);
   },err=>console.error('Chat config listener:',err));
 }
 
@@ -794,16 +814,38 @@ function openDM(uid,name){
 // ─── Open Group ───
 function openGroup(id,name,members){
   activeType='group'; activeId=id; activeName=name; activePeer=null;
-  const others=(members||[]).filter(m=>m!==myUid).map(uid=>{
+  _activeGroupMembers=members||[];
+  const others=_activeGroupMembers.filter(m=>m!==myUid).map(uid=>{
     const u=allUsers.find(x=>x.uid===uid);
     return u?u.name:uid.slice(0,6);
   });
-  const subText=`${(members||[]).length} members${others.length?' · '+others.slice(0,3).join(', ')+(others.length>3?'…':''):''}`;
+  const subText=`${_activeGroupMembers.length} members${others.length?' · '+others.slice(0,3).join(', ')+(others.length>3?'…':''):''}`;
   mountChat('👥',name||'Group',subText);
+  const sub=$('chSub');
+  sub.style.cursor='pointer';sub.title='View members';
+  sub.onclick=()=>showMembersModal();
   markRead(activeId);
   const _mb=$('chMuteBtn');if(_mb){_mb.style.display='flex';updateMuteBtn();}
   if(window.innerWidth<=768)closeSb();
 }
+
+// ─── Members modal ───
+function showMembersModal(){
+  if(!_activeGroupMembers.length)return;
+  $('membersMTitle').textContent=`Members (${_activeGroupMembers.length})`;
+  const list=$('membersList');
+  list.innerHTML='';
+  _activeGroupMembers.forEach(uid=>{
+    const u=allUsers.find(x=>x.uid===uid);
+    const name=u?u.name:(uid===myUid?'You':uid.slice(0,8));
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)';
+    div.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 32px">${esc(ini(name))}</div><span style="font-size:13px">${esc(name)}${uid===myUid?' <span style="font-size:10px;color:var(--ink3)">(you)</span>':''}</span>`;
+    list.appendChild(div);
+  });
+  $('membersOv').style.display='flex';
+}
+function closeMembersModal(){$('membersOv').style.display='none';}
 
 // ─── Mount chat view ───
 function mountChat(av,name,sub){
@@ -811,7 +853,8 @@ function mountChat(av,name,sub){
   $('chatBody').style.display='flex';
   $('chAv').textContent=av;
   $('chName').textContent=name;
-  $('chSub').textContent=sub;
+  const subEl=$('chSub');
+  subEl.textContent=sub;subEl.style.cursor='';subEl.title='';subEl.onclick=null;
   $('msgs').innerHTML='<div class="c-empty"><div class="spin"></div></div>';
   setTimeout(()=>$('chatIn').focus(),100);
   renderList();
