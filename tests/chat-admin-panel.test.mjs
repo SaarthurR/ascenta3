@@ -23,10 +23,10 @@ test("clear-chat-users uses the same permanent delete-ban flow for every account
   assert.match(adminHtml, /Permanently delete and ban ALL AscentChat users/);
 });
 
-test("active key removal reloads from the backend and key sections render as expandable tabs", () => {
+test("active key removal reloads from the backend without the tabbed admin tools wrapper", () => {
   assert.match(adminHtml, /if \(ok\) await loadKeys\(\);/);
-  assert.match(adminHtml, /id="admin-tools-tabs"/);
-  assert.match(adminHtml, /data-tab="keys"/);
-  assert.match(adminHtml, /data-tab="dev-codes"/);
-  assert.match(adminHtml, /function setAdminToolsTab\(tab\)/);
+  assert.doesNotMatch(adminHtml, /id="admin-tools-tabs"/);
+  assert.doesNotMatch(adminHtml, /function setAdminToolsTab\(tab\)/);
+  assert.match(adminHtml, /\/\/ KEY MANAGEMENT/);
+  assert.match(adminHtml, /\/\/ DEV CODES/);
 });
