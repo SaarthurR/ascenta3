@@ -72,6 +72,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .tb-home:hover{color:var(--A);border-color:rgba(96,165,250,0.3)}
 .tb-grow{flex:1}
 .tb-chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:100px;background:var(--As);font-size:11px;color:var(--A);font-weight:600}
+.tb-chip.locked{cursor:default;background:rgba(120,120,140,0.12);color:var(--ink3);box-shadow:none}
 .tb-av{width:22px;height:22px;border-radius:5px;background:var(--A);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
 .tb-notify{position:relative}
 .tb-nbadge{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--R);color:#fff;font-size:8px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid var(--sf)}
@@ -261,6 +262,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 /* ── RENAME POPOVER ── */
 .tb-chip{cursor:pointer;transition:var(--ease)}
 .tb-chip:hover{background:rgba(96,165,250,0.2);box-shadow:0 0 0 1.5px rgba(96,165,250,0.35)}
+.tb-chip.locked:hover{background:rgba(120,120,140,0.12);box-shadow:none}
 #renamePop{position:fixed;top:60px;right:14px;background:var(--sf);border:1px solid var(--line2);border-radius:14px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;z-index:300;width:220px}
 #renamePop.open{display:block}
 #renamePop .rp-lbl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
@@ -313,7 +315,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
     </button>
     <span class="tb-brand">Ascen<em>Chat</em></span>
     <span class="tb-grow"></span>
-    <div class="tb-chip tb-notify" onclick="openRename()" title="Click to change name">
+    <div class="tb-chip tb-notify" id="renameChip" onclick="openRename()" title="Click to change name">
       <div class="tb-av" id="myAv">?</div>
       <span id="myNameDisp">—</span>
       <div class="tb-nbadge" id="globalBadge"></div>
@@ -486,6 +488,7 @@ function toEmail(name){return name.toLowerCase().replace(/\s+/g,'_')+'@ascenta.c
 function enterApp(){
   $('myNameDisp').textContent=myName;
   $('myAv').textContent=ini(myName);
+  syncRenameUi();
   $('setup').style.display='none';
   $('app').classList.add('live');
   if(window.innerWidth>768)openSb();
@@ -506,7 +509,7 @@ auth.onAuthStateChanged(async user=>{
     const doc=await db.collection('users').doc(user.uid).get();
     if(!doc.exists)return; // new user mid-doJoin, let doJoin handle enterApp
     myUid=user.uid;
-    myName=doc.data().name;
+    myName=doc.data().name||_savedName||'You';
     myMutedGroups=new Set(doc.data().mutedGroups||[]);
     enterApp();
   }catch(e){console.error('Auto-resume:',e)}
@@ -555,9 +558,12 @@ async function doJoin(){
     const snap=await db.collection('users').where('name','==',name).get();
     if(snap.docs.some(d=>d.id!==myUid)){await auth.signOut();setErr('Name taken, try another.');reset();return;}
     const uSnap=await db.collection('users').doc(myUid).get();
+    const existingName=uSnap.exists?(uSnap.data().name||''):'';
     myMutedGroups=new Set(uSnap.exists?uSnap.data().mutedGroups||[]:[]);
-    await db.collection('users').doc(myUid).set(_namesLocked?{uid:myUid,lastSeen:TS()}:{name,uid:myUid,lastSeen:TS()},{merge:true});
-    if($('remMe').checked) localStorage.setItem('ac_n',name); else localStorage.removeItem('ac_n');
+    const storedName=_namesLocked&&existingName?existingName:name;
+    await db.collection('users').doc(myUid).set({name:storedName,uid:myUid,lastSeen:TS()},{merge:true});
+    myName=storedName;
+    if($('remMe').checked) localStorage.setItem('ac_n',storedName); else localStorage.removeItem('ac_n');
     _joining=false;
     enterApp();
   }catch(e){_joining=false;console.error(e);setErr((e.code||e.message||'Connection error'));reset()}
@@ -661,6 +667,7 @@ function listenChatConfig(){
     _lastChatMuted=d.chatMuted??false;
     _accountsLocked=d.accountsLocked??false;
     _namesLocked=d.namesLocked??false;
+    syncRenameUi();
     applyMuteState(_lastChatMuted);
   },err=>console.error('Chat config listener:',err));
 }
@@ -1221,7 +1228,16 @@ async function createGroup(){
 $('grpOv').addEventListener('click',e=>{if(e.target===$('grpOv'))closeGM()});
 
 // ─── Rename ───
+function syncRenameUi(){
+  const chip=$('renameChip');
+  if(!chip)return;
+  chip.classList.toggle('locked',_namesLocked);
+  chip.setAttribute('title',_namesLocked?'Display names are frozen by admin':'Click to change name');
+  chip.setAttribute('aria-disabled',_namesLocked?'true':'false');
+  if(_namesLocked)closeRename();
+}
 function openRename(){
+  if(_namesLocked)return;
   $('renameInput').value=myName||'';
   $('rpErr').textContent='';
   $('renamePop').classList.add('open');
@@ -1236,6 +1252,7 @@ document.addEventListener('click',e=>{
   if($('renamePop').classList.contains('open')&&!e.target.closest('#renamePop')&&!e.target.closest('.tb-chip'))closeRename();
 });
 async function confirmRename(){
+  if(_namesLocked){$('rpErr').textContent='Display names are frozen by admin.';return}
   const name=$('renameInput').value.trim();
   if(!name){$('rpErr').textContent='Enter a name.';return}
   if(name.length<2){$('rpErr').textContent='At least 2 characters.';return}
@@ -1243,13 +1260,21 @@ async function confirmRename(){
   if(name===myName){closeRename();return}
   $('rpErr').textContent='Checking…';
   try{
-    const snap=await db.collection('users').where('name','==',name).get();
-    if(snap.docs.some(d=>d.id!==myUid)){$('rpErr').textContent='Name taken, try another.';return}
-    await db.collection('users').doc(myUid).update({name});
-    myName=name;
-    $('myNameDisp').textContent=name;
-    $('myAv').textContent=ini(name);
-    if(localStorage.getItem('ac_n'))localStorage.setItem('ac_n',name);
+    const token=await auth.currentUser.getIdToken();
+    const r=await fetch('/api/chat-profile?action=rename',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+token
+      },
+      body:JSON.stringify({name})
+    });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){$('rpErr').textContent=data.error||'Error, try again.';return}
+    myName=data.name||name;
+    $('myNameDisp').textContent=myName;
+    $('myAv').textContent=ini(myName);
+    if(localStorage.getItem('ac_n'))localStorage.setItem('ac_n',myName);
     closeRename();
   }catch(e){$('rpErr').textContent='Error, try again.';console.error(e)}
 }

@@ -1,0 +1,99 @@
+- generic [active] [ref=e1]:
+  - link "← Back to Ascenta3" [ref=e2] [cursor=pointer]:
+    - /url: /
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: Legal
+      - generic [ref=e6]: Privacy Policy
+      - generic [ref=e7]: "Last Updated: May 11, 2026"
+    - paragraph [ref=e9]: At Ascenta3, we value your privacy and are committed to protecting your information. This Policy explains what data we collect, how we use it, and your choices.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: "01"
+        - text: Information We Collect
+      - list [ref=e13]:
+        - listitem [ref=e14]:
+          - strong [ref=e15]: "Account Information:"
+          - text: Username, email, password (if you create an account). We may collect minimal profile info.
+        - listitem [ref=e16]:
+          - strong [ref=e17]: "Usage Data:"
+          - text: IP address, device type, browser info, gameplay statistics, and interaction data — automatically collected via cookies and similar technologies.
+        - listitem [ref=e18]:
+          - strong [ref=e19]: "Communications:"
+          - text: Messages you send to us or through in-game features (if any).
+        - listitem [ref=e20]:
+          - strong [ref=e21]: "Payment Data (if applicable):"
+          - text: Handled securely by third-party processors. We do not store full card details.
+      - paragraph [ref=e22]: We do not knowingly collect personal information from children under 13 without verifiable parental consent. If we learn we have such data, we will delete it.
+      - paragraph [ref=e23]: We do not collect sensitive personal data like precise location, school affiliation details, or health information unless voluntarily provided — and we discourage sharing unnecessary personal details.
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: "02"
+        - text: How We Use Your Information
+      - list [ref=e27]:
+        - listitem [ref=e28]: To provide, improve, and personalize the gaming experience.
+        - listitem [ref=e29]: To manage accounts, process payments, and communicate with you.
+        - listitem [ref=e30]: For analytics and to prevent cheating or abuse.
+        - listitem [ref=e31]: To comply with legal obligations.
+      - generic [ref=e32]: ✓ We do not sell your personal information.
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]: "03"
+        - text: Sharing Your Information
+      - paragraph [ref=e36]: "We may share data with:"
+      - list [ref=e37]:
+        - listitem [ref=e38]: Service providers (hosting, analytics, payment processors) who are contractually obligated to protect it.
+        - listitem [ref=e39]: Law enforcement or authorities if required by law.
+        - listitem [ref=e40]: In the event of a business transfer (merger, etc.), with notice where required.
+      - paragraph [ref=e41]: We do not share data with schools or districts unless legally compelled.
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]: "04"
+        - text: Cookies & Tracking
+      - paragraph [ref=e45]: We use essential cookies for functionality. You can manage preferences through your browser settings. We do not use tracking for targeted advertising aimed at children.
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e48]: "05"
+        - text: Data Security
+      - paragraph [ref=e49]: We use reasonable security measures (encryption, access controls) to protect your data. No system is 100% secure, so we cannot guarantee absolute security.
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]: "06"
+        - text: Your Rights & Choices
+      - list [ref=e53]:
+        - listitem [ref=e54]: Access, correct, or delete your data (subject to legal limits).
+        - listitem [ref=e55]: Opt out of certain communications.
+        - listitem [ref=e56]: "California and other privacy law residents: additional rights may apply (e.g., CCPA requests). Contact us to exercise rights."
+      - paragraph [ref=e57]: Parents or guardians of children under 13 can contact us regarding their child's data.
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - generic [ref=e60]: "07"
+        - text: Data Retention
+      - paragraph [ref=e61]: We keep data only as long as necessary for the purposes described or as required by law.
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]: "08"
+        - text: International Users
+      - paragraph [ref=e65]: If you are outside the U.S., note that your data may be transferred to and processed in the United States.
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - generic [ref=e68]: "09"
+        - text: Changes to This Policy
+      - paragraph [ref=e69]: We may update this Policy and will post the new version with an updated date. Continued use means acceptance.
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - generic [ref=e72]: "10"
+        - text: Contact Us
+      - paragraph [ref=e73]:
+        - text: "For privacy questions:"
+        - link "ascenta3support@gmail.com" [ref=e74] [cursor=pointer]:
+          - /url: mailto:ascenta3support@gmail.com
+        - text: .
+      - paragraph [ref=e75]: By using Ascenta3, you consent to these practices.
+    - generic [ref=e76]:
+      - link "Home" [ref=e77] [cursor=pointer]:
+        - /url: /
+      - link "Terms of Service" [ref=e78] [cursor=pointer]:
+        - /url: /tos.html
+      - link "Privacy Policy" [ref=e79] [cursor=pointer]:
+        - /url: /privacy.html

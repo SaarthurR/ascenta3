@@ -1,0 +1,96 @@
+- generic [active] [ref=e1]:
+  - link "← Back to Ascenta3" [ref=e2] [cursor=pointer]:
+    - /url: /
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: Legal
+      - generic [ref=e6]: Terms of Service
+      - generic [ref=e7]: "Last Updated: May 11, 2026"
+    - paragraph [ref=e9]: Welcome to Ascenta3 — a gaming platform for students to play, connect, and have fun responsibly. By using this site you agree to these Terms. If you don't agree, please don't use the Service.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: "01"
+        - text: About Us & No School Affiliation
+      - paragraph [ref=e13]: Ascenta3 is an independent, privately operated gaming website. We are not affiliated with, endorsed by, or sponsored by any school, school district (including Cupertino Union School District or Sam H. Lawson Middle School), or educational institution. Use of Ascenta3 is voluntary and at your own discretion.
+      - paragraph [ref=e14]: We encourage all users to follow their school's rules, code of conduct, and acceptable use policies for technology and internet access. Accessing the Site on a school network does not imply school approval.
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: "02"
+        - text: Who Can Use Ascenta3
+      - paragraph [ref=e18]: You must be at least 13 years old or have parental/guardian permission to use the Service. If you are under 13, you may only use features that do not require personal information (consistent with COPPA). We do not knowingly collect personal data from children under 13 without verifiable parental consent.
+      - paragraph [ref=e19]: By using the Site, you represent that you are old enough to form a binding contract or have obtained necessary parental consent.
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: "03"
+        - text: Your Responsibilities & Acceptable Use
+      - list [ref=e23]:
+        - listitem [ref=e24]:
+          - strong [ref=e25]: "Follow the Rules:"
+          - text: Use Ascenta3 for personal entertainment. Be respectful to other players. Do not harass, bully, cheat, or disrupt others.
+        - listitem [ref=e26]:
+          - strong [ref=e27]: "School & Network Compliance:"
+          - text: You are responsible for complying with your school's internet use policies, device rules, and any network restrictions. We are not responsible if your use leads to school disciplinary actions, loss of privileges, or blocked access.
+      - paragraph [ref=e28]: "Prohibited activities — you agree not to:"
+      - list [ref=e29]:
+        - listitem [ref=e30]: Violate any laws or school policies.
+        - listitem [ref=e31]: Attempt to hack, reverse-engineer, or interfere with the Service.
+        - listitem [ref=e32]: Share inappropriate, harmful, or copyrighted content without permission.
+        - listitem [ref=e33]: Create multiple accounts to evade rules or spam.
+        - listitem [ref=e34]: Use the Service for commercial purposes or gambling-like activities unless explicitly allowed.
+        - listitem [ref=e35]: Share your login credentials.
+      - paragraph [ref=e36]: We may suspend or terminate accounts for violations without notice.
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e39]: "04"
+        - text: Accounts & Security
+      - paragraph [ref=e40]: You may need an account to access certain features. Keep your password secure and do not share it. You are responsible for all activity on your account. Notify us immediately of any unauthorized use.
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]: "05"
+        - text: Payments & Subscriptions
+      - paragraph [ref=e44]: Certain features may require payment (e.g., premium access or in-game items). All payments are processed through secure third-party providers. Refunds are handled according to our refund policy — generally no refunds for digital goods once delivered, except where required by law. Prices may change with notice.
+      - paragraph [ref=e45]: We are not responsible for payment issues handled by third parties.
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e48]: "06"
+        - text: Intellectual Property
+      - paragraph [ref=e49]: All content on Ascenta3 (games, designs, logos, etc.) is owned by us or our licensors. You get a limited, personal license to use the Service for its intended purpose. You may not copy, modify, distribute, or create derivative works without permission. User-generated content remains your property, but you grant us a license to use it on the platform.
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]: "07"
+        - text: Disclaimers & Limitation of Liability
+      - paragraph [ref=e53]: The Service is provided "as is" without warranties. We do not guarantee uninterrupted access, error-free gameplay, or compatibility with all devices or networks.
+      - paragraph [ref=e54]: To the fullest extent permitted by law, Ascenta3, its owners, operators, and affiliates are not liable for any indirect, incidental, or consequential damages arising from your use of the Site. Our total liability will not exceed amounts you paid to us in the past 12 months.
+      - paragraph [ref=e55]: "We are not responsible for: actions taken by your school or network provider; content posted by other users; third-party links or services; or damages from misuse or unauthorized access."
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]: "08"
+        - text: Termination
+      - paragraph [ref=e59]: We may terminate or suspend your access at any time for violations or other reasons. You may stop using the Service anytime.
+    - generic [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]: "09"
+        - text: Changes to Terms
+      - paragraph [ref=e63]: We may update these Terms. Continued use after changes means you accept the new Terms. We will post updates with a new "Last Updated" date.
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - generic [ref=e66]: "10"
+        - text: Governing Law & Dispute Resolution
+      - paragraph [ref=e67]: These Terms are governed by the laws of California, without regard to conflict of laws principles. Disputes will first attempt informal resolution. Any unresolved disputes may be resolved through binding arbitration or in small claims court where appropriate.
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]: "11"
+        - text: Contact Us
+      - paragraph [ref=e71]:
+        - text: Questions? Email us at
+        - link "ascenta3support@gmail.com" [ref=e72] [cursor=pointer]:
+          - /url: mailto:ascenta3support@gmail.com
+        - text: .
+      - paragraph [ref=e73]: Thank you for playing responsibly on Ascenta3.
+    - generic [ref=e74]:
+      - link "Home" [ref=e75] [cursor=pointer]:
+        - /url: /
+      - link "Terms of Service" [ref=e76] [cursor=pointer]:
+        - /url: /tos.html
+      - link "Privacy Policy" [ref=e77] [cursor=pointer]:
+        - /url: /privacy.html

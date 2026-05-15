@@ -1,5 +1,10 @@
 import { SESSION_COOKIE_NAME, verifySessionValue } from "../lib/session.mjs";
 import { normalizeAccessKey } from "../lib/access-keys.mjs";
+import {
+  removeUserFromGroups,
+  renameUserHistory,
+  validateChatName,
+} from "../lib/chat-admin-identity.mjs";
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 
@@ -60,6 +65,11 @@ async function readJsonBody(req) {
 async function getDocument(collection, id) {
   const doc = await db.collection(collection).doc(id).get();
   return doc.exists ? { id: doc.id, ...doc.data() } : null;
+}
+
+async function ensureUniqueChatName(chatDb, uid, name) {
+  const snap = await chatDb.collection("users").where("name", "==", name).get();
+  return !snap.docs.some(doc => doc.id !== uid);
 }
 
 async function requireAdmin(req, res) {
@@ -333,8 +343,23 @@ export default async function handler(req, res) {
     if (action === "rename-chat-user" && method === "POST") {
       const { uid, name } = await readJsonBody(req);
       if (!uid || !name) return res.status(400).json({ error: "Missing uid or name" });
+      const validation = validateChatName(name);
+      if (!validation.ok) return res.status(400).json({ error: validation.error });
       const chatDb = getChatDb();
-      await chatDb.collection("users").doc(uid).update({ name: name.trim() });
+      const userRef = chatDb.collection("users").doc(uid);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) return res.status(404).json({ error: "Chat user not found" });
+      if (!(await ensureUniqueChatName(chatDb, uid, validation.name))) {
+        return res.status(409).json({ error: "Name taken, try another." });
+      }
+      const userData = userSnap.data();
+      const previousName = userData.name ?? userData.username ?? "";
+      await renameUserHistory(chatDb, {
+        uid,
+        previousName,
+        nextName: validation.name,
+      });
+      await userRef.set({ name: validation.name, uid }, { merge: true });
       return res.status(200).json({ ok: true });
     }
 
@@ -343,6 +368,7 @@ export default async function handler(req, res) {
       const { uid } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
       const chatDb = getChatDb();
+      await removeUserFromGroups(chatDb, uid);
       await chatDb.collection("users").doc(uid).delete();
       return res.status(200).json({ ok: true });
     }
