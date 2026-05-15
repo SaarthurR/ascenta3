@@ -989,7 +989,8 @@ function renderChatAdmins() {
       <button class="btn ${u.isChatAdmin ? 'btn-danger' : 'btn-primary'} btn-xs ca-toggle"
         data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">
         ${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}
-      </button>`;
+      </button>
+      <button class="btn btn-danger btn-xs ca-remove" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" style="margin-left:6px">Remove</button>`;
     list.appendChild(row);
   });
 }
@@ -999,6 +1000,24 @@ function initChatAdmins() {
   document.getElementById('chat-admin-search').addEventListener('input', () => renderChatAdmins());
 
   document.getElementById('chat-admins-body').addEventListener('click', async e => {
+    const removeBtn = e.target.closest('.ca-remove');
+    if (removeBtn) {
+      const { uid, name } = removeBtn.dataset;
+      if (!confirm(`Remove "${name}"? They can rejoin with the same name.`)) return;
+      removeBtn.disabled = true;
+      try {
+        const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
+        if (ok) {
+          _chatAdminsCache = _chatAdminsCache.filter(x => x.uid !== uid);
+          renderChatAdmins();
+          showFeedback('fb-chat-admins', `> Removed ${name}`, true);
+        } else {
+          removeBtn.disabled = false;
+          showFeedback('fb-chat-admins', '> Failed to remove.', false);
+        }
+      } catch { removeBtn.disabled = false; }
+      return;
+    }
     const btn = e.target.closest('.ca-toggle');
     if (!btn) return;
     const { uid } = btn.dataset;
