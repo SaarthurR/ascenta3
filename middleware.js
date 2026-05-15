@@ -11,9 +11,17 @@ export default async function middleware(request) {
   const url = new URL(request.url);
   const cookieHeader = request.headers.get("cookie") || "";
   const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
-  const hasValidSession = await verifySessionValue(sessionValue, secret);
+  const payload = await verifySessionValue(sessionValue, secret);
 
-  if (hasValidSession) {
+  const isAdminRoute = url.pathname === "/admin.html";
+
+  if (isAdminRoute) {
+    if (payload?.isAdmin) return next();
+    return Response.redirect(new URL("/", url), 307);
+  }
+
+  // Games routes — any valid session
+  if (payload) {
     return next();
   }
 
@@ -38,5 +46,5 @@ function readCookie(cookieHeader, name) {
 }
 
 export const config = {
-  matcher: ["/games/:path*"],
+  matcher: ["/admin.html", "/games/:path*"],
 };
