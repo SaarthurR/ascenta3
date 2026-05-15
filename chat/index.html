@@ -423,6 +423,9 @@ let lastMsg={};     // {cid:{text,mine,ts}} — last known message per conversat
 let lastActivity={}; // {cid:ms} — for sorting (most recent to top)
 let seenSet=new Set(JSON.parse(sessionStorage.getItem('ac_seen')||'[]'));
 function saveSeen(){try{sessionStorage.setItem('ac_seen',JSON.stringify([...seenSet].slice(-400)));}catch(e){}}
+let lastReadTs=JSON.parse(localStorage.getItem('ac_lastRead')||'{}');
+let convPreviewUnsubs={};
+function saveLastRead(){try{localStorage.setItem('ac_lastRead',JSON.stringify(lastReadTs))}catch(e){}}
 
 const $=id=>document.getElementById(id);
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -560,6 +563,7 @@ function listenUsers(){
     allUsers.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     renderList();
     startGroupPingListeners();
+    loadConversationPreviews();
   });
 }
 
@@ -573,6 +577,13 @@ function listenMyGroups(){
         const ta=a.updatedAt&&a.updatedAt.toDate?a.updatedAt.toDate().getTime():0;
         const tb=b.updatedAt&&b.updatedAt.toDate?b.updatedAt.toDate().getTime():0;
         return tb-ta;
+      });
+      myGroups.forEach(g=>{
+        if(g.updatedAt&&g.updatedAt.toDate){
+          const ts=g.updatedAt.toDate().getTime();
+          if(!lastActivity[g.id]||ts>lastActivity[g.id])lastActivity[g.id]=ts;
+          if(g.lastMsg&&!lastMsg[g.id])lastMsg[g.id]={text:g.lastMsg,mine:false,ts};
+        }
       });
       if(tab==='grp')renderList();
       startGroupPingListeners();
@@ -675,6 +686,8 @@ function updateGlobalBadge(){
 }
 
 function markRead(cid){
+  lastReadTs[cid]=Date.now();
+  saveLastRead();
   if(unread[cid]){delete unread[cid];renderList()}
 }
 
@@ -897,6 +910,31 @@ function bumpUnread(cid,fromName,text,groupName){
   lastMsg[cid]={text:(groupName?fromName+': ':'')+text,mine:false,ts:Date.now()};
   lastActivity[cid]=Date.now();
   renderList();
+}
+
+// ─── Per-conversation preview listeners ───
+// Populates lastMsg/lastActivity on load so previews and sort order are correct
+// without requiring the user to open each conversation first.
+function loadConversationPreviews(){
+  allUsers.forEach(u=>{
+    const cid=dmId(myUid,u.uid);
+    if(convPreviewUnsubs[cid])return;
+    convPreviewUnsubs[cid]=db.collection('conversations').doc(cid)
+      .collection('messages').orderBy('timestamp','desc').limit(1)
+      .onSnapshot(snap=>{
+        if(snap.empty)return;
+        const doc=snap.docs[0],m=doc.data();
+        const mine=m.from===myUid;
+        const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
+        lastMsg[cid]={text:m.text||'',mine,ts};
+        if(!lastActivity[cid]||ts>lastActivity[cid])lastActivity[cid]=ts;
+        // Only mark unread for historical msgs (pre-load); real-time handled by ping listener
+        if(ts<_pageStartTs&&!mine&&ts>(lastReadTs[cid]||0)&&activeId!==cid&&!unread[cid]){
+          unread[cid]={count:1,preview:m.text||'',fromName:m.fromName||u.name};
+        }
+        renderList();
+      },err=>console.error('Preview listener:',err));
+  });
 }
 
 function showToast(from,text,cid,type,peerUid,peerName,groupName){
