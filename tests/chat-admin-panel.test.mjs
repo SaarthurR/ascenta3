@@ -16,3 +16,17 @@ test("remove-chat-user permanently bans the chat identity and deletes auth", () 
   assert.match(adminApi, /collection\("banned_names"\)\.doc\(buildChatBanKey\(/);
   assert.match(adminApi, /await getChatAuth\(\)\.deleteUser\(uid\)/);
 });
+
+test("clear-chat-users uses the same permanent delete-ban flow for every account", () => {
+  assert.match(adminApi, /action === "clear-chat-users" && method === "POST"/);
+  assert.match(adminApi, /Promise\.all\(snap\.docs\.map\(doc => permanentlyDeleteChatUser\(chatDb, doc\.id, doc\.data\(\)\)\)\)/);
+  assert.match(adminHtml, /Permanently delete and ban ALL AscentChat users/);
+});
+
+test("active key removal reloads from the backend and key sections render as expandable tabs", () => {
+  assert.match(adminHtml, /if \(ok\) await loadKeys\(\);/);
+  assert.match(adminHtml, /id="admin-tools-tabs"/);
+  assert.match(adminHtml, /data-tab="keys"/);
+  assert.match(adminHtml, /data-tab="dev-codes"/);
+  assert.match(adminHtml, /function setAdminToolsTab\(tab\)/);
+});

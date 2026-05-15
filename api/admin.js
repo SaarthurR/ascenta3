@@ -90,6 +90,38 @@ async function ensureUniqueChatName(chatDb, uid, name) {
   return !snap.docs.some(doc => doc.id !== uid);
 }
 
+async function permanentlyDeleteChatUser(chatDb, uid, userData) {
+  const userRef = chatDb.collection("users").doc(uid);
+  const username = userData?.name ?? userData?.username ?? "";
+  const bannedAt = Timestamp.now();
+  const banKey = buildChatBanKey(username);
+
+  await chatDb.collection("moderation_events").doc(uid).set({
+    action: "removed",
+    title: "Your account was deleted",
+    message: "An admin permanently deleted and banned your AscentChat account.",
+    bannedAt,
+    uid,
+    name: username,
+  }, { merge: true });
+
+  if (banKey) {
+    await chatDb.collection("banned_names").doc(buildChatBanKey(username)).set({
+      uid,
+      name: username,
+      bannedAt,
+    }, { merge: true });
+  }
+
+  await removeUserFromGroups(chatDb, uid);
+  await userRef.delete();
+  try {
+    await getChatAuth().deleteUser(uid);
+  } catch (err) {
+    if (err?.code !== "auth/user-not-found") throw err;
+  }
+}
+
 async function requireAdmin(req, res) {
   const cookieHeader = req.headers["cookie"] || "";
   const sessionValue = readCookie(cookieHeader, SESSION_COOKIE_NAME);
@@ -351,9 +383,7 @@ export default async function handler(req, res) {
     if (action === "clear-chat-users" && method === "POST") {
       const chatDb = getChatDb();
       const snap = await chatDb.collection("users").get();
-      const batch = chatDb.batch();
-      snap.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
+      await Promise.all(snap.docs.map(doc => permanentlyDeleteChatUser(chatDb, doc.id, doc.data())));
       return res.status(200).json({ ok: true, deleted: snap.size });
     }
 
@@ -389,32 +419,7 @@ export default async function handler(req, res) {
       const userRef = chatDb.collection("users").doc(uid);
       const userSnap = await userRef.get();
       if (!userSnap.exists) return res.status(404).json({ error: "Chat user not found" });
-      const userData = userSnap.data();
-      const username = userData.name ?? userData.username ?? "";
-      const bannedAt = Timestamp.now();
-      const banKey = buildChatBanKey(username);
-      await chatDb.collection("moderation_events").doc(uid).set({
-        action: "removed",
-        title: "Your account was deleted",
-        message: "An admin permanently deleted and banned your AscentChat account.",
-        bannedAt,
-        uid,
-        name: username,
-      }, { merge: true });
-      if (banKey) {
-        await chatDb.collection("banned_names").doc(buildChatBanKey(username)).set({
-          uid,
-          name: username,
-          bannedAt,
-        }, { merge: true });
-      }
-      await removeUserFromGroups(chatDb, uid);
-      await userRef.delete();
-      try {
-        await getChatAuth().deleteUser(uid);
-      } catch (err) {
-        if (err?.code !== "auth/user-not-found") throw err;
-      }
+      await permanentlyDeleteChatUser(chatDb, uid, userSnap.data());
       return res.status(200).json({ ok: true });
     }
 

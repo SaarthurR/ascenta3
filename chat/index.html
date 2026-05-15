@@ -198,7 +198,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .rxn{font-size:13px;padding:3px 8px;background:var(--bg2);border:1px solid var(--line);border-radius:100px;cursor:pointer;transition:var(--ease);display:flex;align-items:center;gap:3px;touch-action:manipulation}
 .rxn:hover{background:var(--bg);border-color:var(--A)}
 .rxn span{font-size:10px;color:var(--ink3)}
-.m-time{font-size:10px;color:var(--ink4);margin-top:4px;padding:0 2px}
 
 /* Scroll FAB */
 .sfab{position:absolute;bottom:86px;right:14px;width:36px;height:36px;border-radius:50%;background:var(--A);color:#000;border:none;box-shadow:0 4px 16px var(--Ag);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:16px;z-index:10;transition:var(--ease);touch-action:manipulation}
@@ -504,7 +503,6 @@ function refreshActiveGroupUi(){
   if(sub)sub.textContent=subText;
   if($('membersOv').style.display==='flex')showMembersModal();
 }
-function fmtT(ts){const d=ts&&ts.toDate?ts.toDate():new Date();return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true})}
 function fmtD(ts){
   const d=ts&&ts.toDate?ts.toDate():new Date(),t=new Date();
   if(d.toDateString()===t.toDateString())return'Today';
@@ -1068,7 +1066,6 @@ function renderMsgs(msgs){
           <div class="bubble">${esc(m.text)}</div>
         </div>
         ${rHtml?`<div class="rxns">${rHtml}</div>`:''}
-        <div class="m-time">${fmtT(m.timestamp)}</div>
       </div>`;
     const bw=row.querySelector('.bw');
     let lpt;
