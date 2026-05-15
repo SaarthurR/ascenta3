@@ -364,6 +364,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
         <button class="sfab" id="sfab" onclick="scrollBot()" aria-label="Scroll to bottom">↓</button>
         <div class="inp-wrap">
           <div id="chatMutedBanner" style="display:none;padding:8px 16px;font-size:11px;color:#f87171;text-align:center;letter-spacing:.5px;border-bottom:1px solid rgba(248,113,113,0.2)">Chat muted by admin — read only</div>
+          <div id="chatAdminBanner" style="display:none;padding:8px 16px;font-size:11px;color:#fbbf24;text-align:center;letter-spacing:.5px;border-bottom:1px solid rgba(251,191,36,0.2)">🔒 Chat locked — you have admin access</div>
           <div class="ep-pop" id="epPop"></div>
           <div class="inp-row">
             <button class="em-btn" id="emBtn" onclick="toggleEp()" aria-label="Emoji">😊</button>
@@ -631,6 +632,7 @@ function applyMuteState(muted){
   $('sndBtn').disabled=blocked;
   $('chatIn').placeholder=blocked?'Chat muted by admin…':'Message…';
   $('chatMutedBanner').style.display=blocked?'block':'none';
+  $('chatAdminBanner').style.display=(muted&&isChatAdmin)?'block':'none';
 }
 function listenChatConfig(){
   db.collection('config').doc('global').onSnapshot(snap=>{
