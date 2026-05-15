@@ -521,7 +521,7 @@ async function doJoin(){
     await db.collection('users').doc(myUid).set({name,uid:myUid,lastSeen:TS()},{merge:true});
     if($('remMe').checked) localStorage.setItem('ac_n',name); else localStorage.removeItem('ac_n');
     enterApp();
-  }catch(e){console.error(e);setErr('Connection error, try again.');reset()}
+  }catch(e){console.error(e);setErr((e.code||e.message||'Connection error'));reset()}
 }
 function setErr(msg,c='var(--R)'){$('sErr').textContent=msg;$('sErr').style.color=c}
 function reset(){$('joinBtn').disabled=false;$('joinBtn').textContent='Enter AscentChat'}
