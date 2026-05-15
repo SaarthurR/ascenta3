@@ -469,14 +469,15 @@ function enterApp(){
 }
 
 // ─── Auto-resume via Firebase auth persistence ───
+let _joining=false;
 const _savedName=localStorage.getItem('ac_n');
 if(_savedName)$('nameIn').value=_savedName;
 
 auth.onAuthStateChanged(async user=>{
-  if(!user)return;
+  if(!user||_joining)return;
   try{
     const doc=await db.collection('users').doc(user.uid).get();
-    if(!doc.exists){await auth.signOut();return;}
+    if(!doc.exists)return; // new user mid-doJoin, let doJoin handle enterApp
     myUid=user.uid;
     myName=doc.data().name;
     myMutedGroups=new Set(doc.data().mutedGroups||[]);
@@ -497,6 +498,7 @@ async function doJoin(){
   if(!pass){setErr('Enter a password.');return}
   if(pass.length<6){setErr('Password must be at least 6 characters.');return}
   $('joinBtn').disabled=true;$('joinBtn').textContent='Connecting…';
+  _joining=true;
   try{
     await auth.setPersistence($('remMe').checked
       ?firebase.auth.Auth.Persistence.LOCAL
@@ -520,8 +522,9 @@ async function doJoin(){
     myMutedGroups=new Set(uSnap.exists?uSnap.data().mutedGroups||[]:[]);
     await db.collection('users').doc(myUid).set({name,uid:myUid,lastSeen:TS()},{merge:true});
     if($('remMe').checked) localStorage.setItem('ac_n',name); else localStorage.removeItem('ac_n');
+    _joining=false;
     enterApp();
-  }catch(e){console.error(e);setErr((e.code||e.message||'Connection error'));reset()}
+  }catch(e){_joining=false;console.error(e);setErr((e.code||e.message||'Connection error'));reset()}
 }
 function setErr(msg,c='var(--R)'){$('sErr').textContent=msg;$('sErr').style.color=c}
 function reset(){$('joinBtn').disabled=false;$('joinBtn').textContent='Enter AscentChat'}
