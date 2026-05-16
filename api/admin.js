@@ -77,7 +77,7 @@ async function permanentlyDeleteChatUser(chatDb, uid, userData) {
   try {
     await getChatAuth().deleteUser(uid);
   } catch (err) {
-    if (err?.code !== "auth/user-not-found") throw err;
+    console.error("deleteUser failed (non-fatal):", err?.code || err?.message);
   }
 }
 
@@ -361,11 +361,15 @@ export default async function handler(req, res) {
       }
       const userData = userSnap.data();
       const previousName = userData.name ?? userData.username ?? "";
-      await renameUserHistory(chatDb, {
-        uid,
-        previousName,
-        nextName: validation.name,
-      });
+      try {
+        await renameUserHistory(chatDb, {
+          uid,
+          previousName,
+          nextName: validation.name,
+        });
+      } catch (err) {
+        console.error("renameUserHistory failed (non-fatal):", err?.message);
+      }
       await userRef.set({ name: validation.name, uid }, { merge: true });
       return res.status(200).json({ ok: true });
     }

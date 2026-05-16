@@ -1337,16 +1337,29 @@ function readKeyValue(entry) {
    BOOT
 ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
+  async function fetchStatus() {
+    const res = await fetch('/api/admin/status', { credentials: 'include' });
+    if (res.status === 403) return null; // not admin — redirect
+    if (!res.ok) throw new Error('status ' + res.status);
+    return res.json().catch(() => null);
+  }
+
   let statusData;
   try {
-    const res = await fetch('/api/admin/status', { credentials: 'include' });
-    if (!res.ok) { window.location.href = '/'; return; }
-    statusData = await res.json().catch(() => null);
-    if (!statusData) { window.location.href = '/'; return; }
+    statusData = await fetchStatus();
+    if (!statusData) {
+      // retry once after 1.5 s (cold-start tolerance)
+      await new Promise(r => setTimeout(r, 1500));
+      statusData = await fetchStatus();
+    }
   } catch {
-    window.location.href = '/';
-    return;
+    try {
+      await new Promise(r => setTimeout(r, 1500));
+      statusData = await fetchStatus();
+    } catch { /* fall through */ }
   }
+
+  if (!statusData) { window.location.href = '/'; return; }
 
   // Hide loading, show page
   document.getElementById('loading-screen').style.display = 'none';
