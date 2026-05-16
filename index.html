@@ -1719,8 +1719,24 @@ async function tryUnlock(){
       if(result.displayHint) sessionStorage.setItem('hub_hint', result.displayHint);
       if(result.fullKey) sessionStorage.setItem('hub_key', result.fullKey);
       msg.className='success';
-      msg.textContent='✓ Admin access granted';
-      setTimeout(()=>{ window.location.href='/admin.html'; },800);
+      msg.textContent='✓ Verifying admin access...';
+      // Verify admin API is reachable before navigating, cache result for admin.html
+      let adminStatus = null;
+      for(let i = 0; i < 3 && !adminStatus; i++){
+        if(i > 0) await new Promise(r => setTimeout(r, 1500));
+        try{
+          const sr = await fetch('/api/admin/status', { credentials: 'include' });
+          if(sr.ok) adminStatus = await sr.json().catch(() => null);
+        }catch{}
+      }
+      if(adminStatus){
+        sessionStorage.setItem('_adminStatusCache', JSON.stringify(adminStatus));
+        window.location.href = '/admin.html';
+      } else {
+        msg.className = 'error';
+        msg.textContent = '✗ Admin API unreachable — check Vercel logs';
+        btn.disabled = false;
+      }
       return;
     }
 
