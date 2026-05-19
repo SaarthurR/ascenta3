@@ -174,12 +174,19 @@ export default async function handler(req, res) {
   try {
     // GET /api/admin/status
     if (action === "status" && method === "GET") {
-      const chatDb = getChatDb();
-      const [configDoc, chatConfigSnap] = await Promise.all([
+      const [configDoc, chatData] = await Promise.all([
         getDocument("config", "global"),
-        chatDb.collection("config").doc("global").get(),
+        (async () => {
+          try {
+            const chatDb = getChatDb();
+            const snap = await chatDb.collection("config").doc("global").get();
+            return snap.exists ? snap.data() : {};
+          } catch (err) {
+            console.error("admin/status: chat config fetch failed", err.message);
+            return {};
+          }
+        })(),
       ]);
-      const chatData = chatConfigSnap.exists ? chatConfigSnap.data() : {};
       return res.status(200).json({
         siteDisabled: configDoc?.siteDisabled ?? false,
         gamesDisabled: configDoc?.gamesDisabled ?? false,

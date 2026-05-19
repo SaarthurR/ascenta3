@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/admin/:action*", "destination": "/api/admin" }
+    { "source": "/api/admin/:action*", "destination": "/api/admin?action=:action" }
   ]
 }
