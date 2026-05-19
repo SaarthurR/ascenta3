@@ -112,7 +112,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .sb-search:focus{border-color:var(--A);background:var(--sf)}
 .sb-search::placeholder{color:var(--ink4)}
 .sb-tabs{display:flex;gap:3px;background:var(--bg2);border-radius:9px;padding:3px}
-.sb-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;color:var(--ink3);border-radius:7px;cursor:pointer;transition:var(--ease);touch-action:manipulation;user-select:none}
+.sb-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;color:var(--ink3);border-radius:7px;cursor:pointer;transition:var(--ease);touch-action:manipulation;user-select:none;position:relative}
+.grp-udot{display:none;width:6px;height:6px;border-radius:50%;background:var(--A);box-shadow:0 0 5px rgba(96,165,250,0.7);margin-left:5px;vertical-align:middle;animation:udPulse 1.8s ease-in-out infinite}
+.grp-udot.show{display:inline-block}
 .sb-tab.on{background:var(--sf);color:var(--A);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
 .ng-btn{width:100%;padding:9px;background:var(--As);border:1.5px dashed rgba(96,165,250,0.3);border-radius:9px;color:var(--A);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:var(--ease);touch-action:manipulation;display:none}
 .ng-btn.show{display:block}
@@ -338,7 +340,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
         <input class="sb-search" id="sbSearch" type="text" placeholder="🔍  Search…" autocorrect="off">
         <div class="sb-tabs">
           <div class="sb-tab on" id="tDM" onclick="setTab('dm')">💬 DMs</div>
-          <div class="sb-tab" id="tGrp" onclick="setTab('grp')">👥 Groups</div>
+          <div class="sb-tab" id="tGrp" onclick="setTab('grp')">👥 Groups<span class="grp-udot" id="grpTabDot"></span></div>
         </div>
         <button class="ng-btn" id="ngBtn" onclick="openGM(event)">＋ New group chat</button>
       </div>
@@ -459,6 +461,7 @@ let seenSet=new Set(JSON.parse(sessionStorage.getItem('ac_seen')||'[]'));
 function saveSeen(){try{sessionStorage.setItem('ac_seen',JSON.stringify([...seenSet].slice(-400)));}catch(e){}}
 let lastReadTs=JSON.parse(localStorage.getItem('ac_lastRead')||'{}');
 let convPreviewUnsubs={};
+let groupPreviewUnsubs={};
 function saveLastRead(){try{localStorage.setItem('ac_lastRead',JSON.stringify(lastReadTs))}catch(e){}}
 
 const $=id=>document.getElementById(id);
@@ -810,6 +813,7 @@ function listenMyGroups(){
       });
       if(tab==='grp')renderList();
       startGroupPingListeners();
+      loadGroupPreviews();
     },err=>{console.error('Groups listener error:',err);if(tab==='grp')renderList()});
 }
 
@@ -908,6 +912,9 @@ function updateGlobalBadge(){
   if(total>0){badge.textContent=total>99?'99+':total;badge.classList.add('show')}
   else badge.classList.remove('show');
   document.title=total>0?`(${total}) AscentChat`:'AscentChat · ASCENTA 3';
+  const hasGrpUnread=Object.keys(unread).some(k=>!k.includes('__'));
+  const grpTabDot=$('grpTabDot');
+  if(grpTabDot)grpTabDot.classList.toggle('show',hasGrpUnread);
 }
 
 function markRead(cid){
@@ -1213,6 +1220,28 @@ function loadConversationPreviews(){
         }
         renderList();
       },err=>console.error('Preview listener:',err));
+  });
+}
+
+function loadGroupPreviews(){
+  myGroups.forEach(g=>{
+    if(groupPreviewUnsubs[g.id])return;
+    groupPreviewUnsubs[g.id]=db.collection('groups').doc(g.id)
+      .collection('messages').orderBy('timestamp','desc').limit(1)
+      .onSnapshot(snap=>{
+        if(snap.empty)return;
+        const doc=snap.docs[0],m=doc.data();
+        const mine=m.from===myUid;
+        const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
+        const preview=(m.fromName?m.fromName+': ':'')+( m.text||'');
+        lastMsg[g.id]={text:preview,mine,ts};
+        if(!lastActivity[g.id]||ts>lastActivity[g.id])lastActivity[g.id]=ts;
+        if(!mine&&ts>(lastReadTs[g.id]||0)&&activeId!==g.id){
+          if(!unread[g.id])unread[g.id]={count:1,preview,fromName:m.fromName||'Someone'};
+          else unread[g.id].preview=preview;
+        }
+        renderList();
+      },err=>console.error('Group preview listener:',err));
   });
 }
 
