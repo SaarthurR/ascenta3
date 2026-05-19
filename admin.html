@@ -1337,26 +1337,27 @@ function readKeyValue(entry) {
    BOOT
 ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
+  const loaderEl = document.querySelector('.loader-text');
+
   async function fetchStatus() {
     const res = await fetch('/api/admin/status', { credentials: 'include' });
+    if (res.status === 403) throw new Error('forbidden');
     if (!res.ok) return null;
     return res.json().catch(() => null);
   }
 
-  // Use pre-verified data from the unlock flow if available (avoids double-fetch)
+  // Retry with delays to survive Vercel cold-start on admin.js (~5-8s)
   let statusData = null;
-  const cached = sessionStorage.getItem('_adminStatusCache');
-  if (cached) {
-    try { statusData = JSON.parse(cached); } catch {}
-    sessionStorage.removeItem('_adminStatusCache');
-  }
-
-  // Fallback for direct navigation to admin.html (no cached data)
-  if (!statusData) {
-    try { statusData = await fetchStatus(); } catch {}
-    if (!statusData) {
-      await new Promise(r => setTimeout(r, 1500));
-      try { statusData = await fetchStatus(); } catch {}
+  const retryDelays = [0, 2000, 3000, 3000]; // 0s, 2s, 5s, 8s cumulative
+  for (let i = 0; i < retryDelays.length && !statusData; i++) {
+    if (retryDelays[i] > 0) {
+      if (loaderEl) loaderEl.textContent = '// LOADING...';
+      await new Promise(r => setTimeout(r, retryDelays[i]));
+    }
+    try {
+      statusData = await fetchStatus();
+    } catch (err) {
+      if (err.message === 'forbidden') { window.location.href = '/'; return; }
     }
   }
 
