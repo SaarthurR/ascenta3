@@ -233,12 +233,14 @@ export default async function handler(req, res) {
         if (typeof ts === "number") return ts;
         return 0;
       };
-      const chatDb = getChatDb();
       const [chatSnap, hubSnap] = await Promise.all([
-        chatDb.collection("users").get(),
+        (async () => {
+          try { return await getChatDb().collection("users").get(); }
+          catch (err) { console.error("admin/users: chat users fetch failed", err.message); return null; }
+        })(),
         db.collection("hub_sessions").where("lastSeen", ">", Timestamp.fromMillis(cutoffMs)).get(),
       ]);
-      const chatUsers = chatSnap.docs
+      const chatUsers = (chatSnap?.docs ?? [])
         .map(doc => {
           const d = doc.data();
           return { uid: doc.id, username: d.name ?? d.username ?? doc.id, lastSeen: tsMs(d.lastSeen), banned: d.banned ?? false, isChatAdmin: d.isChatAdmin ?? false, source: "chat" };
@@ -395,14 +397,18 @@ export default async function handler(req, res) {
 
     // GET /api/admin/chat-users — all chat users (for admin grant UI)
     if (action === "chat-users" && method === "GET") {
-      const chatDb = getChatDb();
-      const snap = await chatDb.collection("users").get();
-      const users = snap.docs.map(doc => {
-        const d = doc.data();
-        return { uid: doc.id, username: d.name ?? d.username ?? doc.id, isChatAdmin: d.isChatAdmin ?? false };
-      });
-      users.sort((a, b) => (a.username || "").localeCompare(b.username || ""));
-      return res.status(200).json({ users });
+      try {
+        const snap = await getChatDb().collection("users").get();
+        const users = snap.docs.map(doc => {
+          const d = doc.data();
+          return { uid: doc.id, username: d.name ?? d.username ?? doc.id, isChatAdmin: d.isChatAdmin ?? false };
+        });
+        users.sort((a, b) => (a.username || "").localeCompare(b.username || ""));
+        return res.status(200).json({ users });
+      } catch (err) {
+        console.error("admin/chat-users: fetch failed", err.message);
+        return res.status(200).json({ users: [] });
+      }
     }
 
     // POST /api/admin/set-chat-admin — grant or revoke chat admin on a user doc
