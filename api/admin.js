@@ -420,10 +420,24 @@ export default async function handler(req, res) {
     if (action === "chat-users" && method === "GET") {
       try {
         const chatDb = getChatDb();
-        const snap = await chatDb.collection("users").get();
-        const users = snap.docs.map(doc => {
+        const [usersSnap, hwidBansSnap, nameBansSnap] = await Promise.all([
+          chatDb.collection("users").get(),
+          chatDb.collection("banned_hwids").get(),
+          chatDb.collection("banned_names").get(),
+        ]);
+        const hwidBannedUids = new Set(hwidBansSnap.docs.map(d => d.data().uid).filter(Boolean));
+        const bannedNameKeys = new Set(nameBansSnap.docs.map(d => d.id));
+        const users = usersSnap.docs.map(doc => {
           const d = doc.data();
-          return { uid: doc.id, username: d.name ?? d.username ?? doc.id, isChatAdmin: d.isChatAdmin ?? false };
+          const username = d.name ?? d.username ?? doc.id;
+          const nameKey = buildChatBanKey(username);
+          return {
+            uid: doc.id,
+            username,
+            isChatAdmin: d.isChatAdmin ?? false,
+            hwidBanned: hwidBannedUids.has(doc.id),
+            nameBanned: nameKey ? bannedNameKeys.has(nameKey) : false,
+          };
         });
         users.sort((a, b) => (a.username || "").localeCompare(b.username || ""));
         return res.status(200).json({ users });

@@ -296,9 +296,21 @@
     }
     .chip.banned { color: var(--red); border-color: var(--red); }
     .chip.active { color: var(--green); border-color: var(--green); }
-    .ca-row { display: flex; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .ca-row { display: flex; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; gap: 6px; }
     .ca-row:last-child { border-bottom: none; }
     .ca-name { color: var(--text); flex: 1; }
+    .ca-ban-chips { display: flex; gap: 4px; align-items: center; }
+    .chip.hw-banned { color: var(--yellow); border-color: var(--yellow); background: rgba(255,204,0,0.08); }
+    .chip.name-banned { color: var(--red); border-color: var(--red); background: rgba(255,68,68,0.08); }
+    .ca-menu { position: relative; }
+    .ca-menu-btn { background: none; border: 1px solid var(--border2); color: var(--text-dim); cursor: pointer; font-size: 15px; padding: 1px 7px 3px; font-family: var(--font); line-height: 1; }
+    .ca-menu-btn:hover { border-color: var(--text-dim); color: var(--text); }
+    .ca-menu-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 2px); background: var(--card2); border: 1px solid var(--border2); z-index: 100; min-width: 150px; }
+    .ca-menu.open .ca-menu-dropdown { display: block; }
+    .ca-menu-dropdown button { display: block; width: 100%; text-align: left; background: none; border: none; border-bottom: 1px solid var(--border); color: var(--text); cursor: pointer; font-family: var(--font); font-size: 11px; padding: 8px 12px; }
+    .ca-menu-dropdown button:last-child { border-bottom: none; }
+    .ca-menu-dropdown button:hover { background: var(--border); }
+    .ca-menu-dropdown button.ca-danger { color: var(--red); }
 
     /* ─── LOADING ─── */
     #loading-screen {
@@ -1045,17 +1057,20 @@ function renderChatAdmins() {
     row.dataset.uid = u.uid;
     row.innerHTML = `
       <span class="ca-name">${escHtml(u.username || u.uid)}</span>
-      ${u.isChatAdmin ? '<span class="chip active" style="font-size:9px;padding:2px 6px;margin-left:6px;margin-right:6px">ADMIN</span>' : ''}
-      <button class="btn btn-default btn-xs ca-rename"
-        data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">
-        Rename
-      </button>
-      <button class="btn ${u.isChatAdmin ? 'btn-danger' : 'btn-primary'} btn-xs ca-toggle"
-        data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">
-        ${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}
-      </button>
-      <button class="btn btn-danger btn-xs ca-hwid-ban" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" title="Ban device fingerprint without deleting account">HWID Ban</button>
-      <button class="btn btn-danger btn-xs ca-remove" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" style="margin-left:6px">Delete/Ban</button>`;
+      ${u.isChatAdmin ? '<span class="chip active" style="font-size:9px;padding:2px 5px">ADMIN</span>' : ''}
+      <span class="ca-ban-chips">
+        ${u.hwidBanned ? '<span class="chip hw-banned" style="font-size:9px;padding:2px 5px" title="Device fingerprint is banned">HW BANNED</span>' : ''}
+        ${u.nameBanned ? '<span class="chip name-banned" style="font-size:9px;padding:2px 5px" title="Name is banned">NAME BANNED</span>' : ''}
+      </span>
+      <div class="ca-menu">
+        <button class="ca-menu-btn" title="Actions">⋮</button>
+        <div class="ca-menu-dropdown">
+          <button class="ca-rename" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">Rename</button>
+          <button class="ca-toggle" data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}</button>
+          <button class="ca-hwid-ban ca-danger" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">HWID Ban</button>
+          <button class="ca-remove ca-danger" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">Delete/Ban</button>
+        </div>
+      </div>`;
     list.appendChild(row);
   });
 }
@@ -1064,7 +1079,22 @@ function initChatAdmins() {
   document.getElementById('btn-refresh-chat-admins').addEventListener('click', () => loadChatAdmins(false));
   document.getElementById('chat-admin-search').addEventListener('input', () => renderChatAdmins());
 
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.ca-menu')) {
+      document.querySelectorAll('.ca-menu.open').forEach(m => m.classList.remove('open'));
+    }
+  });
+
   document.getElementById('chat-admins-body').addEventListener('click', async e => {
+    const menuBtn = e.target.closest('.ca-menu-btn');
+    if (menuBtn) {
+      const menu = menuBtn.closest('.ca-menu');
+      const wasOpen = menu.classList.contains('open');
+      document.querySelectorAll('.ca-menu.open').forEach(m => m.classList.remove('open'));
+      if (!wasOpen) menu.classList.add('open');
+      return;
+    }
+    e.target.closest('.ca-menu')?.classList.remove('open');
     const renameBtn = e.target.closest('.ca-rename');
     if (renameBtn) {
       const { uid, name } = renameBtn.dataset;
