@@ -902,6 +902,7 @@ async function loadUsers(silent = false) {
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
           ${u.source === 'chat' ? `
             <button class="btn btn-default btn-xs" data-action="add-community" data-uid="${escAttr(u.uid)}" title="Force-add to Ascenta Community group">+Community</button>
+            <button class="btn btn-danger btn-xs" data-action="hwid-ban" data-uid="${escAttr(u.uid)}" title="Ban device fingerprint without deleting account">HWID Ban</button>
             <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Delete/Ban</button>
           ` : ''}
         </td>`;
@@ -971,6 +972,14 @@ function initUserManagement() {
         const { ok } = await adminFetch('/api/admin/add-to-community', { method: 'POST', body: { uid } });
         btn.textContent = ok ? 'Added ✓' : 'Failed';
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+      } catch { btn.disabled = false; }
+    } else if (action === 'hwid-ban') {
+      if (!confirm('Ban this user\'s device fingerprint? They keep their account but cannot re-register from the same device.')) return;
+      btn.disabled = true;
+      try {
+        const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
+        btn.textContent = ok ? 'HW Banned ✓' : (data?.error || 'Failed');
+        btn.style.color = ok ? 'var(--yellow)' : 'var(--red)';
       } catch { btn.disabled = false; }
     } else if (action === 'remove-chat') {
       if (!confirm('Permanently delete and ban this chat user from AscentChat?')) return;
@@ -1045,6 +1054,7 @@ function renderChatAdmins() {
         data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">
         ${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}
       </button>
+      <button class="btn btn-danger btn-xs ca-hwid-ban" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" title="Ban device fingerprint without deleting account">HWID Ban</button>
       <button class="btn btn-danger btn-xs ca-remove" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}" style="margin-left:6px">Delete/Ban</button>`;
     list.appendChild(row);
   });
@@ -1075,6 +1085,20 @@ function initChatAdmins() {
         renameBtn.disabled = false;
         showFeedback('fb-chat-admins', '> Request failed.', false);
       }
+      return;
+    }
+    const hwidBanBtn = e.target.closest('.ca-hwid-ban');
+    if (hwidBanBtn) {
+      const { uid, name } = hwidBanBtn.dataset;
+      if (!confirm(`Ban "${name}"'s device fingerprint? They keep their account but cannot re-register from the same device.`)) return;
+      hwidBanBtn.disabled = true;
+      try {
+        const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
+        hwidBanBtn.textContent = ok ? 'HW Banned ✓' : (data?.error || 'Failed');
+        hwidBanBtn.style.color = ok ? 'var(--yellow)' : 'var(--red)';
+        if (ok) showFeedback('fb-chat-admins', `> HWID banned ${name}`, true);
+        else showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to HWID ban.'), false);
+      } catch { hwidBanBtn.disabled = false; }
       return;
     }
     const removeBtn = e.target.closest('.ca-remove');
