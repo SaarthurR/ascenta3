@@ -72,6 +72,15 @@ async function permanentlyDeleteChatUser(chatDb, uid, userData) {
     }, { merge: true });
   }
 
+  const hwid = userData?.hwid;
+  if (hwid) {
+    await chatDb.collection("banned_hwids").doc(hwid).set({
+      uid,
+      name: username,
+      bannedAt,
+    }, { merge: true });
+  }
+
   await removeUserFromGroups(chatDb, uid);
   await userRef.delete();
   try {
@@ -422,6 +431,25 @@ export default async function handler(req, res) {
         console.error("admin/chat-users failed:", err.message);
         return res.status(500).json({ error: `Chat DB error: ${err.message}` });
       }
+    }
+
+    // POST /api/admin/hwid-ban — ban a chat user's device fingerprint without deleting their account
+    if (action === "hwid-ban" && method === "POST") {
+      const { uid } = await readJsonBody(req);
+      if (!uid) return res.status(400).json({ error: "Missing uid" });
+      const chatDb = getChatDb();
+      const userSnap = await chatDb.collection("users").doc(uid).get();
+      if (!userSnap.exists) return res.status(404).json({ error: "Chat user not found" });
+      const userData = userSnap.data();
+      const hwid = userData?.hwid;
+      if (!hwid) return res.status(400).json({ error: "No device fingerprint on file for this user" });
+      const username = userData?.name ?? userData?.username ?? "";
+      await chatDb.collection("banned_hwids").doc(hwid).set({
+        uid,
+        name: username,
+        bannedAt: Timestamp.now(),
+      }, { merge: true });
+      return res.status(200).json({ ok: true });
     }
 
     // POST /api/admin/set-chat-admin — grant or revoke chat admin on a user doc

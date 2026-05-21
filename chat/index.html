@@ -567,6 +567,8 @@ $('joinBtn').onclick=doJoin;
 $('nameIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('passIn').focus()}};
 $('passIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doJoin()}};
 
+function getDeviceFingerprint(){return btoa(navigator.userAgent+screen.width+screen.height+navigator.language)}
+
 async function doJoin(){
   const name=$('nameIn').value.trim();
   const pass=$('passIn').value;
@@ -603,6 +605,7 @@ async function doJoin(){
         } else throw e1;
       }
     }
+    const hwid=getDeviceFingerprint();
     const bannedSnap=await db.collection('banned_names').doc(banKeyForName(name)).get();
     if(bannedSnap.exists){
       if(justCreated){
@@ -614,6 +617,17 @@ async function doJoin(){
       reset();
       return;
     }
+    const hwidSnap=await db.collection('banned_hwids').doc(hwid).get();
+    if(hwidSnap.exists){
+      if(justCreated){
+        try{await cred.user.delete();}catch(e){console.error('Delete hwid-banned signup:',e)}
+      }
+      await auth.signOut().catch(()=>{});
+      _joining=false;
+      setErr('Your device has been banned from AscentChat.');
+      reset();
+      return;
+    }
     myUid=cred.user.uid; myName=name;
     const snap=await db.collection('users').where('name','==',name).get();
     if(snap.docs.some(d=>d.id!==myUid)){await auth.signOut();setErr('Name taken, try another.');reset();return;}
@@ -621,7 +635,7 @@ async function doJoin(){
     const existingName=uSnap.exists?(uSnap.data().name||''):'';
     myMutedGroups=new Set(uSnap.exists?uSnap.data().mutedGroups||[]:[]);
     const storedName=_namesLocked&&existingName?existingName:name;
-    await db.collection('users').doc(myUid).set({name:storedName,uid:myUid,lastSeen:TS()},{merge:true});
+    await db.collection('users').doc(myUid).set({name:storedName,uid:myUid,lastSeen:TS(),hwid},{merge:true});
     myName=storedName;
     if($('remMe').checked) localStorage.setItem('ac_n',storedName); else localStorage.removeItem('ac_n');
     _joining=false;
