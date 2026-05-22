@@ -930,8 +930,7 @@ async function loadUsers(silent = false) {
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
           ${u.source === 'chat' ? `
             <button class="btn btn-default btn-xs" data-action="add-community" data-uid="${escAttr(u.uid)}" title="Force-add to Ascenta Community group">+Community</button>
-            <button class="btn btn-danger btn-xs" data-action="hwid-ban" data-uid="${escAttr(u.uid)}" title="Ban device fingerprint — kicks and notifies them immediately">HWID Ban</button>
-            <button class="btn btn-default btn-xs" data-action="delete-account" data-uid="${escAttr(u.uid)}" title="Delete account only — no ban, they can rejoin">Delete Account</button>
+            <button class="btn btn-danger btn-xs" data-action="hwid-ban" data-uid="${escAttr(u.uid)}" title="Permanently delete account + ban name and device">HWID Ban</button>
           ` : ''}
         </td>`;
       if (existingRows[u.uid]) {
@@ -1009,20 +1008,12 @@ function initUserManagement() {
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
       } catch { btn.disabled = false; }
     } else if (action === 'hwid-ban') {
-      if (!confirm('HWID ban this user? Their device will be permanently banned and they will be kicked and notified immediately.')) return;
+      if (!confirm('Permanently delete and ban this user? Their name and device will be banned and they cannot rejoin.')) return;
       btn.disabled = true;
       try {
-        const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
-        btn.textContent = ok ? 'HW Banned ✓' : (data?.error || 'Failed');
-        btn.style.color = ok ? 'var(--yellow)' : 'var(--red)';
-      } catch { btn.disabled = false; }
-    } else if (action === 'delete-account') {
-      if (!confirm('Delete this user\'s account? They are NOT banned and can create a new account.')) return;
-      btn.disabled = true;
-      try {
-        const { ok } = await adminFetch('/api/admin/delete-account', { method: 'POST', body: { uid } });
+        const { ok, data } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
         if (ok) { const tr = btn.closest('tr'); if (tr) tr.remove(); }
-        else btn.disabled = false;
+        else { btn.textContent = data?.error || 'Failed'; btn.style.color = 'var(--red)'; btn.disabled = false; }
       } catch { btn.disabled = false; }
     }
   });
@@ -1105,7 +1096,7 @@ function renderChatAdmins() {
           <button class="ca-rename" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">Rename</button>
           <button class="ca-toggle" data-uid="${escAttr(u.uid)}" data-admin="${u.isChatAdmin ? '1' : '0'}">${u.isChatAdmin ? 'Revoke Admin' : 'Grant Admin'}</button>
           <button class="ca-hwid-ban ca-danger" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">HWID Ban</button>
-          <button class="ca-remove ca-danger" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">Delete/Ban</button>
+          <button class="ca-delete-account" data-uid="${escAttr(u.uid)}" data-name="${escAttr(u.username || u.uid)}">Delete Account</button>
         </div>
       </div>`;
     list.appendChild(row);
@@ -1157,22 +1148,8 @@ function initChatAdmins() {
     const hwidBanBtn = e.target.closest('.ca-hwid-ban');
     if (hwidBanBtn) {
       const { uid, name } = hwidBanBtn.dataset;
-      if (!confirm(`HWID ban "${name}"? Their device will be permanently banned and they will be kicked and notified immediately.`)) return;
+      if (!confirm(`Permanently delete and ban "${name}"? Their name and device will be banned and they cannot rejoin.`)) return;
       hwidBanBtn.disabled = true;
-      try {
-        const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
-        hwidBanBtn.textContent = ok ? 'HW Banned ✓' : (data?.error || 'Failed');
-        hwidBanBtn.style.color = ok ? 'var(--yellow)' : 'var(--red)';
-        if (ok) showFeedback('fb-chat-admins', `> HWID banned ${name}`, true);
-        else showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to HWID ban.'), false);
-      } catch { hwidBanBtn.disabled = false; }
-      return;
-    }
-    const removeBtn = e.target.closest('.ca-remove');
-    if (removeBtn) {
-      const { uid, name } = removeBtn.dataset;
-      if (!confirm(`Permanently delete and ban "${name}" from AscentChat?`)) return;
-      removeBtn.disabled = true;
       try {
         const { ok, data } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
         if (ok) {
@@ -1180,10 +1157,28 @@ function initChatAdmins() {
           renderChatAdmins();
           showFeedback('fb-chat-admins', `> Deleted and banned ${name}`, true);
         } else {
-          removeBtn.disabled = false;
+          hwidBanBtn.disabled = false;
           showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to delete/ban.'), false);
         }
-      } catch { removeBtn.disabled = false; }
+      } catch { hwidBanBtn.disabled = false; }
+      return;
+    }
+    const deleteAccountBtn = e.target.closest('.ca-delete-account');
+    if (deleteAccountBtn) {
+      const { uid, name } = deleteAccountBtn.dataset;
+      if (!confirm(`Delete "${name}"'s account? They are NOT banned and can create a new account.`)) return;
+      deleteAccountBtn.disabled = true;
+      try {
+        const { ok, data } = await adminFetch('/api/admin/delete-account', { method: 'POST', body: { uid } });
+        if (ok) {
+          _chatAdminsCache = _chatAdminsCache.filter(x => x.uid !== uid);
+          renderChatAdmins();
+          showFeedback('fb-chat-admins', `> Deleted account for ${name}`, true);
+        } else {
+          deleteAccountBtn.disabled = false;
+          showFeedback('fb-chat-admins', '> ' + (data?.error || 'Failed to delete account.'), false);
+        }
+      } catch { deleteAccountBtn.disabled = false; }
       return;
     }
     const btn = e.target.closest('.ca-toggle');
