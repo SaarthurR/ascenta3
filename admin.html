@@ -512,6 +512,7 @@
       <div class="section-header-row">
         <span>// USER MANAGEMENT</span>
         <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-danger btn-sm" id="btn-clear-community-msgs">Clear Community Messages</button>
           <button class="btn btn-danger btn-sm" id="btn-clear-chat-users">Clear Chat Users</button>
           <button class="btn btn-default btn-sm" id="btn-refresh-users">&#8635; Refresh</button>
         </div>
@@ -939,6 +940,13 @@ async function loadUsers(silent = false) {
 
 function initUserManagement() {
   document.getElementById('btn-refresh-users').addEventListener('click', () => loadUsers(false));
+  document.getElementById('btn-clear-community-msgs').addEventListener('click', async () => {
+    if (!confirm('Delete ALL messages from the Ascenta Community group chat? This cannot be undone.')) return;
+    try {
+      const { ok, data } = await adminFetch('/api/admin/clear-community-messages', { method: 'POST' });
+      showFeedback('fb-users', ok ? `> Deleted ${data.deleted || 0} community messages.` : '> Error: ' + (data?.error || 'Failed'), ok);
+    } catch { showFeedback('fb-users', '> Request failed.', false); }
+  });
   document.getElementById('btn-clear-chat-users').addEventListener('click', async () => {
     if (!confirm('Permanently delete and ban ALL AscentChat users?')) return;
     try {

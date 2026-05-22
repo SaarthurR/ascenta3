@@ -486,6 +486,22 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    // POST /api/admin/clear-community-messages — delete all messages in the community group
+    if (action === "clear-community-messages" && method === "POST") {
+      const chatDb = getChatDb();
+      const msgsRef = chatDb.collection("groups").doc("community").collection("messages");
+      let deleted = 0;
+      let snap = await msgsRef.limit(400).get();
+      while (!snap.empty) {
+        const batch = chatDb.batch();
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        deleted += snap.docs.length;
+        snap = await msgsRef.limit(400).get();
+      }
+      return res.status(200).json({ ok: true, deleted });
+    }
+
     // POST /api/admin/clear-sessions — revoke all existing sessions
     if (action === "clear-sessions" && method === "POST") {
       await db.collection("config").doc("global").set(
