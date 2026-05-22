@@ -514,6 +514,7 @@
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-danger btn-sm" id="btn-clear-community-msgs">Clear Community Messages</button>
           <button class="btn btn-danger btn-sm" id="btn-clear-chat-users">Clear Chat Users</button>
+          <button class="btn btn-default btn-sm" id="btn-auto-refresh-users" title="Auto-refresh every 15s">Auto-refresh: OFF</button>
           <button class="btn btn-default btn-sm" id="btn-refresh-users">&#8635; Refresh</button>
         </div>
       </div>
@@ -1027,7 +1028,21 @@ function initUserManagement() {
   });
 
   loadUsers(false);
-  setInterval(() => loadUsers(true), 15000);
+  let _userPollInterval = null;
+  const autoBtn = document.getElementById('btn-auto-refresh-users');
+  autoBtn.addEventListener('click', () => {
+    if (_userPollInterval) {
+      clearInterval(_userPollInterval);
+      _userPollInterval = null;
+      autoBtn.textContent = 'Auto-refresh: OFF';
+      autoBtn.classList.remove('btn-success');
+    } else {
+      loadUsers(true);
+      _userPollInterval = setInterval(() => loadUsers(true), 15000);
+      autoBtn.textContent = 'Auto-refresh: ON';
+      autoBtn.classList.add('btn-success');
+    }
+  });
 }
 
 /* ═══════════════════════════════════════════════
