@@ -1600,7 +1600,7 @@ async function _dmCaller(mt,ls){
   const pc=new RTCPeerConnection(CALL_ICE);
   const rs=new MediaStream();
   ls.getTracks().forEach(t=>pc.addTrack(t,ls));
-  pc.ontrack=e=>e.streams[0].getTracks().forEach(t=>rs.addTrack(t));
+  pc.ontrack=e=>{rs.addTrack(e.track);if(callState)_rebuildGrid();};
   const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
   await ref.set({callerId:myUid,callerName:myName,calleeUid:activePeer,status:'ringing',mediaType:mt,offer:{sdp:offer.sdp,type:offer.type},createdAt:TS()});
@@ -1631,7 +1631,7 @@ async function answerCall(){
   const pc=new RTCPeerConnection(CALL_ICE);
   const rs=new MediaStream();
   stream.getTracks().forEach(t=>pc.addTrack(t,stream));
-  pc.ontrack=e=>e.streams[0].getTracks().forEach(t=>rs.addTrack(t));
+  pc.ontrack=e=>{rs.addTrack(e.track);if(callState)_rebuildGrid();};
   await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
   const answer=await pc.createAnswer();
   await pc.setLocalDescription(answer);
