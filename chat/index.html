@@ -1178,7 +1178,8 @@ $('imgFile').addEventListener('change',async e=>{
   try{
     const ext=file.name.split('.').pop()||'jpg';
     const ref=storage.ref(`chat-images/${activeId}/${myUid}_${Date.now()}.${ext}`);
-    await ref.put(file);
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('Upload timed out — check Firebase Storage is enabled in the console.')),30000));
+    await Promise.race([ref.put(file),timeout]);
     const url=await ref.getDownloadURL();
     const text=$('chatIn').value.trim();
     $('chatIn').value='';$('chatIn').style.height='';
