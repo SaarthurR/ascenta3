@@ -524,6 +524,20 @@
     <div class="feedback" id="fb-users"></div>
   </div>
 
+  <!-- ─── BANNED USERS ─── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-header-row">
+        <span>// BANNED USERS</span>
+        <button class="btn btn-default btn-sm" id="btn-refresh-bans">&#8635; Refresh</button>
+      </div>
+    </div>
+    <div class="section-body" id="bans-body">
+      <p class="empty-state">Loading...</p>
+    </div>
+    <div class="feedback" id="fb-bans"></div>
+  </div>
+
   <!-- ─── CHAT ADMINS ─── -->
   <div class="section">
     <div class="section-header">
@@ -915,8 +929,8 @@ async function loadUsers(silent = false) {
           ${u.source === 'hub' ? `<button class="btn btn-danger btn-xs" data-action="revoke" data-uid="${escAttr(u.uid)}">Revoke Key</button>` : ''}
           ${u.source === 'chat' ? `
             <button class="btn btn-default btn-xs" data-action="add-community" data-uid="${escAttr(u.uid)}" title="Force-add to Ascenta Community group">+Community</button>
-            <button class="btn btn-danger btn-xs" data-action="hwid-ban" data-uid="${escAttr(u.uid)}" title="Ban device fingerprint without deleting account">HWID Ban</button>
-            <button class="btn btn-danger btn-xs" data-action="remove-chat" data-uid="${escAttr(u.uid)}">Delete/Ban</button>
+            <button class="btn btn-danger btn-xs" data-action="hwid-ban" data-uid="${escAttr(u.uid)}" title="Ban device fingerprint — kicks and notifies them immediately">HWID Ban</button>
+            <button class="btn btn-default btn-xs" data-action="delete-account" data-uid="${escAttr(u.uid)}" title="Delete account only — no ban, they can rejoin">Delete Account</button>
           ` : ''}
         </td>`;
       if (existingRows[u.uid]) {
@@ -994,18 +1008,18 @@ function initUserManagement() {
         btn.style.color = ok ? 'var(--green)' : 'var(--red)';
       } catch { btn.disabled = false; }
     } else if (action === 'hwid-ban') {
-      if (!confirm('Ban this user\'s device fingerprint? They keep their account but cannot re-register from the same device.')) return;
+      if (!confirm('HWID ban this user? Their device will be permanently banned and they will be kicked and notified immediately.')) return;
       btn.disabled = true;
       try {
         const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
         btn.textContent = ok ? 'HW Banned ✓' : (data?.error || 'Failed');
         btn.style.color = ok ? 'var(--yellow)' : 'var(--red)';
       } catch { btn.disabled = false; }
-    } else if (action === 'remove-chat') {
-      if (!confirm('Permanently delete and ban this chat user from AscentChat?')) return;
+    } else if (action === 'delete-account') {
+      if (!confirm('Delete this user\'s account? They are NOT banned and can create a new account.')) return;
       btn.disabled = true;
       try {
-        const { ok } = await adminFetch('/api/admin/remove-chat-user', { method: 'POST', body: { uid } });
+        const { ok } = await adminFetch('/api/admin/delete-account', { method: 'POST', body: { uid } });
         if (ok) { const tr = btn.closest('tr'); if (tr) tr.remove(); }
         else btn.disabled = false;
       } catch { btn.disabled = false; }
@@ -1128,7 +1142,7 @@ function initChatAdmins() {
     const hwidBanBtn = e.target.closest('.ca-hwid-ban');
     if (hwidBanBtn) {
       const { uid, name } = hwidBanBtn.dataset;
-      if (!confirm(`Ban "${name}"'s device fingerprint? They keep their account but cannot re-register from the same device.`)) return;
+      if (!confirm(`HWID ban "${name}"? Their device will be permanently banned and they will be kicked and notified immediately.`)) return;
       hwidBanBtn.disabled = true;
       try {
         const { ok, data } = await adminFetch('/api/admin/hwid-ban', { method: 'POST', body: { uid } });
@@ -1396,6 +1410,46 @@ function readKeyValue(entry) {
 }
 
 /* ═══════════════════════════════════════════════
+   BANNED USERS
+═══════════════════════════════════════════════ */
+function initBannedUsers() {
+  async function loadBans() {
+    const body = document.getElementById('bans-body');
+    try {
+      const { ok, data } = await adminFetch('/api/admin/bans');
+      if (!ok) { body.innerHTML = '<p class="empty-state" style="color:var(--red)">Failed to load bans.</p>'; return; }
+      const bans = data.bans || [];
+      if (!bans.length) { body.innerHTML = '<p class="empty-state">No HWID bans on record.</p>'; return; }
+      body.innerHTML = `<table class="data-table"><thead><tr>
+        <th>Name</th><th>HWID (partial)</th><th>Banned</th><th>Actions</th>
+      </tr></thead><tbody>${bans.map(b => `<tr>
+        <td>${escHtml(b.name || '—')}</td>
+        <td style="font-family:monospace;font-size:11px;color:var(--text-dim)">${escHtml(b.hwid ? b.hwid.slice(0,8) + '…' : '—')}</td>
+        <td style="font-size:11px;color:var(--text-dim)">${relTime(b.bannedAt)}</td>
+        <td><button class="btn btn-default btn-xs" data-unban-hwid="${escAttr(b.hwid)}" data-name="${escAttr(b.name || '')}">Unban</button></td>
+      </tr>`).join('')}</tbody></table>`;
+    } catch { body.innerHTML = '<p class="empty-state" style="color:var(--red)">Request failed.</p>'; }
+  }
+
+  loadBans();
+  document.getElementById('btn-refresh-bans').addEventListener('click', loadBans);
+
+  document.getElementById('bans-body').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-unban-hwid]');
+    if (!btn) return;
+    const hwid = btn.dataset.unbanHwid;
+    const name = btn.dataset.name || hwid;
+    if (!confirm(`Unban "${name}"? They will be able to log in from their device again.`)) return;
+    btn.disabled = true;
+    try {
+      const { ok, data } = await adminFetch('/api/admin/unban-hwid', { method: 'POST', body: { hwid } });
+      if (ok) { btn.closest('tr').remove(); showFeedback('fb-bans', `> Unbanned ${name}.`, true); }
+      else { showFeedback('fb-bans', '> ' + (data?.error || 'Failed.'), false); btn.disabled = false; }
+    } catch { btn.disabled = false; }
+  });
+}
+
+/* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1443,6 +1497,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initClearSessions();
   initBroadcast();
   initUserManagement();
+  initBannedUsers();
   initChatAdmins();
   initKeyManagement();
   initAdminKeys();
