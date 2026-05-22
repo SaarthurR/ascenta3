@@ -1775,13 +1775,14 @@ function _showCallUI(title,mt,ls){
   $('acLocalVid').srcObject=ls;
   $('acLocal').style.display=mt==='video'?'block':'none';
   $('acGrid').innerHTML='';
-  _addTile(null,title);
+  if(callState&&callState.remoteStreams.size)_rebuildGrid();
+  else _addTile(null,title);
   $('acOv').style.display='flex';
 }
 
 function _addTile(stream,label){
   const t=document.createElement('div');t.className='ac-tile';
-  if(stream){const v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.srcObject=stream;t.appendChild(v);}
+  if(stream){const v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.srcObject=stream;t.appendChild(v);v.play().catch(()=>{});}
   else{const av=document.createElement('div');av.className='ac-tile-av';av.textContent=ini(label||'?');t.appendChild(av);}
   const lb=document.createElement('div');lb.className='ac-tile-lbl';lb.textContent=label||'?';t.appendChild(lb);
   $('acGrid').appendChild(t);
