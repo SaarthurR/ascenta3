@@ -227,6 +227,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .attach-btn{width:38px;height:38px;border-radius:10px;flex:0 0 38px;border:1.5px solid var(--line);background:transparent;color:var(--ink3);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);touch-action:manipulation}
 .attach-btn:hover{background:var(--bg2);border-color:var(--line2)}
 .attach-btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none}
+.img-prev-strip{padding:6px 14px 0;display:none}
+.img-prev-thumb{position:relative;display:inline-block}
+.img-prev-thumb img{height:72px;border-radius:8px;display:block;object-fit:cover;border:1.5px solid var(--line2)}
+.img-prev-rm{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--line2);color:var(--ink2);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:var(--ease)}
+.img-prev-rm:hover{background:#f87171;border-color:#f87171;color:#fff}
 .msg-img{max-width:220px;max-height:260px;border-radius:10px;display:block;cursor:zoom-in;object-fit:cover;margin-bottom:2px}
 @media(max-width:500px){.msg-img{max-width:170px;max-height:200px}}
 .img-lb{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(6px)}
@@ -384,6 +389,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
           <div id="chatMutedBanner" style="display:none;padding:8px 16px;font-size:11px;color:#f87171;text-align:center;letter-spacing:.5px;border-bottom:1px solid rgba(248,113,113,0.2)">Chat muted by admin — read only</div>
           <div id="chatAdminBanner" style="display:none;padding:8px 16px;font-size:11px;color:#fbbf24;text-align:center;letter-spacing:.5px;border-bottom:1px solid rgba(251,191,36,0.2)">🔒 Chat locked — you have admin access</div>
           <div class="ep-pop" id="epPop"></div>
+          <div class="img-prev-strip" id="imgPrevStrip">
+            <div class="img-prev-thumb">
+              <img id="imgPrevThumb" src="" alt="">
+              <button class="img-prev-rm" onclick="clearPendingImg()" aria-label="Remove image">×</button>
+            </div>
+          </div>
           <div class="inp-row">
             <button class="em-btn" id="emBtn" onclick="toggleEp()" aria-label="Emoji">😊</button>
             <input type="file" id="imgFile" accept="image/*" style="display:none">
@@ -458,6 +469,7 @@ let sbOpen=false;
 let myMutedGroups=new Set();
 let isChatAdmin=false;
 let _lastChatMuted=false;
+let pendingImg=null;
 let _accountsLocked=false;
 let _namesLocked=false;
 let _activeGroupMembers=[];
@@ -1021,6 +1033,7 @@ function closeMembersModal(){$('membersOv').style.display='none';}
 
 // ─── Mount chat view ───
 function mountChat(av,name,sub){
+  clearPendingImg();
   $('chatPh').style.display='none';
   $('chatBody').style.display='flex';
   $('chAv').textContent=av;
@@ -1148,18 +1161,22 @@ $('chatIn').addEventListener('input',()=>{
 });
 async function sendMsg(){
   const text=$('chatIn').value.trim();
-  if(!text||!activeId)return;
+  const img=pendingImg;
+  if((!text&&!img)||!activeId)return;
   $('chatIn').value=''; $('chatIn').style.height='';
+  clearPendingImg();
   const payload={from:myUid,fromName:myName,text,timestamp:TS(),reactions:{}};
+  if(img)payload.imageUrl=img;
   if(activeType==='dm') payload.to=activePeer||'';
   try{
+    const preview=text||(img?'📷 Image':'');
     if(activeType==='dm'){
       await db.collection('conversations').doc(activeId).collection('messages').add(payload);
     } else {
       await db.collection('groups').doc(activeId).collection('messages').add(payload);
-      await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:text});
+      await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:preview});
     }
-    lastMsg[activeId]={text,mine:true,ts:Date.now()};
+    lastMsg[activeId]={text:preview,mine:true,ts:Date.now()};
     lastActivity[activeId]=Date.now();
     renderList();
   }catch(e){console.error('Send error:',e)}
@@ -1186,10 +1203,15 @@ function compressImage(file,maxDim=900,quality=0.72){
     img.src=blobUrl;
   });
 }
+function clearPendingImg(){
+  pendingImg=null;
+  $('imgPrevThumb').src='';
+  $('imgPrevStrip').style.display='none';
+}
 $('imgFile').addEventListener('change',async e=>{
   const file=e.target.files[0];
   e.target.value='';
-  if(!file||!activeId)return;
+  if(!file)return;
   if(!file.type.startsWith('image/'))return;
   if(file.size>20*1024*1024){alert('Image must be under 20 MB');return;}
   const btn=$('attachBtn');
@@ -1197,20 +1219,11 @@ $('imgFile').addEventListener('change',async e=>{
   try{
     const url=await compressImage(file);
     if(url.length>900000){alert('Image is too large even after compression. Try a smaller photo.');return;}
-    const text=$('chatIn').value.trim();
-    $('chatIn').value='';$('chatIn').style.height='';
-    const payload={from:myUid,fromName:myName,text:text||'',imageUrl:url,timestamp:TS(),reactions:{}};
-    if(activeType==='dm')payload.to=activePeer||'';
-    if(activeType==='dm'){
-      await db.collection('conversations').doc(activeId).collection('messages').add(payload);
-    }else{
-      await db.collection('groups').doc(activeId).collection('messages').add(payload);
-      await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:text||'📷 Image'});
-    }
-    lastMsg[activeId]={text:text||'📷 Image',mine:true,ts:Date.now()};
-    lastActivity[activeId]=Date.now();
-    renderList();
-  }catch(err){console.error('Image send error:',err);alert('Failed to send image. Please try again.');}
+    pendingImg=url;
+    $('imgPrevThumb').src=url;
+    $('imgPrevStrip').style.display='block';
+    $('chatIn').focus();
+  }catch(err){console.error('Image compress error:',err);alert('Failed to process image.');}
   finally{btn.disabled=false;btn.textContent='📎';}
 });
 function openImg(src){$('imgLbImg').src=src;$('imgLb').style.display='flex';}
