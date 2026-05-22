@@ -224,6 +224,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .snd-btn:hover{background:rgba(96,165,250,0.22);border-color:rgba(96,165,250,0.55);color:var(--A2)}
 .snd-btn:active{transform:scale(.9)}
 .snd-btn svg{width:16px;height:16px}
+.attach-btn{width:38px;height:38px;border-radius:10px;flex:0 0 38px;border:1.5px solid var(--line);background:transparent;color:var(--ink3);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);touch-action:manipulation}
+.attach-btn:hover{background:var(--bg2);border-color:var(--line2)}
+.attach-btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none}
+.msg-img{max-width:220px;max-height:260px;border-radius:10px;display:block;cursor:zoom-in;object-fit:cover;margin-bottom:2px}
+@media(max-width:500px){.msg-img{max-width:170px;max-height:200px}}
+.img-lb{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(6px)}
+.img-lb img{max-width:92vw;max-height:88vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 60px rgba(0,0,0,0.8)}
 
 /* ── GROUP MODAL ── */
 .overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
@@ -379,6 +386,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
           <div class="ep-pop" id="epPop"></div>
           <div class="inp-row">
             <button class="em-btn" id="emBtn" onclick="toggleEp()" aria-label="Emoji">😊</button>
+            <input type="file" id="imgFile" accept="image/*" style="display:none">
+            <button class="attach-btn" id="attachBtn" onclick="$('imgFile').click()" aria-label="Attach image">📎</button>
             <textarea class="chat-in" id="chatIn" rows="1" placeholder="Message…"></textarea>
             <button class="snd-btn" id="sndBtn" aria-label="Send">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -420,9 +429,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
   </div>
 </div>
 
+<div class="img-lb" id="imgLb" style="display:none" onclick="$('imgLb').style.display='none'"><img id="imgLbImg" src="" alt=""></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 // ─── Firebase ───
 firebase.initializeApp({
@@ -433,7 +445,7 @@ firebase.initializeApp({
   messagingSenderId:"1059766104296",
   appId:"1:1059766104296:web:aa69cca63fc1f901af995d"
 });
-const auth=firebase.auth(), db=firebase.firestore();
+const auth=firebase.auth(), db=firebase.firestore(), storage=firebase.storage();
 const TS=()=>firebase.firestore.FieldValue.serverTimestamp();
 
 // ─── State ───
@@ -749,6 +761,7 @@ function applyMuteState(muted){
   const blocked=muted&&!isChatAdmin;
   $('chatIn').disabled=blocked;
   $('sndBtn').disabled=blocked;
+  $('attachBtn').disabled=blocked;
   $('chatIn').placeholder=blocked?'Chat muted by admin…':'Message…';
   $('chatMutedBanner').style.display=blocked?'block':'none';
   $('chatAdminBanner').style.display=(muted&&isChatAdmin)?'block':'none';
@@ -1044,7 +1057,7 @@ function mountChat(av,name,sub){
       const lm=nonSys[nonSys.length-1];
       const mine=lm.from===myUid;
       const cid2=activeId;
-      lastMsg[cid2]={text:lm.text||'',mine,ts:lm.timestamp&&lm.timestamp.toDate?lm.timestamp.toDate().getTime():Date.now()};
+      lastMsg[cid2]={text:lm.text||(lm.imageUrl?'📷 Image':''),mine,ts:lm.timestamp&&lm.timestamp.toDate?lm.timestamp.toDate().getTime():Date.now()};
       if(!lastActivity[cid2])lastActivity[cid2]=lastMsg[cid2].ts;
     }
     renderMsgs(allMsgs);
@@ -1092,7 +1105,7 @@ function renderMsgs(msgs){
         ${showSender?`<div class="m-sender">${esc(sName)}</div>`:''}
         <div class="bw">
           <div class="react-bar">${rBar}</div>
-          <div class="bubble">${esc(m.text)}</div>
+          <div class="bubble">${m.imageUrl?`<img src="${m.imageUrl}" class="msg-img" onclick="openImg(this.src)" loading="lazy">`:''}${m.imageUrl&&m.text?'<br>':''}${m.text?esc(m.text):''}</div>
         </div>
         ${rHtml?`<div class="rxns">${rHtml}</div>`:''}
       </div>`;
@@ -1152,6 +1165,38 @@ async function sendMsg(){
     renderList();
   }catch(e){console.error('Send error:',e)}
 }
+
+// ─── Image send ───
+$('imgFile').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  e.target.value='';
+  if(!file||!activeId)return;
+  if(!file.type.startsWith('image/'))return;
+  if(file.size>8*1024*1024){alert('Image must be under 8 MB');return;}
+  const btn=$('attachBtn');
+  btn.disabled=true;btn.textContent='⏳';
+  try{
+    const ext=file.name.split('.').pop()||'jpg';
+    const ref=storage.ref(`chat-images/${activeId}/${myUid}_${Date.now()}.${ext}`);
+    await ref.put(file);
+    const url=await ref.getDownloadURL();
+    const text=$('chatIn').value.trim();
+    $('chatIn').value='';$('chatIn').style.height='';
+    const payload={from:myUid,fromName:myName,text:text||'',imageUrl:url,timestamp:TS(),reactions:{}};
+    if(activeType==='dm')payload.to=activePeer||'';
+    if(activeType==='dm'){
+      await db.collection('conversations').doc(activeId).collection('messages').add(payload);
+    }else{
+      await db.collection('groups').doc(activeId).collection('messages').add(payload);
+      await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:text||'📷 Image'});
+    }
+    lastMsg[activeId]={text:text||'📷 Image',mine:true,ts:Date.now()};
+    lastActivity[activeId]=Date.now();
+    renderList();
+  }catch(err){console.error('Image send error:',err);alert('Failed to send image. Please try again.');}
+  finally{btn.disabled=false;btn.textContent='📎';}
+});
+function openImg(src){$('imgLbImg').src=src;$('imgLb').style.display='flex';}
 
 // ─── Global ping listeners ───
 let groupPingUnsubs={};
