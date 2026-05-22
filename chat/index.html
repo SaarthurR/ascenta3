@@ -1023,7 +1023,7 @@ function mountChat(av,name,sub){
   const colRef=(activeType==='dm'
     ?db.collection('conversations').doc(activeId).collection('messages')
     :db.collection('groups').doc(activeId).collection('messages')
-  ).orderBy('timestamp','asc');
+  ).orderBy('timestamp','asc').limitToLast(150);
 
   let firstLoad=true;
   unsubMsgs=colRef.onSnapshot(snap=>{
