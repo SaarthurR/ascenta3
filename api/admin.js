@@ -447,7 +447,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // POST /api/admin/hwid-ban — ban a chat user's device fingerprint without deleting their account
+    // POST /api/admin/hwid-ban — ban device, kick user, and notify them immediately
     if (action === "hwid-ban" && method === "POST") {
       const { uid } = await readJsonBody(req);
       if (!uid) return res.status(400).json({ error: "Missing uid" });
@@ -458,11 +458,63 @@ export default async function handler(req, res) {
       const hwid = userData?.hwid;
       if (!hwid) return res.status(400).json({ error: "No device fingerprint on file for this user" });
       const username = userData?.name ?? userData?.username ?? "";
-      await chatDb.collection("banned_hwids").doc(hwid).set({
+      const bannedAt = Timestamp.now();
+      await Promise.all([
+        chatDb.collection("banned_hwids").doc(hwid).set({ uid, name: username, bannedAt }, { merge: true }),
+        chatDb.collection("moderation_events").doc(uid).set({
+          action: "banned",
+          title: "You've been banned",
+          message: "You have been permanently banned from AscentChat.",
+          bannedAt,
+          uid,
+          name: username,
+        }, { merge: true }),
+      ]);
+      return res.status(200).json({ ok: true });
+    }
+
+    // POST /api/admin/delete-account — delete chat account without banning (user can rejoin)
+    if (action === "delete-account" && method === "POST") {
+      const { uid } = await readJsonBody(req);
+      if (!uid) return res.status(400).json({ error: "Missing uid" });
+      const chatDb = getChatDb();
+      const userRef = chatDb.collection("users").doc(uid);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) return res.status(404).json({ error: "Chat user not found" });
+      const username = userSnap.data()?.name ?? userSnap.data()?.username ?? "";
+      await chatDb.collection("moderation_events").doc(uid).set({
+        action: "removed",
+        title: "Account deleted",
+        message: "An admin deleted your AscentChat account. You may create a new one.",
+        bannedAt: Timestamp.now(),
         uid,
         name: username,
-        bannedAt: Timestamp.now(),
       }, { merge: true });
+      await removeUserFromGroups(chatDb, uid);
+      await userRef.delete();
+      try { await getChatAuth().deleteUser(uid); } catch (err) {
+        console.error("deleteUser failed (non-fatal):", err?.code || err?.message);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    // GET /api/admin/bans — list all HWID-banned users
+    if (action === "bans" && method === "GET") {
+      const chatDb = getChatDb();
+      const snap = await chatDb.collection("banned_hwids").orderBy("bannedAt", "desc").get();
+      const bans = snap.docs.map(d => ({
+        hwid: d.id,
+        ...d.data(),
+        bannedAt: d.data().bannedAt?.toMillis?.() ?? 0,
+      }));
+      return res.status(200).json({ bans });
+    }
+
+    // POST /api/admin/unban-hwid — remove a device ban
+    if (action === "unban-hwid" && method === "POST") {
+      const { hwid } = await readJsonBody(req);
+      if (!hwid) return res.status(400).json({ error: "Missing hwid" });
+      await getChatDb().collection("banned_hwids").doc(hwid).delete();
       return res.status(200).json({ ok: true });
     }
 
