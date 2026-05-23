@@ -512,6 +512,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="./call-webrtc.js"></script>
 <script>
 // ─── Firebase ───
 firebase.initializeApp({
@@ -550,8 +551,9 @@ let lastActivity={}; // {cid:ms} — for sorting (most recent to top)
 let seenSet=new Set(JSON.parse(sessionStorage.getItem('ac_seen')||'[]'));
 function saveSeen(){try{sessionStorage.setItem('ac_seen',JSON.stringify([...seenSet].slice(-400)));}catch(e){}}
 let lastReadTs=JSON.parse(localStorage.getItem('ac_lastRead')||'{}');
-let convPreviewUnsubs={};
-let groupPreviewUnsubs={};
+let convPreviewUnsubs={};   // cid -> true (one-time load marker, not a real unsub)
+let groupPreviewUnsubs={};  // kept for compat, unused
+let _presenceMap={};        // uid -> {lastSeen: Timestamp}
 function saveLastRead(){try{localStorage.setItem('ac_lastRead',JSON.stringify(lastReadTs))}catch(e){}}
 
 const $=id=>document.getElementById(id);
@@ -822,7 +824,20 @@ function showBroadcast(msg){
   $('toasts').appendChild(t);
   setTimeout(dismiss,12000);
 }
-function hb(){if(myUid)db.collection('users').doc(myUid).update({lastSeen:TS()}).catch(()=>{})}
+function hb(){
+  if(!myUid)return;
+  const now=firebase.firestore.Timestamp.now();
+  db.collection('presence').doc(myUid).set({lastSeen:now,uid:myUid},{merge:true}).catch(()=>{});
+  _presenceMap[myUid]={lastSeen:now,uid:myUid};
+}
+
+async function loadPresence(){
+  try{
+    const snap=await db.collection('presence').get();
+    snap.forEach(d=>{_presenceMap[d.id]=d.data();});
+    renderList();
+  }catch(e){}
+}
 
 // ─── Community group auto-join ───
 async function joinCommunityGroup(){
@@ -881,9 +896,10 @@ function updateMuteBtn(){
   btn.style.color=muted?'var(--R)':'var(--ink3)';
 }
 
-// ─── Users listener ───
-function listenUsers(){
-  db.collection('users').onSnapshot(snap=>{
+// ─── Users loader (one-time getDocs + periodic refresh — avoids N² cascade from lastSeen heartbeats) ───
+async function _loadUserList(){
+  try{
+    const snap=await db.collection('users').get();
     allUsers=[];
     snap.forEach(d=>{const u=d.data();if(u.uid!==myUid)allUsers.push(u)});
     _usersLoaded=true;
@@ -893,7 +909,13 @@ function listenUsers(){
     renderList();
     startGroupPingListeners();
     loadConversationPreviews();
-  });
+  }catch(e){console.error('Load users:',e)}
+}
+function listenUsers(){
+  _loadUserList();
+  loadPresence();
+  setInterval(_loadUserList,120000); // refresh user list every 2 min
+  setInterval(loadPresence,120000);  // refresh presence every 2 min
 }
 
 // ─── Groups listener ───
@@ -917,8 +939,7 @@ function listenMyGroups(){
         }
       });
       if(tab==='grp')renderList();
-      startGroupPingListeners();
-      loadGroupPreviews();
+      startGroupPingListeners(); // also handles group preview (loadGroupPreviews removed)
     },err=>{console.error('Groups listener error:',err);if(tab==='grp')renderList()});
 }
 
@@ -952,7 +973,7 @@ function renderList(){
     users.forEach(u=>{
       const cid=dmId(myUid,u.uid);
       const isAct=activeId===cid&&activeType==='dm';
-      const online=u.lastSeen&&(Date.now()-u.lastSeen.toDate().getTime()<90000);
+      const _pr=_presenceMap[u.uid];const _pls=_pr&&_pr.lastSeen;const online=_pls&&(Date.now()-(_pls.toDate?_pls.toDate().getTime():_pls)<180000);
       const ur=unread[cid]||null;
       const lm=lastMsg[cid]||null;
       let previewText, previewUnread=false;
@@ -968,7 +989,7 @@ function renderList(){
           <div class="ci-preview${previewUnread?' unread':''}">${esc(previewText.slice(0,40))}</div>
         </div>
         <div class="ci-meta">
-          <div class="ci-time">${ur?'now':ago(u.lastSeen)}</div>
+          <div class="ci-time">${ur?'now':ago(_pls)}</div>
           ${ur?`<div class="ci-udot"></div>`:''}
         </div>`;
       el.onclick=()=>{openDM(u.uid,u.name);};
@@ -1245,6 +1266,17 @@ async function sendMsg(){
     const preview=text||(img?'📷 Image':'');
     if(activeType==='dm'){
       await db.collection('conversations').doc(activeId).collection('messages').add(payload);
+      // write to recipient's dm_inbox so their dedicated listener picks it up
+      // (replaces the expensive collectionGroup query)
+      if(activePeer){
+        db.collection('dm_inbox').doc(activePeer).collection('msgs').add({
+          from:myUid,fromName:myName,
+          text:text||(img?'📷 Image':''),
+          imageUrl:img||null,
+          convId:activeId,
+          timestamp:TS()
+        }).catch(()=>{});
+      }
     } else {
       await db.collection('groups').doc(activeId).collection('messages').add(payload);
       await db.collection('groups').doc(activeId).update({updatedAt:TS(),lastMsg:preview});
@@ -1302,15 +1334,16 @@ $('imgFile').addEventListener('change',async e=>{
 function openImg(src){$('imgLbImg').src=src;$('imgLb').style.display='flex';}
 
 // ─── Global ping listeners ───
+// DM notifications use a dedicated dm_inbox/{uid}/msgs collection instead of
+// a collectionGroup query, which was scanning every messages subcollection system-wide.
+// Group ping + group preview are merged into one listener per group (was two).
 let groupPingUnsubs={};
 let dmPingUnsub=null;
 
 function startGroupPingListeners(){
   if(!dmPingUnsub&&myUid){
-    dmPingUnsub=db.collectionGroup('messages')
-      .where('to','==',myUid)
-      .orderBy('timestamp','desc')
-      .limit(20)
+    dmPingUnsub=db.collection('dm_inbox').doc(myUid).collection('msgs')
+      .orderBy('timestamp','desc').limit(20)
       .onSnapshot(snap=>{
         snap.docChanges().forEach(ch=>{
           if(ch.type==='added'){
@@ -1318,10 +1351,13 @@ function startGroupPingListeners(){
             if(seenSet.has(mid))return;
             seenSet.add(mid); saveSeen();
             if(m.from===myUid)return;
-            const cid=dmId(myUid,m.from);
+            const cid=m.convId||dmId(myUid,m.from);
+            const lmText=m.text||(m.imageUrl?'📷 Image':'');
+            lastMsg[cid]={text:lmText,mine:false,ts:m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():Date.now()};
+            lastActivity[cid]=Date.now();
             if(activeId!==cid){
-              bumpUnread(cid,m.fromName||'Someone',m.text);
-              showToast(m.fromName||'Someone',m.text,cid,'dm',m.from,m.fromName);
+              bumpUnread(cid,m.fromName||'Someone',lmText);
+              showToast(m.fromName||'Someone',lmText,cid,'dm',m.from,m.fromName);
             }
           }
         });
@@ -1330,8 +1366,21 @@ function startGroupPingListeners(){
   myGroups.forEach(g=>{
     if(groupPingUnsubs[g.id])return;
     groupPingUnsubs[g.id]=db.collection('groups').doc(g.id).collection('messages')
-      .orderBy('timestamp','desc').limit(10)
+      .orderBy('timestamp','desc').limit(5)
       .onSnapshot(snap=>{
+        // update preview from latest message (replaces separate loadGroupPreviews listener)
+        if(!snap.empty){
+          const doc=snap.docs[0],m=doc.data();
+          if(!m.system){
+            const mine=m.from===myUid;
+            const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
+            const preview=(m.fromName?m.fromName+': ':'')+(m.text||'');
+            if(!lastMsg[g.id]||ts>=lastMsg[g.id].ts){
+              lastMsg[g.id]={text:preview,mine,ts};
+              if(!lastActivity[g.id]||ts>lastActivity[g.id])lastActivity[g.id]=ts;
+            }
+          }
+        }
         snap.docChanges().forEach(ch=>{
           if(ch.type==='added'){
             const m=ch.doc.data(), mid=ch.doc.id;
@@ -1360,52 +1409,34 @@ function bumpUnread(cid,fromName,text,groupName){
   renderList();
 }
 
-// ─── Per-conversation preview listeners ───
-// Populates lastMsg/lastActivity on load so previews and sort order are correct
-// without requiring the user to open each conversation first.
+// ─── Per-conversation preview loader ───
+// Uses one-time get() instead of persistent onSnapshot — eliminates N listeners per user.
+// New DM notifications arrive via the dm_inbox listener and update lastMsg there.
 function loadConversationPreviews(){
   allUsers.forEach(u=>{
     const cid=dmId(myUid,u.uid);
     if(convPreviewUnsubs[cid])return;
-    convPreviewUnsubs[cid]=db.collection('conversations').doc(cid)
+    convPreviewUnsubs[cid]=true; // mark loaded
+    db.collection('conversations').doc(cid)
       .collection('messages').orderBy('timestamp','desc').limit(1)
-      .onSnapshot(snap=>{
+      .get().then(snap=>{
         if(snap.empty)return;
         const doc=snap.docs[0],m=doc.data();
         const mine=m.from===myUid;
         const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
-        lastMsg[cid]={text:m.text||'',mine,ts};
+        if(!lastMsg[cid]||ts>lastMsg[cid].ts)lastMsg[cid]={text:m.text||'',mine,ts};
         if(!lastActivity[cid]||ts>lastActivity[cid])lastActivity[cid]=ts;
         if(!mine&&ts>(lastReadTs[cid]||0)&&activeId!==cid){
           if(!unread[cid])unread[cid]={count:1,preview:m.text||'',fromName:m.fromName||u.name};
           else unread[cid].preview=m.text||'';
         }
         renderList();
-      },err=>console.error('Preview listener:',err));
+      }).catch(err=>console.error('Preview get:',err));
   });
 }
 
-function loadGroupPreviews(){
-  myGroups.forEach(g=>{
-    if(groupPreviewUnsubs[g.id])return;
-    groupPreviewUnsubs[g.id]=db.collection('groups').doc(g.id)
-      .collection('messages').orderBy('timestamp','desc').limit(1)
-      .onSnapshot(snap=>{
-        if(snap.empty)return;
-        const doc=snap.docs[0],m=doc.data();
-        const mine=m.from===myUid;
-        const ts=m.timestamp&&m.timestamp.toDate?m.timestamp.toDate().getTime():0;
-        const preview=(m.fromName?m.fromName+': ':'')+( m.text||'');
-        lastMsg[g.id]={text:preview,mine,ts};
-        if(!lastActivity[g.id]||ts>lastActivity[g.id])lastActivity[g.id]=ts;
-        if(!mine&&ts>(lastReadTs[g.id]||0)&&activeId!==g.id){
-          if(!unread[g.id])unread[g.id]={count:1,preview,fromName:m.fromName||'Someone'};
-          else unread[g.id].preview=preview;
-        }
-        renderList();
-      },err=>console.error('Group preview listener:',err));
-  });
-}
+// loadGroupPreviews is removed — group ping listeners (startGroupPingListeners)
+// now update lastMsg/lastActivity when they fire on initial attach.
 
 function showToast(from,text,cid,type,peerUid,peerName,groupName){
   if(myMutedGroups.has(cid))return;
@@ -1596,15 +1627,15 @@ async function startCall(mt){
 async function _dmCaller(mt,ls){
   const cid=activeId,peerName=activeName||'?';
   const ref=db.collection('calls').doc(cid);
-  const pc=new RTCPeerConnection(CALL_ICE);
-  const rs=new MediaStream();
-  ls.getTracks().forEach(t=>pc.addTrack(t,ls));
-  pc.ontrack=e=>{rs.addTrack(e.track);if(callState)_rebuildGrid();};
-  const offer=await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  await ref.set({callerId:myUid,callerName:myName,calleeUid:activePeer,status:'ringing',mediaType:mt,offer:{sdp:offer.sdp,type:offer.type},createdAt:TS()});
-  pc.onicecandidate=e=>{if(e.candidate)ref.collection('oc').add(e.candidate.toJSON());};
-  callState={type:'dm',callId:cid,mediaType:mt,localStream:ls,pcs:new Map([['r',pc]]),remoteStreams:new Map([['r',rs]]),labels:new Map([['r',peerName]]),unsubs:[],role:'caller'};
+  const session=await CallWebRTC.createOfferingPeer({
+    iceConfig:CALL_ICE,
+    localStream:ls,
+    onIceCandidate:candidate=>ref.collection('oc').add(candidate),
+    onRemoteTrack:()=>{if(callState)_rebuildGrid();}
+  });
+  const {pc,remoteStream,offer}=session;
+  await ref.set({callerId:myUid,callerName:myName,calleeUid:activePeer,status:'ringing',mediaType:mt,offer,createdAt:TS()});
+  callState={type:'dm',callId:cid,mediaType:mt,localStream:ls,pcs:new Map([['r',pc]]),remoteStreams:new Map([['r',remoteStream]]),labels:new Map([['r',peerName]]),unsubs:[],role:'caller'};
   _ringTimeout=setTimeout(()=>{if(callState?.callId===cid)ref.update({status:'ended'}).catch(()=>{}),endCall(false);},45000);
   _showCallUI(peerName,mt,ls);
   callState.unsubs.push(
@@ -1612,9 +1643,9 @@ async function _dmCaller(mt,ls){
       if(!snap.exists||!callState)return;
       const d=snap.data();
       if(d.status==='ended'){endCall(false);return;}
-      if(d.answer&&!pc.currentRemoteDescription){clearTimeout(_ringTimeout);await pc.setRemoteDescription(new RTCSessionDescription(d.answer)).catch(()=>{});_startTimer();}
+      if(d.answer&&!pc.currentRemoteDescription){clearTimeout(_ringTimeout);await session.applyAnswer(d.answer).catch(()=>{});_startTimer();}
     }),
-    ref.collection('ac').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(()=>{});}))
+    ref.collection('ac').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')session.addRemoteIceCandidate(c.doc.data()).catch(()=>{});}))
   );
 }
 
@@ -1627,18 +1658,18 @@ async function answerCall(){
   try{stream=await navigator.mediaDevices.getUserMedia(data.mediaType==='video'?{audio:true,video:{facingMode:'user'}}:{audio:true});}
   catch(e){alert('Microphone access denied.');return;}
   const ref=db.collection('calls').doc(callId);
-  const pc=new RTCPeerConnection(CALL_ICE);
-  const rs=new MediaStream();
-  stream.getTracks().forEach(t=>pc.addTrack(t,stream));
-  pc.ontrack=e=>{rs.addTrack(e.track);if(callState)_rebuildGrid();};
-  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-  const answer=await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  await ref.update({answer:{sdp:answer.sdp,type:answer.type},status:'active'});
-  pc.onicecandidate=e=>{if(e.candidate)ref.collection('ac').add(e.candidate.toJSON());};
-  callState={type:'dm',callId,mediaType:data.mediaType,localStream:stream,pcs:new Map([['r',pc]]),remoteStreams:new Map([['r',rs]]),labels:new Map([['r',data.callerName||'?']]),unsubs:[],role:'callee'};
+  const session=await CallWebRTC.createAnsweringPeer({
+    iceConfig:CALL_ICE,
+    localStream:stream,
+    remoteOffer:data.offer,
+    onIceCandidate:candidate=>ref.collection('ac').add(candidate),
+    onRemoteTrack:()=>{if(callState)_rebuildGrid();}
+  });
+  const {pc,remoteStream,answer}=session;
+  await ref.update({answer,status:'active'});
+  callState={type:'dm',callId,mediaType:data.mediaType,localStream:stream,pcs:new Map([['r',pc]]),remoteStreams:new Map([['r',remoteStream]]),labels:new Map([['r',data.callerName||'?']]),unsubs:[],role:'callee'};
   callState.unsubs.push(
-    ref.collection('oc').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(()=>{});})),
+    ref.collection('oc').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')session.addRemoteIceCandidate(c.doc.data()).catch(()=>{});})),
     ref.onSnapshot(s=>{if(!s.exists||!callState)return;if(s.data().status==='ended')endCall(false);})
   );
   _showCallUI(data.callerName||'?',data.mediaType,stream);
@@ -1695,33 +1726,45 @@ function _listenGroupRoom(cid,ls){
 async function _pairPeers(remoteUid,cid,ls){
   const pairId=[myUid,remoteUid].sort().join('__');
   const cx=db.collection('groupCalls').doc(cid).collection('cx').doc(pairId);
-  const pc=new RTCPeerConnection(CALL_ICE);
-  const rs=new MediaStream();
-  ls.getTracks().forEach(t=>pc.addTrack(t,ls));
-  pc.ontrack=e=>{e.streams[0].getTracks().forEach(t=>rs.addTrack(t));if(callState){callState.remoteStreams.set(remoteUid,rs);_rebuildGrid();}};
-  callState.pcs.set(remoteUid,pc);
-  callState.remoteStreams.set(remoteUid,rs);
+  let remoteStream=null;
+  const refreshRemote=()=>{if(callState&&remoteStream){callState.remoteStreams.set(remoteUid,remoteStream);_rebuildGrid();}};
   if(myUid<remoteUid){
-    const offer=await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await cx.set({offerer:myUid,offer:{sdp:offer.sdp,type:offer.type}},{merge:true});
-    pc.onicecandidate=e=>{if(e.candidate)cx.collection('oc').add(e.candidate.toJSON());};
+    const session=await CallWebRTC.createOfferingPeer({
+      iceConfig:CALL_ICE,
+      localStream:ls,
+      onIceCandidate:candidate=>cx.collection('oc').add(candidate),
+      onRemoteTrack:()=>refreshRemote()
+    });
+    const {pc,offer}=session;
+    remoteStream=session.remoteStream;
+    callState.pcs.set(remoteUid,pc);
+    callState.remoteStreams.set(remoteUid,remoteStream);
+    await cx.set({offerer:myUid,offer},{merge:true});
     callState.unsubs.push(
-      cx.onSnapshot(async s=>{if(!s.exists||!callState)return;const d=s.data();if(d.answer&&!pc.currentRemoteDescription)await pc.setRemoteDescription(new RTCSessionDescription(d.answer)).catch(()=>{});}),
-      cx.collection('ac').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(()=>{});}))
+      cx.onSnapshot(async s=>{if(!s.exists||!callState)return;const d=s.data();if(d.answer&&!pc.currentRemoteDescription)await session.applyAnswer(d.answer).catch(()=>{});}),
+      cx.collection('ac').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')session.addRemoteIceCandidate(c.doc.data()).catch(()=>{});}))
     );
   }else{
+    const session=CallWebRTC.createManagedPeerConnection({
+      iceConfig:CALL_ICE,
+      localStream:ls,
+      onIceCandidate:candidate=>cx.collection('ac').add(candidate),
+      onRemoteTrack:()=>refreshRemote()
+    });
+    const {pc}=session;
+    remoteStream=session.remoteStream;
+    callState.pcs.set(remoteUid,pc);
+    callState.remoteStreams.set(remoteUid,remoteStream);
     callState.unsubs.push(
       cx.onSnapshot(async s=>{
         if(!s.exists||!callState)return;const d=s.data();
         if(d.offer&&!pc.currentRemoteDescription){
-          await pc.setRemoteDescription(new RTCSessionDescription(d.offer)).catch(()=>{});
+          await session.applyRemoteDescription(d.offer).catch(()=>{});
           const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
           await cx.set({answer:{sdp:ans.sdp,type:ans.type}},{merge:true});
-          pc.onicecandidate=e=>{if(e.candidate)cx.collection('ac').add(e.candidate.toJSON());};
         }
       }),
-      cx.collection('oc').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(()=>{});}))
+      cx.collection('oc').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')session.addRemoteIceCandidate(c.doc.data()).catch(()=>{});}))
     );
   }
   _rebuildGrid();
