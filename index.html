@@ -1834,15 +1834,15 @@ sessionStorage.setItem('hub_sid', _hubSid);
 let _hubActive = false;
 let _gamesDisabled = null; // null = unknown (first poll), true/false = known state
 pollConfig();
-setInterval(pollConfig, 1500);
+setInterval(pollConfig, 30000);
 
 // Called when hub is entered — starts hub-only intervals
 function startBroadcastPolling(){
   _hubActive = true;
   hubHeartbeat();
   checkKick();
-  setInterval(hubHeartbeat, 2000);
-  setInterval(checkKick, 2000);
+  setInterval(hubHeartbeat, 30000);
+  setInterval(checkKick, 10000);
 }
 
 async function checkKick(){
