@@ -739,7 +739,7 @@ function reset(){$('joinBtn').disabled=false;$('joinBtn').textContent='Enter Asc
 const _pageStartTs = Date.now();
 let _lastBroadcastAt = 0;
 function startApp(){
-  hb(); setInterval(hb,30000);
+  hb(); setInterval(hb,120000);
   listenUsers();
   listenMyGroups();
   listenAnnouncements();
@@ -749,7 +749,6 @@ function startApp(){
   joinCommunityGroup();
   buildEp();
   startCallListener();
-  setInterval(pollBroadcast, 3000);
 }
 
 // ─── Broadcast polling (fallback — in case chat Firebase onSnapshot misses it) ───
